@@ -347,6 +347,7 @@ no PequiDev: Next.js + Tailwind + Supabase (Realtime para as leituras ao vivo).
 | Etapa | Entrega |
 | --- | --- |
 | 0. Preparação | Repositório criado (**feito**); PyTorch com a GPU funcionando no PC |
+| 0b. Estudo | Estufa de brinquedo em NumPy: simulador, rede e evolução, para aprender as ideias (**feito**, em [`estudo/`](../estudo/README.md)) |
 | 1. Simulador do ar | Van Henten em PyTorch, clima do INMET, conferido com a literatura |
 | 2. Regras fixas e PID | As comparações rodando no simulador, com métricas |
 | 3. Neuroevolução | Agente aprende a fase 1, milhares de estufas na GPU |
