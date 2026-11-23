@@ -18,6 +18,9 @@ python estudo/evolucao.py   # passo 3: a evolução treinando a rede (~10 s)
 
 Os gráficos vão para `estudo/saidas/`.
 
+`rede-da-estufa.html` é a versão interativa: a mesma estufa, rede e evolução em
+JavaScript, com o campeão embutido. Abre direto no navegador, sem instalar nada.
+
 ## Os três passos
 
 | Arquivo | O que ensina | No Genesis de verdade |
