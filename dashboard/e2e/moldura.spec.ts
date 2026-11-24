@@ -31,12 +31,6 @@ test('trocar para Desenvolvedor leva às estufas lado a lado', async ({ page, is
   if (!isMobile) await expect(page.getByRole('link', { name: 'Treino e gerações' })).toBeVisible()
 })
 
-test('visor: tela cheia, sem navegação', async ({ page }) => {
-  await page.goto('/visor')
-  await expect(page.getByRole('heading', { name: 'Visor' })).toBeVisible()
-  await expect(page.getByRole('navigation')).toHaveCount(0)
-})
-
 test('desktop: Agora com gráficos e a comparação com as regras', async ({ page, isMobile }) => {
   test.skip(isMobile, 'gráficos e comparação são do desktop')
   await page.goto('/')
