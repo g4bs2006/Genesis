@@ -1,0 +1,677 @@
+<title>Rede da Estufa</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: uma bancada de estufa — o painel da rede ao lado do painel do clima, depois o treino. */
+:root {
+  --bg: #f3f6f0;
+  --surface: #ffffff;
+  --fg: #18261c;
+  --muted: #5b6a5f;
+  --line: #dde5d9;
+  --line-strong: #b9c7b6;
+  --leaf: #2e7a3c;
+  --heat: #c9502a;
+  --cool: #1e86ad;
+  --vent: #7b8a4a;
+  --pos: #d0861b;
+  --neg: #4762c4;
+  --ok: #2e7a3c;
+  --warn: #b7791f;
+  --bad: #c0392b;
+  --font-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1511; --surface: #151f18; --fg: #e2ebe3; --muted: #97a89b; --line: #243329; --line-strong: #3a4d40;
+    --leaf: #6cc27b; --heat: #ff7c52; --cool: #4cbfe4; --vent: #b5c477; --pos: #f2b244; --neg: #8196ff;
+    --ok: #6cc27b; --warn: #e8b04a; --bad: #ff6b5b; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1511; --surface: #151f18; --fg: #e2ebe3; --muted: #97a89b; --line: #243329; --line-strong: #3a4d40;
+  --leaf: #6cc27b; --heat: #ff7c52; --cool: #4cbfe4; --vent: #b5c477; --pos: #f2b244; --neg: #8196ff;
+  --ok: #6cc27b; --warn: #e8b04a; --bad: #ff6b5b; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+h1, h2 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; line-height: 1.05; }
+h2 { font-size: 1.35rem; font-weight: 700; }
+p { margin: 0; }
+.lead { max-width: 64ch; color: var(--muted); font-size: 1.05rem; }
+.lead strong { color: var(--fg); font-weight: 600; }
+.eyebrow { font-family: var(--font-data); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--leaf); }
+header { display: flex; flex-direction: column; gap: 10px; }
+.mono { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.note { color: var(--muted); font-size: 0.88rem; max-width: 70ch; }
+
+.bench { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 860px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+
+/* Controles */
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--muted); padding: 6px 12px; font: 500 0.84rem var(--font-body); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--surface); }
+button.btn { border: 1px solid var(--line-strong); background: var(--surface); color: var(--fg); border-radius: 8px; padding: 7px 14px; font: 600 0.88rem var(--font-body); cursor: pointer; }
+button.btn.primary { background: var(--leaf); border-color: var(--leaf); color: var(--surface); }
+button.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+select { font: 500 0.86rem var(--font-body); padding: 5px 8px; border-radius: 7px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--fg); }
+label.inline { display: inline-flex; gap: 6px; align-items: center; font-size: 0.86rem; color: var(--muted); }
+
+/* Diagrama da rede */
+.net-box { position: relative; }
+#rede { width: 100%; height: auto; display: block; }
+#rede text { fill: var(--fg); font-family: var(--font-body); }
+#rede .sub { fill: var(--muted); font-family: var(--font-data); font-size: 11px; }
+#rede .layer { fill: var(--muted); font-family: var(--font-data); font-size: 10.5px; letter-spacing: 0.08em; }
+.net-off { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; background: color-mix(in srgb, var(--surface) 78%, transparent); border-radius: 8px; color: var(--fg); font-weight: 500; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.8rem; color: var(--muted); }
+.legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px 18px; }
+.slider { display: flex; flex-direction: column; gap: 2px; font-size: 0.84rem; }
+.slider span { display: flex; justify-content: space-between; color: var(--muted); }
+.slider b { color: var(--fg); font-family: var(--font-data); font-weight: 500; }
+input[type="range"] { width: 100%; accent-color: var(--leaf); }
+
+/* Leitura da estufa */
+.readout { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.metric { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.metric .k { font-size: 0.74rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.metric .v { font-family: var(--font-data); font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.pill { display: inline-block; font: 600 0.72rem var(--font-body); padding: 2px 8px; border-radius: 999px; width: fit-content; }
+.pill.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
+.pill.hot { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
+.pill.cold { color: var(--cool); background: color-mix(in srgb, var(--cool) 16%, transparent); }
+.act { display: grid; grid-template-columns: 96px minmax(0, 1fr) 44px; gap: 8px; align-items: center; font-size: 0.86rem; }
+.act .bar { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
+.act .bar div { height: 100%; width: 0; border-radius: 5px; }
+.act .pct { font-family: var(--font-data); text-align: right; font-variant-numeric: tabular-nums; }
+
+canvas { display: block; width: 100%; touch-action: none; }
+#grafico { height: 250px; cursor: ew-resize; }
+#curva { height: 230px; }
+
+/* Controladores (também é o seletor) */
+.ctrl-list { display: flex; flex-direction: column; gap: 6px; }
+.ctrl { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; width: 100%;
+  background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; color: var(--fg); cursor: pointer; font: inherit; }
+.ctrl:hover:not(:disabled) { border-color: var(--line-strong); }
+.ctrl[aria-pressed="true"] { border-color: var(--leaf); background: color-mix(in srgb, var(--leaf) 8%, transparent); }
+.ctrl:disabled { opacity: 0.5; cursor: not-allowed; }
+.ctrl .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--line-strong); }
+.ctrl[aria-pressed="true"] .dot { border-color: var(--leaf); background: var(--leaf); }
+.ctrl .name { font-weight: 600; font-size: 0.9rem; }
+.ctrl .desc { color: var(--muted); font-size: 0.8rem; }
+.ctrl .score { font-family: var(--font-data); font-variant-numeric: tabular-nums; font-size: 0.95rem; }
+
+/* Treino */
+.train { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 860px) { .train { grid-template-columns: minmax(0, 1fr); } }
+.steps { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
+.steps b { font-weight: 600; }
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+td, th { padding: 7px 4px; border-bottom: 1px solid var(--line); text-align: left; }
+th { font-weight: 500; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+td.n { text-align: right; font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.status { font-family: var(--font-data); font-size: 0.84rem; color: var(--muted); }
+.callout { border-left: 3px solid var(--leaf); padding: 4px 0 4px 12px; font-size: 0.92rem; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Genesis · estudo · estufa de brinquedo</span>
+    <h1>Rede da Estufa</h1>
+    <p class="lead">Uma rede neural de <strong>146 pesos</strong> que aprendeu, por evolução, a manter uma estufa de alface entre <strong>18 e 26 °C</strong> usando um exaustor e uma nebulização. A cada 10 minutos de estufa ela lê seis números e decide duas coisas. Veja ela decidir, mexa nas entradas ou treine uma do zero.</p>
+  </header>
+
+  <section class="bench">
+    <!-- A rede -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>A rede por dentro</h2>
+        <div class="seg" role="group" aria-label="Modo do diagrama">
+          <button id="modoSim" aria-pressed="true">Seguir a estufa</button>
+          <button id="modoManual" aria-pressed="false">Mexer nas entradas</button>
+        </div>
+      </div>
+      <p class="note" id="notaRede">Cada bolinha é um neurônio; a cor mostra o valor dele agora. Cada linha é um peso, e a espessura mostra quanto sinal passa por ela neste instante (entrada × peso).</p>
+      <div class="net-box">
+        <svg id="rede" viewBox="0 0 600 450" role="img" aria-label="Diagrama da rede neural: 6 entradas, 16 neurônios ocultos, 2 saídas"></svg>
+        <div class="net-off" id="redeOff" hidden></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--pos)"></i>positivo (empurra para cima)</span>
+        <span><i style="background:var(--neg)"></i>negativo (empurra para baixo)</span>
+        <span><i style="background:var(--leaf)"></i>saída: quanto ligar (0 a 100%)</span>
+      </div>
+      <div class="sliders" id="sliders" hidden>
+        <label class="slider"><span>Dentro <b id="sv0"></b></span><input id="s0" type="range" min="12" max="40" step="0.1" value="27"></label>
+        <label class="slider"><span>Tendência (última hora) <b id="sv1"></b></span><input id="s1" type="range" min="-3" max="3" step="0.1" value="1"></label>
+        <label class="slider"><span>Fora <b id="sv2"></b></span><input id="s2" type="range" min="12" max="40" step="0.1" value="30"></label>
+        <label class="slider"><span>Sol <b id="sv3"></b></span><input id="s3" type="range" min="0" max="1" step="0.01" value="0.8"></label>
+        <label class="slider"><span>Hora <b id="sv4"></b></span><input id="s4" type="range" min="0" max="23.83" step="0.1667" value="14"></label>
+      </div>
+    </div>
+
+    <!-- A estufa -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>A estufa</h2>
+        <span class="mono" id="relogio">dia 1 · 00:00</span>
+      </div>
+      <div class="readout">
+        <div class="metric"><span class="k">Dentro</span><span class="v" id="rDentro">–</span><span class="pill ok" id="rStatus">na faixa</span></div>
+        <div class="metric"><span class="k">Fora</span><span class="v" id="rFora">–</span></div>
+        <div class="metric"><span class="k">Sol</span><span class="v" id="rSol">–</span></div>
+      </div>
+      <div class="act"><span>Exaustor</span><div class="bar"><div id="bExa" style="background:var(--vent)"></div></div><span class="pct" id="pExa">0%</span></div>
+      <div class="act"><span>Nebulização</span><div class="bar"><div id="bNeb" style="background:var(--cool)"></div></div><span class="pct" id="pNeb">0%</span></div>
+      <canvas id="grafico" aria-label="Temperatura dentro e fora da estufa ao longo de 3 dias"></canvas>
+      <div class="row">
+        <button class="btn primary" id="play">Pausar</button>
+        <label class="inline">Velocidade
+          <select id="vel"><option value="12">1 dia em 12 s</option><option value="48" selected>1 dia em 3 s</option><option value="144">1 dia em 1 s</option></select>
+        </label>
+        <button class="btn" id="climaNovo">Clima novo</button>
+      </div>
+      <div class="row" style="justify-content:space-between"><span class="note">Nota até agora (0 é perfeito)</span><span class="mono" id="notaAgora">0</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Quem controla a estufa</h2>
+      <span class="note">Nota de cada um neste clima de 3 dias. Toque para trocar.</span>
+    </div>
+    <div class="ctrl-list" id="ctrls"></div>
+    <p class="note">A nota soma 1 ponto de castigo por grau fora da faixa a cada 10 minutos, mais o gasto de energia e água. Por isso é negativa, e quanto mais perto de zero, melhor.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Treine uma rede do zero</h2>
+      <span class="status" id="trStatus">pronto para treinar</span>
+    </div>
+    <div class="train">
+      <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+        <canvas id="curva" aria-label="Curva de aprendizado: nota por geração"></canvas>
+        <div class="legend">
+          <span>Nota por geração:</span>
+          <span><i style="background:var(--leaf)"></i>melhor rede da geração</span>
+          <span><i style="background:var(--pos)"></i>rede mediana</span>
+          <span><i style="background:var(--muted)"></i>regras fixas no mesmo clima</span>
+        </div>
+        <div class="row">
+          <label class="inline">População <select id="cfgPop"><option>20</option><option selected>200</option></select></label>
+          <label class="inline">Elite <select id="cfgElite"><option value="0">0</option><option value="0.05" selected>5%</option></select></label>
+          <label class="inline">Mutação <select id="cfgMut"><option>0</option><option>0.01</option><option selected>0.05</option><option>0.3</option></select></label>
+          <label class="inline">Gerações <select id="cfgGer"><option>50</option><option selected>100</option><option>200</option></select></label>
+        </div>
+        <div class="row">
+          <button class="btn primary" id="treinar">Treinar</button>
+          <button class="btn" id="parar" disabled>Parar</button>
+          <button class="btn" id="verTreinada" disabled>Ver a rede treinada na estufa</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+        <ol class="steps">
+          <li><b>Sorteio.</b> Cada rede nasce com pesos ao acaso.</li>
+          <li><b>Cultivo.</b> Todas cuidam da sua estufa por 3 dias, com o mesmo clima.</li>
+          <li><b>Elitismo.</b> As melhores passam intactas para a próxima geração.</li>
+          <li><b>Torneio e cruzamento.</b> Sorteiam-se 3 redes e a melhor vira mãe ou pai. Cada peso do filho vem de um dos dois.</li>
+          <li><b>Mutação.</b> Um ruído pequeno nos pesos do filho. É daí que surge o novo.</li>
+          <li><b>Repete</b>, com clima novo a cada geração.</li>
+        </ol>
+        <div>
+          <table>
+            <thead><tr><th>Prova: 20 climas nunca vistos</th><th style="text-align:right">nota média</th></tr></thead>
+            <tbody id="prova"></tbody>
+          </table>
+        </div>
+        <p class="callout" id="experimento">Experimente: mutação 0, elite 0 ou população 20. Antes de treinar, tente adivinhar o que vai acontecer.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script id="nucleo">
+/* ===== Núcleo: a mesma estufa, rede e evolução de estudo/*.py, em JavaScript ===== */
+const MIN_PASSO = 10, PASSOS_DIA = 144, DIAS = 3, PASSOS = DIAS * PASSOS_DIA;
+const FMIN = 18, FMAX = 26;
+const TROCA_PASSIVA = 0.02, TROCA_EXAUSTOR = 0.15, AQUECE_SOL = 0.35, ESFRIA_NEBULIZ = 1.5;
+const C_FORA = 1.0, C_EXA = 0.02, C_NEB = 0.05;
+const NE = 6, NH = 16, NS = 2, NP = NE * NH + NH + NH * NS + NS; // 146
+const OFF_B1 = NE * NH, OFF_W2 = OFF_B1 + NH, OFF_B2 = OFF_W2 + NH * NS;
+
+// Campeão treinado em Python (estudo/evolucao.py), 146 pesos.
+const CAMPEAO = new Float64Array([1.2602,0.0363,0.9066,1.028,-0.0468,0.5498,0.1074,-1.546,-0.663,-1.1144,1.4438,1.7141,2.4055,-0.2664,1.2266,1.279,-0.4503,-0.1258,0.5238,0.9762,-0.0608,-0.0877,-1.1544,-1.3375,0.5678,0.9721,0.8138,0.3033,-0.2275,-0.7606,0.2581,-0.7851,0.191,1.1425,0.6683,-0.4621,0.1619,0.442,-1.173,-0.4576,-0.1139,-0.194,0.5355,-0.3609,0.3638,-0.3673,0.5681,-0.6891,-0.7771,0.8515,0.5716,0.783,-0.427,0.6296,-0.288,0.5027,0.3742,0.6053,0.1431,0.7837,-0.1205,1.0154,0.2669,0.9221,0.4377,0.1641,-0.1932,-0.5322,-0.9933,0.0066,0.3278,-0.4428,-0.2644,0.5416,0.5527,-0.253,0.31,0.2101,0.5498,-1.1971,-0.3605,-1.8032,-0.4652,0.0726,-0.5407,0.1636,-0.4588,0.7296,-0.0295,0.3832,-0.282,0.2926,-0.0348,0.276,0.1965,0.5119,0.712,-0.752,-0.5933,-0.6364,1.1159,-1.6661,-2.0797,0.1498,0.8188,1.8973,-0.3951,-0.8496,-0.6792,1.6598,-1.0764,1.6044,-1.0972,-0.2168,-0.1859,-0.2615,0.3821,1.6487,0.9873,1.7211,-1.6921,0.1887,1.4541,2.0125,1.8585,0.8569,0.3161,-1.7354,-2.6542,-1.2935,-1.4755,-1.0297,0.4427,0.4546,0.8104,1.7627,0.5571,2.219,-2.014,-0.4509,0.9409,1.153,-1.5972,-0.1108,-1.685,-1.1661]);
+
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function Rng(seed) {
+  const r = mulberry32(seed); let extra = null;
+  return {
+    u: r,
+    unif: (a, b) => a + (b - a) * r(),
+    int: n => Math.floor(r() * n),
+    normal() { // Box-Muller
+      if (extra !== null) { const s = extra; extra = null; return s; }
+      let u = 0; while (u === 0) u = r(); const v = r();
+      const m = Math.sqrt(-2 * Math.log(u)); extra = m * Math.sin(2 * Math.PI * v); return m * Math.cos(2 * Math.PI * v);
+    }
+  };
+}
+
+function sortearClima(seed) {
+  const rng = Rng(seed);
+  const vals = (a, b) => Array.from({ length: DIAS + 1 }, () => rng.unif(a, b));
+  const med = vals(21, 28), amp = vals(4, 8), nuv = vals(0.5, 1.0);
+  const tExt = new Float64Array(PASSOS), sol = new Float64Array(PASSOS), hora = new Float64Array(PASSOS);
+  for (let p = 0; p < PASSOS; p++) {
+    const td = p * MIN_PASSO / 60 / 24, d = Math.floor(td), f = td - d, h = (td * 24) % 24;
+    const lerp = x => x[d] + (x[d + 1] - x[d]) * f;
+    hora[p] = h;
+    tExt[p] = lerp(med) + lerp(amp) * Math.sin(2 * Math.PI * (h - 9) / 24);
+    sol[p] = lerp(nuv) * Math.max(0, Math.sin(Math.PI * (h - 6) / 12));
+  }
+  return { tExt, sol, hora };
+}
+
+function observar(tInt, tInt1h, tExt, sol, hora, x) {
+  const ang = 2 * Math.PI * hora / 24;
+  x[0] = (tInt - 22) / 8; x[1] = (tInt - tInt1h) / 2; x[2] = (tExt - 22) / 8;
+  x[3] = sol; x[4] = Math.sin(ang); x[5] = Math.cos(ang);
+}
+
+// Uma passada pela rede guardada em W a partir de `o`. Escreve oculta (h) e saídas (y).
+function decidir(W, o, x, h, y) {
+  for (let j = 0; j < NH; j++) {
+    let s = W[o + OFF_B1 + j];
+    for (let i = 0; i < NE; i++) s += x[i] * W[o + i * NH + j];
+    h[j] = Math.tanh(s);
+  }
+  for (let k = 0; k < NS; k++) {
+    let s = W[o + OFF_B2 + k];
+    for (let j = 0; j < NH; j++) s += h[j] * W[o + OFF_W2 + j * NS + k];
+    y[k] = 1 / (1 + Math.exp(-s));
+  }
+}
+
+// Roda n estufas. tipo: 'nada' | 'regras' | 'rede' (W com n redes). Devolve notas; com traço, guarda tudo da estufa 0.
+function simular(tipo, W, n, clima, traco) {
+  const t = new Float64Array(n), buf = new Float64Array(n * 6), custo = new Float64Array(n);
+  for (let e = 0; e < n; e++) { t[e] = clima.tExt[0] + 1; for (let k = 0; k < 6; k++) buf[e * 6 + k] = t[e]; }
+  const x = new Float64Array(NE), h = new Float64Array(NH), y = new Float64Array(NS);
+  for (let p = 0; p < PASSOS; p++) {
+    const te = clima.tExt[p], sol = clima.sol[p], hr = clima.hora[p], k = p % 6;
+    for (let e = 0; e < n; e++) {
+      const t1h = buf[e * 6 + k];
+      let exa = 0, neb = 0;
+      if (tipo === 'regras') { exa = t[e] > 24 ? 1 : 0; neb = t[e] > 26 ? 1 : 0; }
+      else if (tipo === 'rede') { observar(t[e], t1h, te, sol, hr, x); decidir(W, e * NP, x, h, y); exa = y[0]; neb = y[1]; }
+      if (traco && e === 0) {
+        if (tipo === 'rede') { traco.x.set(x, p * NE); traco.h.set(h, p * NH); }
+        else { observar(t[e], t1h, te, sol, hr, x); traco.x.set(x, p * NE); }
+        traco.t1h[p] = t1h;
+      }
+      const troca = (TROCA_PASSIVA + TROCA_EXAUSTOR * exa) * (te - t[e]);
+      t[e] = t[e] + troca + AQUECE_SOL * sol - ESFRIA_NEBULIZ * neb;
+      const fora = Math.max(0, FMIN - t[e]) + Math.max(0, t[e] - FMAX);
+      custo[e] += C_FORA * fora + C_EXA * exa + C_NEB * neb;
+      buf[e * 6 + k] = t[e];
+      if (traco && e === 0) { traco.t[p] = t[e]; traco.exa[p] = exa; traco.neb[p] = neb; traco.nota[p] = -custo[e]; }
+    }
+  }
+  const notas = new Float64Array(n); for (let e = 0; e < n; e++) notas[e] = -custo[e];
+  return notas;
+}
+
+function novoTraco() {
+  return { t: new Float64Array(PASSOS), t1h: new Float64Array(PASSOS), exa: new Float64Array(PASSOS), neb: new Float64Array(PASSOS),
+    nota: new Float64Array(PASSOS), x: new Float64Array(PASSOS * NE), h: new Float64Array(PASSOS * NH) };
+}
+
+function pesosAleatorios(n, rng, escala = 0.5) { const W = new Float64Array(n * NP); for (let i = 0; i < W.length; i++) W[i] = rng.normal() * escala; return W; }
+
+// Uma geração de evolução: devolve a população nova.
+function novaGeracao(W, notas, n, elite, mutacao, rng) {
+  const ordem = Array.from(notas.keys()).sort((a, b) => notas[b] - notas[a]);
+  const novo = new Float64Array(n * NP);
+  for (let e = 0; e < elite; e++) novo.set(W.subarray(ordem[e] * NP, ordem[e] * NP + NP), e * NP);
+  const torneio = () => { let best = rng.int(n); for (let k = 1; k < 3; k++) { const c = rng.int(n); if (notas[c] > notas[best]) best = c; } return best; };
+  for (let e = elite; e < n; e++) {
+    const a = torneio() * NP, b = torneio() * NP, o = e * NP;
+    for (let i = 0; i < NP; i++) novo[o + i] = (rng.u() < 0.5 ? W[a + i] : W[b + i]) + (mutacao > 0 ? rng.normal() * mutacao : 0);
+  }
+  return novo;
+}
+
+function mediaEmClimas(tipo, W, n, sementes) {
+  const soma = new Float64Array(n);
+  for (const s of sementes) { const nt = simular(tipo, W, n, sortearClima(s)); for (let e = 0; e < n; e++) soma[e] += nt[e]; }
+  for (let e = 0; e < n; e++) soma[e] /= sementes.length;
+  return soma;
+}
+</script>
+
+<script>
+/* ===== Interface ===== */
+const $ = id => document.getElementById(id);
+const fmt = (v, d = 1) => v.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const horaTxt = h => { const m = Math.round(h * 60) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+
+const PROVA = Array.from({ length: 20 }, (_, i) => 90000 + i);
+const ctrls = {
+  nada:     { nome: 'Não fazer nada', desc: 'Nunca liga nada', tipo: 'nada' },
+  regras:   { nome: 'Regras fixas', desc: 'Exaustor acima de 24 °C, nebulização acima de 26 °C', tipo: 'regras' },
+  sorteada: { nome: 'Rede sorteada', desc: 'Pesos ao acaso, sem treino. Toque de novo para sortear outra', tipo: 'rede', W: pesosAleatorios(1, Rng(7)) },
+  campeao:  { nome: 'Campeão', desc: 'A rede treinada no estudo (150 gerações)', tipo: 'rede', W: CAMPEAO },
+  treinada: { nome: 'Treinada aqui', desc: 'A rede que você treinar abaixo', tipo: 'rede', W: null },
+};
+let atual = 'campeao', seed = 42, clima = sortearClima(seed), traco = null, idx = 0, tocando = true, modo = 'sim', sorteios = 7;
+
+/* --- Diagrama --- */
+const XIN = 160, XH = 330, XOUT = 470;
+const yIn = i => 75 + i * 62, yH = j => 30 + j * (390 / 15), yOut = k => 175 + k * 110;
+const NOMES_IN = ['Dentro', 'Tendência', 'Fora', 'Sol', 'Hora · seno', 'Hora · cosseno'];
+const NOMES_OUT = ['Exaustor', 'Nebulização'];
+const svgNS = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs, parent) => { const e = document.createElementNS(svgNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent && parent.appendChild(e); return e; };
+const svg = $('rede');
+const gEdges = el('g', {}, svg), gNodes = el('g', {}, svg);
+const e1 = [], e2 = [], nIn = [], nH = [], nOut = [], tInVal = [], tOutVal = [];
+el('text', { x: XIN, y: 16, 'text-anchor': 'middle', class: 'layer' }, svg).textContent = 'ENTRADAS';
+el('text', { x: XH, y: 16, 'text-anchor': 'middle', class: 'layer' }, svg).textContent = 'OCULTA';
+el('text', { x: XOUT, y: 16, 'text-anchor': 'middle', class: 'layer' }, svg).textContent = 'SAÍDAS';
+for (let i = 0; i < NE; i++) for (let j = 0; j < NH; j++) e1.push(el('line', { x1: XIN, y1: yIn(i), x2: XH, y2: yH(j), 'stroke-linecap': 'round' }, gEdges));
+for (let j = 0; j < NH; j++) for (let k = 0; k < NS; k++) e2.push(el('line', { x1: XH, y1: yH(j), x2: XOUT, y2: yOut(k), 'stroke-linecap': 'round' }, gEdges));
+for (let i = 0; i < NE; i++) {
+  nIn.push(el('circle', { cx: XIN, cy: yIn(i), r: 11, 'stroke-width': 1.5 }, gNodes));
+  el('text', { x: XIN - 20, y: yIn(i) - 2, 'text-anchor': 'end', 'font-size': 13, 'font-weight': 500 }, gNodes).textContent = NOMES_IN[i];
+  tInVal.push(el('text', { x: XIN - 20, y: yIn(i) + 13, 'text-anchor': 'end', class: 'sub' }, gNodes));
+}
+for (let j = 0; j < NH; j++) nH.push(el('circle', { cx: XH, cy: yH(j), r: 8.5, 'stroke-width': 1.2 }, gNodes));
+for (let k = 0; k < NS; k++) {
+  nOut.push(el('circle', { cx: XOUT, cy: yOut(k), r: 17, 'stroke-width': 1.5 }, gNodes));
+  el('text', { x: XOUT + 28, y: yOut(k) - 2, 'font-size': 14, 'font-weight': 600 }, gNodes).textContent = NOMES_OUT[k];
+  tOutVal.push(el('text', { x: XOUT + 28, y: yOut(k) + 15, class: 'sub', 'font-size': 12 }, gNodes));
+}
+const mix = (v, max = 1) => { const a = Math.min(1, Math.abs(v) / max); return `color-mix(in srgb, var(${v >= 0 ? '--pos' : '--neg'}) ${Math.round(a * 100)}%, var(--surface))`; };
+function pintarEdge(line, s) {
+  const a = Math.min(1, Math.abs(s));
+  line.style.stroke = `var(${s >= 0 ? '--pos' : '--neg'})`;
+  line.style.strokeOpacity = (0.08 + 0.8 * a).toFixed(3);
+  line.style.strokeWidth = (0.5 + 3.6 * a).toFixed(2);
+}
+function desenharRede(W, x, h, y, rotulos) {
+  for (let i = 0; i < NE; i++) {
+    nIn[i].style.fill = mix(x[i]); nIn[i].style.stroke = 'var(--line-strong)';
+    tInVal[i].textContent = rotulos[i];
+    for (let j = 0; j < NH; j++) pintarEdge(e1[i * NH + j], x[i] * W[i * NH + j]);
+  }
+  for (let j = 0; j < NH; j++) {
+    nH[j].style.fill = mix(h[j]); nH[j].style.stroke = 'var(--line-strong)';
+    for (let k = 0; k < NS; k++) pintarEdge(e2[j * NS + k], h[j] * W[OFF_W2 + j * NS + k]);
+  }
+  for (let k = 0; k < NS; k++) {
+    nOut[k].style.fill = `color-mix(in srgb, var(--leaf) ${Math.round(y[k] * 100)}%, var(--surface))`;
+    nOut[k].style.stroke = 'var(--leaf)';
+    tOutVal[k].textContent = `${Math.round(y[k] * 100)}% ligado`;
+  }
+}
+function rotulosDe(t, t1h, te, sol, hr, x) {
+  const tend = t - t1h;
+  return [`${fmt(t)} °C`, `${tend >= 0 ? '+' : '−'}${fmt(Math.abs(tend))} °C/h`, `${fmt(te)} °C`, `${Math.round(sol * 100)}%`, `${horaTxt(hr)} → ${fmt(x[4], 2)}`, fmt(x[5], 2)];
+}
+
+/* --- Estufa: leitura --- */
+function mostrarLeitura(relogio, t, te, sol, exa, neb) {
+  $('relogio').textContent = relogio;
+  $('rDentro').textContent = `${fmt(t)} °C`;
+  $('rFora').textContent = `${fmt(te)} °C`;
+  $('rSol').textContent = `${Math.round(sol * 100)}%`;
+  const st = $('rStatus');
+  if (t > FMAX) { st.className = 'pill hot'; st.textContent = 'quente demais'; }
+  else if (t < FMIN) { st.className = 'pill cold'; st.textContent = 'frio demais'; }
+  else { st.className = 'pill ok'; st.textContent = 'na faixa'; }
+  $('bExa').style.width = `${exa * 100}%`; $('pExa').textContent = `${Math.round(exa * 100)}%`;
+  $('bNeb').style.width = `${neb * 100}%`; $('pNeb').textContent = `${Math.round(neb * 100)}%`;
+}
+
+/* --- Canvas util --- */
+function prepCanvas(c) {
+  const dpr = window.devicePixelRatio || 1, r = c.getBoundingClientRect();
+  const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+  const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, r.width, r.height);
+  return { g, W: r.width, H: r.height };
+}
+
+/* --- Gráfico da estufa --- */
+const G = { l: 34, r: 8, t: 8, tb: 168, lane1: 180, lane2: 198, laneH: 12, xl: 245, tmin: 12, tmax: 40 };
+function desenharGrafico() {
+  const { g, W: Wd } = prepCanvas($('grafico'));
+  const cFg = css('--fg'), cMuted = css('--muted'), cLine = css('--line'), cLeaf = css('--leaf'), cHeat = css('--heat'), cCool = css('--cool'), cVent = css('--vent');
+  const pw = Wd - G.l - G.r, X = p => G.l + (p / (PASSOS - 1)) * pw, Y = t => G.t + (1 - (t - G.tmin) / (G.tmax - G.tmin)) * (G.tb - G.t);
+  g.font = '11px "JetBrains Mono", ui-monospace, monospace';
+  // faixa boa
+  g.fillStyle = cLeaf; g.globalAlpha = 0.12; g.fillRect(G.l, Y(FMAX), pw, Y(FMIN) - Y(FMAX)); g.globalAlpha = 1;
+  // grade e rótulos de temperatura
+  g.strokeStyle = cLine; g.lineWidth = 1; g.fillStyle = cMuted; g.textAlign = 'right'; g.textBaseline = 'middle';
+  for (const t of [15, 20, 25, 30, 35, 40]) { const y = Y(t); g.beginPath(); g.moveTo(G.l, y); g.lineTo(G.l + pw, y); g.stroke(); g.fillText(t, G.l - 6, y); }
+  // dias
+  g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  for (let d = 0; d < DIAS; d++) {
+    if (d > 0) { g.strokeStyle = cMuted; g.globalAlpha = 0.35; g.beginPath(); g.moveTo(X(d * PASSOS_DIA), G.t); g.lineTo(X(d * PASSOS_DIA), G.lane2 + G.laneH); g.stroke(); g.globalAlpha = 1; }
+    g.fillStyle = cMuted; g.fillText(`dia ${d + 1}`, X(d * PASSOS_DIA + 72), G.xl);
+    for (const hh of [6, 12, 18]) { const x = X(d * PASSOS_DIA + hh * 6); g.fillText(`${hh}h`, x, G.xl - 16); }
+  }
+  // fora
+  g.strokeStyle = cMuted; g.setLineDash([4, 4]); g.lineWidth = 1.3; g.beginPath();
+  for (let p = 0; p < PASSOS; p++) { const x = X(p), y = Y(clima.tExt[p]); p ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); g.setLineDash([]);
+  // dentro: inteiro clarinho, até o agora forte
+  const linha = (ate, alpha, w) => { g.strokeStyle = cHeat; g.globalAlpha = alpha; g.lineWidth = w; g.beginPath();
+    for (let p = 0; p <= ate; p++) { const x = X(p), y = Y(Math.max(G.tmin, Math.min(G.tmax, traco.t[p]))); p ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); g.globalAlpha = 1; };
+  linha(PASSOS - 1, 0.22, 1.6); linha(idx, 1, 2.2);
+  // faixas dos atuadores
+  const lane = (arr, y, cor, nome) => {
+    g.fillStyle = cLine; g.fillRect(G.l, y, pw, G.laneH);
+    g.fillStyle = cor; for (let p = 0; p < PASSOS; p++) if (arr[p] > 0.01) { g.globalAlpha = (p <= idx ? 1 : 0.3) * Math.min(1, arr[p]); g.fillRect(X(p), y, pw / PASSOS + 0.6, G.laneH); }
+    g.globalAlpha = 1; g.fillStyle = cMuted; g.textAlign = 'right'; g.textBaseline = 'middle'; g.fillText(nome, G.l - 6, y + G.laneH / 2); g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  };
+  lane(traco.exa, G.lane1, cVent, 'exa'); lane(traco.neb, G.lane2, cCool, 'neb');
+  // agora
+  g.strokeStyle = cFg; g.lineWidth = 1.5; g.beginPath(); g.moveTo(X(idx), G.t); g.lineTo(X(idx), G.lane2 + G.laneH); g.stroke();
+  g.fillStyle = cHeat; g.beginPath(); g.arc(X(idx), Y(Math.max(G.tmin, Math.min(G.tmax, traco.t[idx]))), 4, 0, 7); g.fill();
+}
+
+/* --- Controladores --- */
+const notasClima = {};
+function calcularNotas() {
+  for (const k in ctrls) { const c = ctrls[k]; notasClima[k] = (c.tipo === 'rede' && !c.W) ? null : simular(c.tipo, c.W, 1, clima)[0]; }
+}
+function desenharCtrls() {
+  const box = $('ctrls'); box.innerHTML = '';
+  for (const k in ctrls) {
+    const c = ctrls[k], b = document.createElement('button');
+    b.className = 'ctrl'; b.setAttribute('aria-pressed', k === atual); b.disabled = c.tipo === 'rede' && !c.W;
+    b.innerHTML = `<span class="dot"></span><span><span class="name">${c.nome}</span><br><span class="desc">${c.desc}</span></span><span class="score">${notasClima[k] === null ? '—' : fmt(notasClima[k])}</span>`;
+    b.onclick = () => {
+      if (k === 'sorteada' && atual === 'sorteada') { sorteios++; c.W = pesosAleatorios(1, Rng(sorteios)); notasClima.sorteada = simular('rede', c.W, 1, clima)[0]; }
+      atual = k; rodar(); desenharCtrls();
+    };
+    box.appendChild(b);
+  }
+}
+
+/* --- Roda o controlador atual no clima e desenha --- */
+function rodar() { traco = novoTraco(); const c = ctrls[atual]; simular(c.tipo, c.W, 1, clima, traco); if (modo === 'manual' && c.tipo !== 'rede') { atual = 'campeao'; rodar(); return; } render(); }
+
+function render() {
+  const c = ctrls[atual];
+  const off = $('redeOff');
+  if (modo === 'sim') {
+    const p = idx, x = traco.x.subarray(p * NE, p * NE + NE);
+    const dia = Math.floor(p / PASSOS_DIA) + 1;
+    mostrarLeitura(`dia ${dia} · ${horaTxt(clima.hora[p])}`, traco.t[p], clima.tExt[p], clima.sol[p], traco.exa[p], traco.neb[p]);
+    $('notaAgora').textContent = fmt(traco.nota[p]);
+    const rot = rotulosDe(p ? traco.t[p - 1] : clima.tExt[0] + 1, traco.t1h[p], clima.tExt[p], clima.sol[p], clima.hora[p], x);
+    if (c.tipo === 'rede') {
+      off.hidden = true;
+      desenharRede(c.W, x, traco.h.subarray(p * NH, p * NH + NH), [traco.exa[p], traco.neb[p]], rot);
+    } else {
+      desenharRede(CAMPEAO, x, new Float64Array(NH), [0, 0], rot);
+      off.hidden = false; off.textContent = c.tipo === 'regras' ? 'As regras fixas não usam rede: é só "passou de 24 °C, liga". Escolha uma rede abaixo para ver ela pensar.' : 'Ninguém está decidindo. Escolha uma rede abaixo para ver ela pensar.';
+    }
+  } else {
+    off.hidden = true;
+    const v = [0, 1, 2, 3, 4].map(i => +$('s' + i).value);
+    const t = v[0], t1h = v[0] - v[1], te = v[2], sol = v[3], hr = v[4];
+    $('sv0').textContent = `${fmt(t)} °C`; $('sv1').textContent = `${v[1] >= 0 ? '+' : '−'}${fmt(Math.abs(v[1]))} °C/h`;
+    $('sv2').textContent = `${fmt(te)} °C`; $('sv3').textContent = `${Math.round(sol * 100)}%`; $('sv4').textContent = horaTxt(hr);
+    const x = new Float64Array(NE), h = new Float64Array(NH), y = new Float64Array(NS);
+    observar(t, t1h, te, sol, hr, x); decidir(c.W, 0, x, h, y);
+    desenharRede(c.W, x, h, y, rotulosDe(t, t1h, te, sol, hr, x));
+    mostrarLeitura(`você no controle · ${c.nome.toLowerCase()}`, t, te, sol, y[0], y[1]);
+  }
+  desenharGrafico();
+}
+
+/* --- Animação --- */
+let ultimo = null, acum = 0;
+function quadro(ts) {
+  if (tocando && modo === 'sim') {
+    if (ultimo !== null) {
+      acum += (ts - ultimo) / 1000 * +$('vel').value;
+      const passo = Math.floor(acum); acum -= passo;
+      if (passo > 0) { idx = Math.min(PASSOS - 1, idx + passo); render(); if (idx === PASSOS - 1) { tocando = false; $('play').textContent = 'Repetir'; } }
+    }
+    ultimo = ts;
+  } else ultimo = null;
+  requestAnimationFrame(quadro);
+}
+$('play').onclick = () => {
+  if (modo !== 'sim') setModo('sim');
+  if (!tocando && idx >= PASSOS - 1) idx = 0;
+  tocando = !tocando; $('play').textContent = tocando ? 'Pausar' : 'Continuar';
+};
+$('climaNovo').onclick = () => { seed++; clima = sortearClima(seed); idx = 0; tocando = true; $('play').textContent = 'Pausar'; calcularNotas(); desenharCtrls(); rodar(); };
+
+// arrastar no gráfico para ir a qualquer momento
+let arrastando = false;
+const irPara = ev => { const r = $('grafico').getBoundingClientRect(); const f = (ev.clientX - r.left - G.l) / (r.width - G.l - G.r); idx = Math.max(0, Math.min(PASSOS - 1, Math.round(f * (PASSOS - 1)))); if (modo !== 'sim') setModo('sim'); render(); };
+$('grafico').addEventListener('pointerdown', ev => { arrastando = true; tocando = false; $('play').textContent = 'Continuar'; $('grafico').setPointerCapture(ev.pointerId); irPara(ev); });
+$('grafico').addEventListener('pointermove', ev => { if (arrastando) irPara(ev); });
+$('grafico').addEventListener('pointerup', () => { arrastando = false; });
+
+/* --- Modo do diagrama --- */
+function setModo(m) {
+  modo = m;
+  $('modoSim').setAttribute('aria-pressed', m === 'sim'); $('modoManual').setAttribute('aria-pressed', m === 'manual');
+  $('sliders').hidden = m !== 'manual';
+  $('notaRede').textContent = m === 'manual'
+    ? 'Você escolhe o que os sensores leem; a rede responde na hora. Tente: 30 °C dentro e subindo, às 14h. Depois, o mesmo às 3h da manhã.'
+    : 'Cada bolinha é um neurônio; a cor mostra o valor dele agora. Cada linha é um peso, e a espessura mostra quanto sinal passa por ela neste instante (entrada × peso).';
+  if (m === 'manual') { tocando = false; $('play').textContent = 'Continuar'; if (ctrls[atual].tipo !== 'rede') { atual = 'campeao'; desenharCtrls(); } rodar(); }
+  else render();
+}
+$('modoSim').onclick = () => setModo('sim');
+$('modoManual').onclick = () => setModo('manual');
+for (let i = 0; i < 5; i++) $('s' + i).addEventListener('input', () => render());
+
+/* --- Treino --- */
+const curva = { melhor: [], mediana: [], regras: [], total: 100 };
+const SC = 10, symlog = v => Math.sign(v) * Math.log10(1 + Math.abs(v) / SC);
+function desenharCurva() {
+  const { g, W: Wd, H } = prepCanvas($('curva'));
+  const cMuted = css('--muted'), cLine = css('--line'), cLeaf = css('--leaf'), cPos = css('--pos');
+  const l = 54, r = 8, t = 10, b = 26, pw = Wd - l - r, ph = H - t - b;
+  const ymin = symlog(-20000), ymax = 0;
+  const X = i => l + (i / Math.max(1, curva.total - 1)) * pw, Y = v => t + (1 - (symlog(Math.max(-20000, v)) - ymin) / (ymax - ymin)) * ph;
+  g.font = '11px "JetBrains Mono", ui-monospace, monospace'; g.textAlign = 'right'; g.textBaseline = 'middle';
+  for (const v of [0, -10, -100, -1000, -10000]) { const y = Y(v); g.strokeStyle = cLine; g.lineWidth = 1; g.beginPath(); g.moveTo(l, y); g.lineTo(l + pw, y); g.stroke(); g.fillStyle = cMuted; g.fillText(v.toLocaleString('pt-BR'), l - 6, y); }
+  g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  const passoX = curva.total <= 50 ? 10 : curva.total <= 100 ? 20 : 50;
+  for (let i = 0; i < curva.total; i += passoX) g.fillText(i, X(i), H - 8);
+  const serie = (arr, cor, w, dash) => { if (!arr.length) return; g.strokeStyle = cor; g.lineWidth = w; g.setLineDash(dash || []); g.beginPath(); arr.forEach((v, i) => i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v))); g.stroke(); g.setLineDash([]); };
+  serie(curva.regras, cMuted, 1.2, [4, 4]); serie(curva.mediana, cPos, 1.6); serie(curva.melhor, cLeaf, 2.4);
+  if (!curva.melhor.length) { g.fillStyle = cMuted; g.font = '14px Inter, system-ui, sans-serif'; const msg = pw > 420 ? ['Aperte Treinar para ver 200 redes evoluindo do zero.', 'Leva uns segundos.'] : ['Aperte Treinar para ver', '200 redes evoluindo do zero.'];
+    msg.forEach((s, i) => g.fillText(s, l + pw / 2, t + ph / 2 + i * 20)); }
+}
+
+let treino = null;
+$('treinar').onclick = () => {
+  const n = +$('cfgPop').value, elite = Math.round(n * +$('cfgElite').value), mut = +$('cfgMut').value, ger = +$('cfgGer').value;
+  const rng = Rng(Date.now() % 1e9), base = (Date.now() % 1e6) * 10;
+  treino = { n, elite, mut, ger, g: 0, rng, W: pesosAleatorios(n, rng), base, ativo: true };
+  curva.melhor = []; curva.mediana = []; curva.regras = []; curva.total = ger;
+  $('treinar').disabled = true; $('parar').disabled = false; $('verTreinada').disabled = true;
+  setTimeout(passoTreino, 0);
+};
+$('parar').onclick = () => { if (treino) treino.parar = true; };
+function passoTreino() {
+  const T = treino; if (!T) return;
+  const ini = performance.now();
+  while (T.g < T.ger && !T.parar && performance.now() - ini < 30) {
+    const cl = sortearClima(T.base + T.g);
+    T.notas = simular('rede', T.W, T.n, cl);
+    const ord = Array.from(T.notas).sort((a, b) => b - a);
+    curva.melhor.push(ord[0]); curva.mediana.push(ord[Math.floor(T.n / 2)]); curva.regras.push(simular('regras', null, 1, cl)[0]);
+    T.g++;
+    if (T.g < T.ger && !T.parar) T.W = novaGeracao(T.W, T.notas, T.n, T.elite, T.mut, T.rng);
+  }
+  $('trStatus').textContent = `geração ${T.g}/${T.ger} · melhor ${fmt(curva.melhor.at(-1))}`;
+  desenharCurva();
+  if (T.g < T.ger && !T.parar) { setTimeout(passoTreino, 0); return; }
+  // Campeão do treino: o melhor dos 10 primeiros da última geração, na média de 5 climas.
+  const top = Array.from(T.notas.keys()).sort((a, b) => T.notas[b] - T.notas[a]).slice(0, 10);
+  const Wtop = new Float64Array(top.length * NP); top.forEach((e, i) => Wtop.set(T.W.subarray(e * NP, e * NP + NP), i * NP));
+  const m = mediaEmClimas('rede', Wtop, top.length, [70001, 70002, 70003, 70004, 70005]);
+  let best = 0; for (let i = 1; i < top.length; i++) if (m[i] > m[best]) best = i;
+  ctrls.treinada.W = Wtop.slice(best * NP, best * NP + NP);
+  ctrls.treinada.desc = `Treinada aqui: população ${T.n}, elite ${T.elite}, mutação ${T.mut}, ${T.g} gerações`;
+  provaTreinada = mediaEmClimas('rede', ctrls.treinada.W, 1, PROVA)[0];
+  desenharProva();
+  notasClima.treinada = simular('rede', ctrls.treinada.W, 1, clima)[0];
+  desenharCtrls();
+  $('trStatus').textContent = `${T.parar ? 'parado' : 'pronto'} na geração ${T.g} · prova: ${fmt(provaTreinada)}`;
+  $('treinar').disabled = false; $('treinar').textContent = 'Treinar de novo'; $('parar').disabled = true; $('verTreinada').disabled = false;
+  treino = null;
+}
+$('verTreinada').onclick = () => { atual = 'treinada'; idx = 0; tocando = true; $('play').textContent = 'Pausar'; if (modo !== 'sim') setModo('sim'); rodar(); desenharCtrls(); $('rede').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+
+let provaBase = null, provaTreinada = null;
+function desenharProva() {
+  const linhas = [['Não fazer nada', provaBase.nada], ['Regras fixas', provaBase.regras], ['Campeão do estudo', provaBase.campeao], ['Treinada aqui', provaTreinada]];
+  $('prova').innerHTML = linhas.map(([n, v]) => `<tr><td>${n}</td><td class="n">${v === null ? '—' : fmt(v)}</td></tr>`).join('');
+}
+
+/* --- Início --- */
+provaBase = { nada: mediaEmClimas('nada', null, 1, PROVA)[0], regras: mediaEmClimas('regras', null, 1, PROVA)[0], campeao: mediaEmClimas('rede', CAMPEAO, 1, PROVA)[0] };
+desenharProva();
+calcularNotas(); desenharCtrls(); rodar(); desenharCurva();
+requestAnimationFrame(quadro);
+new ResizeObserver(() => { render(); desenharCurva(); }).observe(document.querySelector('.wrap'));
+const redesenhar = () => { render(); desenharCurva(); };
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redesenhar);
+new MutationObserver(redesenhar).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+</script>

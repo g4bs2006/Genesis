@@ -1,0 +1,8 @@
+.casca {
+  min-height: 100dvh;
+  background: var(--pagina);
+  /* espaço para a barra de abas e para o recorte da câmera (safe-area) */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: calc(var(--toque-minimo) + 12px + env(safe-area-inset-bottom));
+  padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+}

@@ -35,6 +35,8 @@ ainda.**
 | Interface | Dashboard informativo, bom no celular e no desktop | Pedido do Gabriel |
 | Financeiro | Projeção de lucro × gasto no dashboard | Pedido do Gabriel |
 | Treino | Na placa do Gabriel (AMD Radeon RX 7600 XT) | Ver [Treino na GPU](#treino-na-gpu) |
+| Tarifa de energia variável | Entra na fase 3 do currículo, junto com o clima real | A nota já desconta energia desde a fase 1; a tarifa variável só muda o preço. O fim do currículo fica só com o mundo "sujo" |
+| Jeito de trabalhar | Explicar cada passo | É a primeira vez do Gabriel implementando algo assim. Ver [CLAUDE.md](../CLAUDE.md) |
 
 ## O problema
 
@@ -104,14 +106,107 @@ e 10 mil passos.
 | --- | --- | --- |
 | 1 | Só clima do ar, sensores perfeitos, dias amenos | Ventilar e nebulizar na hora certa |
 | 2 | Solução nutritiva entra no jogo | Manter pH e EC na faixa |
-| 3 | Clima real sorteado do histórico do INMET | Ondas de calor, dias nublados |
+| 3 | Clima real sorteado do histórico do INMET e tarifa de energia variando | Ondas de calor, dias nublados; economizar no horário caro sem perder colheita |
 | 4 | Ruído nos sensores | Não reagir a leitura falsa |
 | 5 | Sensor de pH descalibrando com o tempo | Desconfiar e cruzar informações |
 | 6 | Falhas: bomba trava, queda de energia | Reagir a emergências |
-| 7 | Tarifa de energia variando | Economizar sem perder colheita |
 
-As fases 4 a 6 preparam para o hardware real: é a **randomização de domínio**
-(treinar num simulador "sujo" para o agente sobreviver ao mundo real).
+As fases 1 a 3 ensinam a cultivar (ar, água, clima e preço de verdade). As fases
+4 a 6 preparam para o hardware real: é a **randomização de domínio** (treinar
+num simulador "sujo" para o agente sobreviver ao mundo real).
+
+**Quando passa de fase:** quando o campeão cumpre um critério na fase atual (a
+definir; por exemplo, menos de 5% do tempo fora da faixa e nota maior que a das
+regras fixas). Depois de avançar, cada geração mistura cenários: a maior parte
+da fase nova e uma parte das anteriores (por exemplo 70% e 30%).
+
+### A rede neural
+
+**Um neurônio** é uma conta simples: multiplica cada entrada por um peso, soma
+tudo, soma um viés e passa o resultado por uma função de ativação (que
+"entorta" a reta, senão a rede inteira seria só uma conta linear). **Uma rede**
+é várias camadas de neurônios, cada camada recebendo a saída da anterior.
+"Treinar" é achar os pesos que fazem a rede tomar boas decisões.
+
+A rede do Genesis é pequena, uma **MLP** (rede de camadas totalmente ligadas):
+
+```
+entradas (~20)  ->  32 neurônios (tanh)  ->  32 neurônios (tanh)  ->  saídas (8, sigmoide)
+```
+
+São cerca de **2 mil pesos**. Pequena de propósito: a neuroevolução funciona
+melhor com poucos pesos, e controlar uma estufa não exige uma rede grande.
+
+**Entradas** (todas normalizadas para mais ou menos entre -1 e 1, para nenhuma
+dominar só por ter número grande, como CO₂ em ppm ao lado de pH):
+
+- ar: temperatura, umidade, VPD, CO₂, luz;
+- solução: pH, EC, temperatura da água, nível;
+- fora: temperatura, umidade, radiação;
+- tempo: hora do dia (como seno e cosseno, para 23h ficar perto de 0h), dia do
+  ciclo;
+- tarifa de energia atual;
+- tendência: as mesmas leituras principais de uma hora atrás, porque a MLP não
+  tem memória e precisa saber se a temperatura está subindo ou caindo.
+
+Nas fases em que algo ainda não existe (pH e EC na fase 1, tarifa antes da fase
+3), a entrada recebe um valor fixo. Assim a rede tem **o mesmo formato do
+começo ao fim** e não precisa ser trocada entre fases.
+
+**Saídas:** uma por atuador, cada uma entre 0 e 1 (sigmoide):
+
+| Saída | Como vira ação |
+| --- | --- |
+| Ventilação/exaustor | Fração da potência (0 a 1) |
+| Sombreamento | Fração fechada (0 a 1) |
+| Nebulização | Liga se > 0,5 |
+| Luz suplementar | Liga se > 0,5 |
+| Dosagem A/B | Mililitros no passo (0 a um máximo) |
+| Dosagem de ácido | Mililitros no passo (0 a um máximo) |
+| Reposição de água | Liga se > 0,5 |
+| Bomba de circulação | Liga se > 0,5 |
+
+Antes de chegar aos atuadores, as ações passam pela **camada de segurança**.
+
+**Ponto a revisitar:** a fase 5 (sensor descalibrando) pode exigir memória de
+verdade, que a MLP não tem. Se ela travar lá, a alternativa é uma rede
+recorrente pequena (GRU), que guarda um estado de um passo para o outro.
+
+### O treino, passo a passo
+
+Não há "resposta certa" para cada passo (ninguém diz ao agente que naquele
+minuto o certo era ligar o exaustor); só se sabe se o ciclo foi bom no fim,
+35 dias depois. Por isso o treino é por **evolução** e não pelo método mais
+comum (retropropagação com exemplos certos): a evolução só precisa da nota
+final.
+
+1. **Nasce a população:** N redes (por exemplo 1024) com pesos sorteados ao
+   acaso. Cada rede é só uma lista de ~2 mil números.
+2. **Cada rede cultiva uma estufa:** todas as N estufas simuladas rodam juntas
+   na GPU, com o mesmo clima. A cada passo (10 minutos de estufa): lê os
+   sensores, a rede decide as ações, a camada de segurança filtra, o simulador
+   avança 10 minutos. Um ciclo de 35 dias são uns 5 mil passos.
+3. **Nota:** no fim do ciclo, cada rede recebe sua nota em reais: alface
+   colhida × preço, menos energia, nutriente e água, menos uma punição pelo
+   tempo fora da faixa segura.
+4. **Seleção:**
+   - **elitismo:** os melhores (por exemplo 5%) passam intactos;
+   - **cruzamento:** o resto nasce de dois pais escolhidos entre os bons, cada
+     peso vindo de um ou de outro;
+   - **mutação:** soma-se um ruído pequeno aos pesos dos filhos, para surgir
+     coisa nova.
+5. **Repete:** nova geração, clima novo. Centenas ou milhares de gerações.
+6. **Currículo:** quando o campeão cumpre o critério da fase, avança.
+7. **Exporta:** os pesos do campeão de cada geração e a gravação do seu ciclo
+   vão para o dashboard.
+
+**Por que dá para rodar milhares de estufas juntas:** o estado de todas fica em
+tensores com uma linha por estufa (temperatura de todas, pH de todas...), e os
+pesos de todas as redes num tensor `[N, pesos]`. Um passo da simulação é uma
+conta só sobre a tabela inteira, que é exatamente o que a GPU faz bem.
+
+**PPO** (o item 4 das comparações) é o outro caminho: aprende
+por gradiente, com a nota de cada passo. Fica para depois, para comparar.
 
 ### Comparações (para o resultado convencer)
 
@@ -252,11 +347,12 @@ no PequiDev: Next.js + Tailwind + Supabase (Realtime para as leituras ao vivo).
 | Etapa | Entrega |
 | --- | --- |
 | 0. Preparação | Repositório criado (**feito**); PyTorch com a GPU funcionando no PC |
+| 0b. Estudo | Estufa de brinquedo em NumPy: simulador, rede e evolução, para aprender as ideias (**feito**, em [`estudo/`](../estudo/README.md)) |
 | 1. Simulador do ar | Van Henten em PyTorch, clima do INMET, conferido com a literatura |
 | 2. Regras fixas e PID | As comparações rodando no simulador, com métricas |
 | 3. Neuroevolução | Agente aprende a fase 1, milhares de estufas na GPU |
-| 4. Solução nutritiva | pH, EC, água e reservatório; currículo fases 2 e 3 |
-| 5. Mundo sujo | Ruído, descalibração, falhas, tarifa; fases 4 a 7; camada de segurança |
+| 4. Solução nutritiva | pH, EC, água e reservatório; clima do INMET e tarifa variável; currículo fases 2 e 3 |
+| 5. Mundo sujo | Ruído, descalibração, falhas; fases 4 a 6; camada de segurança |
 | 6. Dashboard | Tela do agora, histórico, ciclo, agente × regras, celular e desktop |
 | 7. Financeiro | Lucro × gasto projetado, cenários, preços editáveis |
 | 8. Gravações | Reprodução do ciclo acelerado e das gerações |

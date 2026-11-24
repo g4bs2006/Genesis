@@ -1,0 +1,36 @@
+/**
+ * Preferências de tela: modo (Produtor ou Desenvolvedor) e tema.
+ *
+ * Zustand é uma biblioteca de "estado global": um lugar só onde a tela guarda
+ * escolhas que várias partes do app leem (a barra lateral, as abas, o tema).
+ * O `persist` salva no navegador (localStorage), então a escolha sobrevive a
+ * fechar e abrir o app. Dados da estufa NÃO moram aqui: eles vêm das portas,
+ * pelo React Query.
+ */
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+export type Modo = 'produtor' | 'desenvolvedor'
+export type Tema = 'sistema' | 'claro' | 'escuro'
+
+type Preferencias = {
+  modo: Modo
+  tema: Tema
+  trocarModo: (modo: Modo) => void
+  trocarTema: (tema: Tema) => void
+}
+
+export const usePreferencias = create<Preferencias>()(
+  persist(
+    (set) => ({
+      modo: 'produtor',
+      tema: 'sistema',
+      trocarModo: (modo) => set({ modo }),
+      trocarTema: (tema) => set({ tema }),
+    }),
+    { name: 'genesis:preferencias' },
+  ),
+)
+
+/** O Astryx fala inglês: converte o nosso tema para o `mode` do <Theme>. */
+export const modoDoTema = { sistema: 'system', claro: 'light', escuro: 'dark' } as const

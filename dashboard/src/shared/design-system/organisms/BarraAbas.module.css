@@ -1,0 +1,44 @@
+/* Barra de abas do celular, presa embaixo. Só tokens do tema (genesisTheme.ts). */
+.barra {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 10;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  background: var(--painel);
+  border-top: 1px solid var(--linha-2);
+  /* safe-area: não fica embaixo da barrinha de gestos do iPhone */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.aba {
+  /* alvo de toque de pelo menos 44px, regra do celular */
+  min-height: calc(var(--toque-minimo) + 12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--texto-3);
+  font-size: 11px;
+  text-decoration: none;
+  transition: color var(--mov-rapido) var(--ease-ios);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aba svg {
+  width: 24px;
+  height: 24px;
+}
+
+.aba[aria-current='page'] {
+  color: var(--texto);
+}
+
+.aba:focus-visible {
+  outline: 2px solid var(--focus-outline-color);
+  outline-offset: -4px;
+  border-radius: var(--radius-element);
+}

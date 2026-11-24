@@ -1,0 +1,11 @@
+.visor {
+  min-height: 100dvh;
+  background: var(--pagina);
+  color: var(--texto);
+  /* margem que cresce com a tela: numa TV grande, respira mais */
+  padding: clamp(16px, 3vw, 48px);
+  /* sem seleção nem menu de toque: ninguém mexe no visor */
+  user-select: none;
+  -webkit-touch-callout: none;
+  cursor: none;
+}
