@@ -1,3 +1,4 @@
+import { flushSync } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { Heading } from '@astryxdesign/core/Heading'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
@@ -15,7 +16,12 @@ export function PaginaAjustes() {
       <Heading level={1}>Ajustes</Heading>
       <VStack gap={1.5}>
         <Text type="label">Tema</Text>
-        <SegmentedControl label="Tema" layout="fill" value={tema} onChange={(v) => trocarTema(v as Tema)}>
+        <SegmentedControl
+          label="Tema"
+          layout="fill"
+          value={tema}
+          onChange={(v) => trocarComTransicao(() => trocarTema(v as Tema))}
+        >
           <SegmentedControlItem value="sistema" label="Sistema" />
           <SegmentedControlItem value="claro" label="Claro" />
           <SegmentedControlItem value="escuro" label="Escuro" />
@@ -27,7 +33,7 @@ export function PaginaAjustes() {
           valor={modo}
           aoTrocar={(novo: Modo) => {
             trocarModo(novo)
-            navegar(novo === 'produtor' ? '/' : '/dev')
+            navegar(novo === 'produtor' ? '/' : '/dev', { viewTransition: true })
           }}
         />
         <Text type="supporting" color="secondary">
@@ -36,4 +42,14 @@ export function PaginaAjustes() {
       </VStack>
     </VStack>
   )
+}
+
+/**
+ * Troca de tema sem "meio-termo": o navegador fotografa a tela, aplica o tema
+ * novo de uma vez (flushSync) e cruza as duas imagens em 200ms. Sem a API
+ * (navegadores antigos), troca direto.
+ */
+function trocarComTransicao(trocar: () => void) {
+  if (!document.startViewTransition) return trocar()
+  document.startViewTransition(() => flushSync(trocar))
 }

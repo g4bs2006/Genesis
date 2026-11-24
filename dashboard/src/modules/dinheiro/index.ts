@@ -9,4 +9,8 @@
  *   presentation/    páginas, componentes e hooks
  * As pastas nascem quando a primeira peça delas chega.
  */
-export {}
+export * from './dominio'
+export type { RepositorioPrecos } from './application/portas'
+export * from './presentation/dados'
+// Adaptadores (só app/dependencias.ts deve usar)
+export { criarRepositorioPrecosLocal, PRECOS_PADRAO } from './infrastructure/precosLocal'

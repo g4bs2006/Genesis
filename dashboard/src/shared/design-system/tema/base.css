@@ -11,13 +11,64 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* =============================================================================
+   Movimento (decisão 0002 + revisão de movimento da Fase 0)
+   Calmo e curto: só o que explica o que mudou. Tokens --mov-* e --ease-ios.
+   ============================================================================= */
+
+/* Trocar de página: só o conteúdo esmaece; abas e barra lateral ficam paradas.
+   (View Transitions: o navegador fotografa o antes e o depois e cruza os dois.) */
+.conteudo-pagina {
+  view-transition-name: conteudo;
+}
+::view-transition-old(conteudo),
+::view-transition-new(conteudo) {
+  animation-duration: var(--mov-base);
+  animation-timing-function: var(--ease-ios);
+}
+/* Trocar o tema: o app inteiro cruza claro e escuro em 200ms */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--mov-base);
+}
+
+/* Dado que chega (fim do skeleton): sobe 4px enquanto aparece */
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.surgir {
+  animation: surgir var(--mov-base) var(--ease-ios) backwards;
+}
+
+/* Toque em algo que abre: afunda um pouco, como um botão físico */
+.tocavel {
+  transition: transform var(--mov-base) var(--ease-ios);
+}
+.tocavel:active {
+  transform: scale(0.98);
+  transition-duration: var(--mov-rapido);
+}
+
+/* Movimento reduzido: nada se desloca; o que sobra é esmaecer, curto.
+   O Astryx cuida dos componentes dele; isto cuida dos nossos. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  @keyframes surgir {
+    from {
+      opacity: 0;
+    }
+  }
+  .tocavel:active {
+    transform: none;
+  }
+  html {
+    scroll-behavior: auto;
   }
 }

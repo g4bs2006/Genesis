@@ -16,8 +16,11 @@ export type Tema = 'sistema' | 'claro' | 'escuro'
 type Preferencias = {
   modo: Modo
   tema: Tema
+  /** Estufa aberta no modo Produtor (null = a primeira com agente) */
+  estufaId: string | null
   trocarModo: (modo: Modo) => void
   trocarTema: (tema: Tema) => void
+  escolherEstufa: (estufaId: string) => void
 }
 
 export const usePreferencias = create<Preferencias>()(
@@ -25,8 +28,10 @@ export const usePreferencias = create<Preferencias>()(
     (set) => ({
       modo: 'produtor',
       tema: 'sistema',
+      estufaId: null,
       trocarModo: (modo) => set({ modo }),
       trocarTema: (tema) => set({ tema }),
+      escolherEstufa: (estufaId) => set({ estufaId }),
     }),
     { name: 'genesis:preferencias' },
   ),

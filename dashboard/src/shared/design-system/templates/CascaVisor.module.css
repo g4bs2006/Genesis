@@ -9,3 +9,8 @@
   -webkit-touch-callout: none;
   cursor: none;
 }
+
+/* O visor é escuro: barra de rolagem e entorno também */
+:global(html):has(.visor) {
+  color-scheme: dark;
+}

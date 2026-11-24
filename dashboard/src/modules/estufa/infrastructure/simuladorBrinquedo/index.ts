@@ -1,0 +1,1 @@
+export { criarSimuladorBrinquedo } from './adaptador'

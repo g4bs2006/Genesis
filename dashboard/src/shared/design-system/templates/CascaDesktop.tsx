@@ -46,7 +46,9 @@ export function CascaDesktop({ itens, extras, rodape, children }: Props) {
       }
     >
       {/* margem lateral é da casca; a página cuida só da vertical */}
-      <VStack paddingInline={6}>{children}</VStack>
+      <VStack paddingInline={6} className="conteudo-pagina">
+        {children}
+      </VStack>
     </AppShell>
   )
 }

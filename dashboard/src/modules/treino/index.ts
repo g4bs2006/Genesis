@@ -9,4 +9,9 @@
  *   presentation/    páginas, componentes e hooks
  * As pastas nascem quando a primeira peça delas chega.
  */
-export {}
+export * from './dominio'
+export type { FonteTreino, FonteGravacoes } from './application/portas'
+export * from './presentation/dados'
+export { CardTreinoLateral } from './presentation/CardTreinoLateral'
+// Adaptadores (só app/dependencias.ts deve usar)
+export { criarFonteTreinoExemplo, criarFonteGravacoesExemplo } from './infrastructure/dadosExemplo'
