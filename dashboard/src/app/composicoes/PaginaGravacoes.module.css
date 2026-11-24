@@ -1,0 +1,101 @@
+.paineis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.painel {
+  height: 100%;
+}
+.medidores {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+.medidor {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+.medidorTopo {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  color: var(--texto-3);
+}
+.medidorValor {
+  font-family: var(--font-family-code);
+  font-variant-numeric: tabular-nums;
+  color: var(--texto);
+}
+/* a régua do medidor: a faixa boa é a parte mais escura; o ponto é o valor */
+.regua {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--linha);
+}
+.faixaBoa {
+  position: absolute;
+  inset-block: 0;
+  border-radius: 3px;
+  background: var(--linha-2);
+}
+.ponto {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: var(--texto-2);
+}
+.ponto[data-estado='atencao'] {
+  background: var(--atencao);
+}
+.ponto[data-estado='risco'] {
+  background: var(--risco);
+}
+/* com movimento liberado, o ponto desliza entre os passos; com movimento
+   reduzido, pula direto (sem transição) */
+@media (prefers-reduced-motion: no-preference) {
+  .ponto {
+    transition: left var(--mov-rapido) linear;
+  }
+}
+.luzes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--texto-3);
+}
+.luz {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.lampada {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--linha-2);
+  flex: none;
+}
+.luz[data-ligado='true'] {
+  color: var(--texto);
+}
+.luz[data-ligado='true'] .lampada {
+  background: var(--serie-azul);
+}
+.relogio {
+  font-family: var(--font-family-code);
+  font-variant-numeric: tabular-nums;
+}
+/* alvo de toque de pelo menos 44px nos controles */
+.controles > * {
+  min-height: var(--toque-minimo);
+}
