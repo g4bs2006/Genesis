@@ -60,3 +60,11 @@ test('dinheiro: lucro previsto e editar preço com vírgula', async ({ page }) =
   // o cenário médio passa a mostrar o preço novo
   await expect(page.getByText(/R\$\s?2,50\/pé/)).toBeVisible()
 })
+
+test('treino: currículo, curva de aprendizado e esquecimento', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'treino detalhado é do desktop')
+  await page.goto('/dev/treino')
+  await expect(page.getByRole('heading', { name: 'Curva de aprendizado' })).toBeVisible()
+  await expect(page.getByText('Esqueceu um pouco da fase 2')).toBeVisible()
+  await expect(page.getByText(/aprendendo agora/)).toBeVisible()
+})
