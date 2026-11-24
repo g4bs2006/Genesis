@@ -1,0 +1,6 @@
+dist
+dev-dist
+playwright-report
+test-results
+src/shared/design-system/tema/genesis.*
+AGENTS.md
