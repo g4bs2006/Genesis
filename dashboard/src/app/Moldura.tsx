@@ -9,6 +9,7 @@ import { usePreferencias, type Modo } from '@/shared/stores/preferencias'
 import { ListaEstufasLateral } from '@/modules/estufa'
 import { CardTreinoLateral } from '@/modules/treino'
 import { navegacao } from './navegacao'
+import { TourDev } from './TourDev'
 
 /** /dev é sempre Desenvolvedor; Ajustes vale para os dois; o resto é Produtor. */
 function modoDaRota(caminho: string, guardado: Modo): Modo {
@@ -66,6 +67,7 @@ export function Moldura() {
       rodape={<SeletorModo valor={modo} aoTrocar={aoTrocarModo} tamanho="sm" />}
     >
       {conteudo}
+      {modo === 'desenvolvedor' && <TourDev />}
     </CascaDesktop>
   )
 }

@@ -31,6 +31,7 @@ import {
   type Precos,
 } from '@/modules/dinheiro'
 import { useEstufaAtual, useEstufas, useResumoCiclo, type Estufa, type ResumoCiclo } from '@/modules/estufa'
+import { OQueEIsso } from '@/modules/glossario'
 import { BarraEmpilhada } from '@/shared/design-system/graficos/BarraEmpilhada'
 import { SeloDados } from '@/shared/design-system/molecules/SeloDados'
 import { useAtraso } from '@/shared/hooks/useAtraso'
@@ -95,7 +96,12 @@ function Dinheiro({
           {estufa.nome} · {estufa.plantas} pés · ciclo de {estufa.diasDoCiclo} dias
         </Text>
       </VStack>
-      <Button label="Editar preços" icon={<PencilSquareIcon width={16} aria-hidden />} onClick={aoEditar} />
+      <Button
+        label="Editar preços"
+        size={largo ? 'md' : 'lg'}
+        icon={<PencilSquareIcon width={16} aria-hidden />}
+        onClick={aoEditar}
+      />
     </HStack>
   )
 
@@ -193,7 +199,10 @@ function Cenarios({ estufa, resumo, precos }: { estufa: Estufa; resumo: ResumoCi
   return (
     <Card>
       <VStack gap={2}>
-        <Heading level={2}>Cenários de preço</Heading>
+        <HStack gap={1} align="center">
+          <Heading level={2}>Cenários de preço</Heading>
+          <OQueEIsso id="cenarioPreco" />
+        </HStack>
         <Grid columns={3} gap={3}>
           {(['baixo', 'medio', 'alto'] as const).map((c) => {
             const lucro = resultadoDoCiclo(resumo, estufa.plantas, precos, c).lucro
@@ -232,7 +241,10 @@ function Equilibrio({
   return (
     <Card>
       <VStack gap={2}>
-        <Heading level={2}>Ponto de equilíbrio</Heading>
+        <HStack gap={1} align="center">
+          <Heading level={2}>Ponto de equilíbrio</Heading>
+          <OQueEIsso id="pontoEquilibrio" />
+        </HStack>
         <Text color="secondary">Abaixo disto, a estufa não se paga.</Text>
         <Grid columns={2} gap={3}>
           <VStack gap={0.5}>

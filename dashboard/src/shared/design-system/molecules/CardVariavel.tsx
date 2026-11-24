@@ -25,6 +25,8 @@ type Props = {
   tamanho?: 'compacto' | 'normal'
   /** seta de tendência (↑ ↓), num lugar fixo: o número não sai do lugar quando ela some */
   tendencia?: string
+  /** o "o que é isso?" ao lado do nome */
+  dica?: ReactNode
 }
 
 /** Card de uma variável da estufa: valor, faixa e bolinha. Borda amarela/vermelha quando pede atenção. */
@@ -40,15 +42,19 @@ export function CardVariavel({
   exemplo,
   tamanho = 'normal',
   tendencia,
+  dica,
 }: Props) {
   return (
     <Card padding={tamanho === 'compacto' ? 3 : 4} className={`${css.card} ${css[estado]}`}>
       <VStack gap={tamanho === 'compacto' ? 1 : 2}>
         <HStack gap={1.5} align="center" justify="between">
-          <Text type="label" color="secondary" maxLines={1}>
-            {nome}
-            {apoio && <span className={css.apoio}> · {apoio}</span>}
-          </Text>
+          <HStack gap={1} align="center">
+            <Text type="label" color="secondary" maxLines={1}>
+              {nome}
+              {apoio && <span className={css.apoio}> · {apoio}</span>}
+            </Text>
+            {dica}
+          </HStack>
           <SeloEstado estado={estado} />
         </HStack>
         <HStack gap={1} align="end">

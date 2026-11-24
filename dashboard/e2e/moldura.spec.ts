@@ -68,3 +68,20 @@ test('treino: currículo, curva de aprendizado e esquecimento', async ({ page, i
   await expect(page.getByText('Esqueceu um pouco da fase 2')).toBeVisible()
   await expect(page.getByText(/aprendendo agora/)).toBeVisible()
 })
+
+test('glossário: busca sem acento', async ({ page }) => {
+  await page.goto('/glossario')
+  await page.getByPlaceholder('Buscar (ex.: VPD, mutação)').fill('mutacao')
+  await expect(page.getByText('Mutação', { exact: false }).first()).toBeVisible()
+})
+
+test('tour do desenvolvedor aparece uma vez', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'o tour é do desktop')
+  await page.goto('/dev')
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('button', { name: 'Pular' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await page.reload()
+  await expect(page.getByRole('heading', { level: 1, name: 'Estufas lado a lado' })).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})

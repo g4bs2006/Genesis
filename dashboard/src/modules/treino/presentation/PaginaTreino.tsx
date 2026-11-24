@@ -8,7 +8,6 @@ import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
-import { InfoTip } from '@astryxdesign/core/InfoTip'
 import { Link } from '@astryxdesign/core/Link'
 import { NumberInput } from '@astryxdesign/core/NumberInput'
 import { ProgressBar } from '@astryxdesign/core/ProgressBar'
@@ -16,6 +15,7 @@ import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { Table } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
+import { OQueEIsso, type IdTermo } from '@/modules/glossario'
 import { CurvaAprendizado } from '@/shared/design-system/graficos/CurvaAprendizado'
 import { useAtraso } from '@/shared/hooks/useAtraso'
 import { formatarNumero } from '@/shared/lib/formatar'
@@ -68,32 +68,16 @@ function Treino({
       </VStack>
 
       <Grid columns={4} gap={3}>
-        <Numero
-          rotulo="geração"
-          valor={formatarNumero(ultima.numero)}
-          dica="Uma rodada inteira: todas as redes cultivam um ciclo e as melhores geram a próxima população."
-        />
-        <Numero
-          rotulo="segundos por geração"
-          valor={formatarNumero(mediaSegundos, 1)}
-          dica="Média das últimas 20 gerações na GPU. Cada geração simula um ciclo de 35 dias para cada rede da população."
-        />
-        <Numero
-          rotulo="tempo rodando"
-          valor={duracao(rodandoHa)}
-          dica="Soma do tempo de todas as gerações até agora."
-        />
-        <Numero
-          rotulo="melhor nota"
-          valor={nota(melhorDeTodas)}
-          dica="Nota = reais por ciclo: venda menos gastos, menos uma punição pelo tempo fora da faixa."
-        />
+        <Numero rotulo="geração" valor={formatarNumero(ultima.numero)} termo="geracao" />
+        <Numero rotulo="segundos por geração" valor={formatarNumero(mediaSegundos, 1)} termo="geracao" />
+        <Numero rotulo="tempo rodando" valor={duracao(rodandoHa)} termo="geracao" />
+        <Numero rotulo="melhor nota" valor={nota(melhorDeTodas)} termo="nota" />
       </Grid>
 
       <VStack gap={2}>
         <HStack gap={1} align="center">
           <Heading level={2}>Currículo</Heading>
-          <InfoTip content="O treino vai de fase em fase, como uma escola: cada fase acrescenta um obstáculo novo. Passa de fase quando o campeão cumpre o critério." />
+          <OQueEIsso id="curriculo" />
         </HStack>
         <section className={css.fases}>
           {fases.map((f) => (
@@ -160,7 +144,7 @@ function Esqueceu({ campeao }: { campeao: Modelo }) {
       <VStack gap={2}>
         <HStack gap={1} align="center">
           <Heading level={2}>Ele esqueceu algo?</Heading>
-          <InfoTip content="Esquecimento catastrófico: ao aprender uma fase nova, a rede pode desaprender as antigas. O campeão refaz a prova de cada fase já vista." />
+          <OQueEIsso id="esquecimentoCatastrofico" />
         </HStack>
         <Text type="supporting" color="secondary">
           O campeão atual ({campeao.id}, fase {campeao.fase}) refaz a prova de cada fase. Abaixo de{' '}
@@ -253,41 +237,41 @@ function Comparar({
 const limitar = (v: number, max: number) => Math.min(max, Math.max(1, Math.round(v || 1)))
 
 function Configuracao({ config }: { config: ConfigTreino }) {
-  const itens: { nome: string; valor: string; dica: string }[] = [
+  const itens: { nome: string; valor: string; termo: IdTermo }[] = [
     {
       nome: 'População',
       valor: formatarNumero(config.populacao),
-      dica: 'Quantas redes cultivam juntas em cada geração, cada uma na sua estufa simulada.',
+      termo: 'populacao',
     },
     {
       nome: 'Elite',
       valor: `${formatarNumero(config.elite * 100)}%`,
-      dica: 'Elitismo: as melhores passam intactas para a próxima geração, para o melhor nunca se perder.',
+      termo: 'elitismo',
     },
     {
       nome: 'Torneio',
       valor: String(config.torneio),
-      dica: 'Para escolher cada pai, sorteia-se este número de redes e a melhor delas vence.',
+      termo: 'torneio',
     },
     {
       nome: 'Mutação',
       valor: formatarNumero(config.mutacao, 2),
-      dica: 'O tamanho do ruído somado aos pesos dos filhos. É de onde surge coisa nova.',
+      termo: 'mutacao',
     },
     {
       nome: 'Mistura de fases',
       valor: `${formatarNumero(config.misturaFases * 100)}%`,
-      dica: 'Parte dos cenários de cada geração vem das fases anteriores, para não esquecer o que já aprendeu.',
+      termo: 'misturaFases',
     },
     {
       nome: 'Arquitetura',
       valor: config.arquitetura.join(' → '),
-      dica: 'Entradas, neurônios de cada camada escondida e saídas da rede (uma por atuador).',
+      termo: 'mlp',
     },
     {
       nome: 'Passo do simulador',
       valor: `${config.passoMinutos} min`,
-      dica: 'A cada passo, a rede lê os sensores e decide; o simulador avança este tempo.',
+      termo: 'geracao',
     },
   ]
   return (
@@ -304,7 +288,7 @@ function Configuracao({ config }: { config: ConfigTreino }) {
                 <Text type="supporting" color="secondary">
                   {i.nome}
                 </Text>
-                <InfoTip content={i.dica} label={`O que é ${i.nome}?`} />
+                <OQueEIsso id={i.termo} />
               </HStack>
               <Text size="lg" weight="medium" hasTabularNumbers>
                 {i.valor}
@@ -317,7 +301,7 @@ function Configuracao({ config }: { config: ConfigTreino }) {
   )
 }
 
-function Numero({ rotulo, valor, dica }: { rotulo: string; valor: string; dica: string }) {
+function Numero({ rotulo, valor, termo }: { rotulo: string; valor: string; termo: IdTermo }) {
   return (
     <Card>
       <VStack gap={0.5}>
@@ -328,7 +312,7 @@ function Numero({ rotulo, valor, dica }: { rotulo: string; valor: string; dica: 
           <Text type="supporting" color="secondary">
             {rotulo}
           </Text>
-          <InfoTip content={dica} label={`O que é ${rotulo}?`} />
+          <OQueEIsso id={termo} />
         </HStack>
       </VStack>
     </Card>
