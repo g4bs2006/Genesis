@@ -34,7 +34,7 @@ export function App() {
           <LinkProvider component={LinkRota}>
             {/* cada módulo recebe aqui o adaptador escolhido em dependencias.ts */}
             <ProvedorEstufa fonte={d.fonteEstufa} controle={d.controleSimulacao}>
-              <ProvedorTreino treino={d.fonteTreino} gravacoes={d.fonteGravacoes}>
+              <ProvedorTreino treino={d.fonteTreino} gravacoes={d.fonteGravacoes} origem={d.origemTreino}>
                 <ProvedorDinheiro precos={d.repositorioPrecos}>
                   <RouterProvider router={roteador} />
                 </ProvedorDinheiro>

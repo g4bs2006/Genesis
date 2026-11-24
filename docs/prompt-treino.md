@@ -268,15 +268,16 @@ Pacote `treino/`, generalizando `estudo/evolucao.py`.
 Siga `dashboard/AGENTS.md`, `dashboard/README.md` e as regras de arquitetura
 (módulos, portas, `app/dependencias.ts` como único lugar que escolhe adaptador).
 
-1. **Novo adaptador `arquivosTreino`** em `dashboard/src/modules/treino/infrastructure/`,
-   implementando `FonteTreino` e `FonteGravacoes`:
-   - lê os JSON exportados e valida com os esquemas Zod;
-   - uma forma simples de servir os arquivos: um script
-     `npm run treino:sincronizar` que copia `treino/saidas/<execucao>/` para
-     `dashboard/public/treino/`.
-2. **Modo `npm run dev:treino`**: escolhido em `dependencias.ts`, com o
-   treino e as gravações reais e a estufa do simulador de brinquedo. As telas
-   tiram o selo "dados de exemplo" só do que for real.
+1. **Já pronto: o dashboard lê o treino do Supabase** (adaptador
+   `dashboard/src/modules/treino/infrastructure/supabase/`, ao vivo). Não crie
+   outro adaptador de arquivos. O que falta é só mandar os dados:
+   - em outra janela do PowerShell, junto com o treino:
+     `python -m treino.nuvem treino/saidas/<execucao>` (lê o `.env` da raiz com
+     a conta do treino; passo a passo em `docs/nuvem.md`);
+   - ele envia os JSON da Fase D conforme mudam. Se algum não passar no
+     contrato, o dashboard mostra o erro na tela de treino.
+2. **Local, sem nuvem:** `dashboard/.env.local` com as mesmas `VITE_SUPABASE_*`
+   do Vercel e `npm run dev` mostra o mesmo que o celular.
 3. **Normalização:** o dashboard passa a usar o `normalizacao.json` do treino
    no lugar das estimativas de `rede.ts`.
 4. **Antes do PR:** `npm run typecheck && npm run lint && npm test && npm run build`,
@@ -291,7 +292,7 @@ Siga `dashboard/AGENTS.md`, `dashboard/README.md` e as regras de arquitetura
   servidor local.
 - **PPO, para comparar com a neuroevolução.**
 - **Testar a XPU da placa Intel.**
-- **Mover o treino pesado para o PC com a RX 7600 XT.**
+- **Mover o treino pesado para o PC com a RX 7600** (outro PC, não o notebook).
 
 ## 6. O que NÃO fazer
 

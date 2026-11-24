@@ -57,7 +57,7 @@ describe('gravações de exemplo', () => {
 describe('criarFonteTreinoExemplo', () => {
   it('responde estado, gerações, modelos e configuração', async () => {
     const fonte = criarFonteTreinoExemplo()
-    expect((await fonte.estado()).onde).toBe('PC do Gabriel · RX 7600 XT')
+    expect((await fonte.estado()).onde).toBe('PC do Gabriel · RX 7600')
     expect(await fonte.geracoes()).toHaveLength(812)
     expect(await fonte.modelos()).toHaveLength(4)
     expect(await fonte.configuracao()).toEqual({

@@ -83,6 +83,18 @@ O que foi feito, em ordem, e onde está cada coisa. As decisões ficam no
   - deixar o treino rodando à noite;
   - ligar o dashboard aos resultados reais.
 
+- **Acompanhar de longe (noite de 24/11):** o treino vai rodar num PC sem
+  ninguém olhando, então ele passa a mandar os números para a nuvem e o
+  dashboard mostra no celular. Ver [`nuvem.md`](nuvem.md).
+  - **Supabase:** schema `genesis` dentro do projeto PequiDev (grátis; o plano
+    grátis só deixa 2 projetos e os dois já estavam em uso). Separado do blog.
+  - **Quem pode o quê:** qualquer um lê, só a conta do treino escreve (RLS).
+  - **`treino/nuvem.py`:** olha `treino/saidas/<execucao>/` e manda o que
+    mudou; se o treino ficar 15 min quieto, avisa que parou.
+  - **Dashboard no Vercel** (plano Hobby, grátis), ao vivo pelo Realtime.
+  - **Correção:** a placa do PC é uma **RX 7600** (não a XT), e o PC não é o
+    notebook.
+
 ## Onde está cada coisa
 
 | O quê | Onde |
@@ -92,5 +104,6 @@ O que foi feito, em ordem, e onde está cada coisa. As decisões ficam no
 | Estudo (estufa de brinquedo) | [`estudo/`](../estudo/README.md) |
 | Dashboard | [`dashboard/`](../dashboard/README.md) |
 | Contrato backend → dashboard | [`docs/contrato-dados.md`](contrato-dados.md) |
+| Treino na nuvem (Supabase, Vercel) | [`docs/nuvem.md`](nuvem.md), [`supabase/`](../supabase/), [`treino/nuvem.py`](../treino/nuvem.py) |
 | Prompts dos agentes | [`docs/prompt-frontend.md`](prompt-frontend.md), [`docs/prompt-treino.md`](prompt-treino.md) |
 | Revisão visual (capturas) | [`docs/revisao-visual/`](revisao-visual/) |

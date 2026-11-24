@@ -7,16 +7,39 @@
  *
  *   npm run demo  -> dadosExemplo (JSON fixo e coerente; também nos testes e2e)
  *   npm run dev   -> simuladorBrinquedo (estufa de brinquedo num Web Worker)
- *   depois        -> Supabase Realtime, arquivos do treino, MQTT (backend)
+ *   depois        -> estufa real por MQTT (backend)
  *
- * O treino e as gravações ainda não existem de verdade: nos dois modos vêm dos
- * dados de exemplo, com o selo "dados de exemplo" na tela.
+ * O treino e as gravações vêm do Supabase (o treino de verdade, rodando no PC)
+ * quando as duas variáveis VITE_SUPABASE_* existem (no Vercel e no
+ * dashboard/.env.local). Sem elas, ou no modo demo, vêm dos dados de exemplo,
+ * com o selo "dados de exemplo" na tela.
  */
+import { createClient } from '@supabase/supabase-js'
 import { criarFonteEstufaExemplo, criarSimuladorBrinquedo } from '@/modules/estufa'
-import { criarFonteGravacoesExemplo, criarFonteTreinoExemplo } from '@/modules/treino'
+import { criarFonteGravacoesExemplo, criarFonteTreinoExemplo, criarFonteTreinoSupabase } from '@/modules/treino'
 import { criarRepositorioPrecosLocal } from '@/modules/dinheiro'
 
 const demo = import.meta.env.MODE === 'demo'
+
+// As variáveis VITE_* entram no código na hora do build (o Vite troca o texto).
+// A chave "publishable" é pública de propósito: quem protege os dados é a RLS
+// no banco (só lê; escrever exige a conta do treino).
+const urlSupabase = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const chaveSupabase = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
+const treinoNaNuvem = !demo && !!urlSupabase && !!chaveSupabase
+
+const treinoSupabase = treinoNaNuvem
+  ? criarFonteTreinoSupabase(
+      createClient(urlSupabase!, chaveSupabase!, {
+        // as tabelas do Gênesis moram no schema "genesis", não no "public"
+        db: { schema: 'genesis' },
+        // o dashboard não faz login: não precisa guardar sessão
+        auth: { persistSession: false, autoRefreshToken: false },
+      }),
+    )
+  : null
+
+export const origemTreino: 'exemplo' | 'nuvem' = treinoSupabase ? 'nuvem' : 'exemplo'
 
 export const origemDosDados: 'exemplo' | 'simulada' = demo ? 'exemplo' : 'simulada'
 
@@ -25,7 +48,8 @@ const simulador = demo ? null : criarSimuladorBrinquedo()
 export const dependencias = {
   fonteEstufa: demo ? criarFonteEstufaExemplo() : simulador!,
   controleSimulacao: simulador,
-  fonteTreino: criarFonteTreinoExemplo(),
-  fonteGravacoes: criarFonteGravacoesExemplo(),
+  fonteTreino: treinoSupabase ?? criarFonteTreinoExemplo(),
+  fonteGravacoes: treinoSupabase ?? criarFonteGravacoesExemplo(),
+  origemTreino,
   repositorioPrecos: criarRepositorioPrecosLocal(),
 }

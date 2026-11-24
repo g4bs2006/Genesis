@@ -34,7 +34,7 @@ marcado nas [Etapas](#etapas) e contado em [`docs/diario.md`](diario.md).
 | Onde mora | Repositório próprio, `g4bs2006/Genesis`, fora do PequiDev | Precisa de interface mais séria e identidade própria |
 | Interface | Dashboard informativo, bom no celular e no desktop | Pedido do Gabriel |
 | Financeiro | Projeção de lucro × gasto no dashboard | Pedido do Gabriel |
-| Treino | Fase 1 no notebook do Gabriel, no processador; as fases pesadas depois, no PC com a RX 7600 XT | Ver [Onde o treino roda](#onde-o-treino-roda) |
+| Treino | Fase 1 no notebook do Gabriel, no processador; as fases pesadas depois, no PC com a RX 7600 | Ver [Onde o treino roda](#onde-o-treino-roda) |
 | Dashboard | React 19 + Vite + Astryx, com a linguagem Lightfield do Tesserato (feito, fases 0 a 12) | Ver [`docs/prompt-frontend.md`](prompt-frontend.md) e [`dashboard/README.md`](../dashboard/README.md) |
 | Contrato backend → dashboard | O que o treino e o simulador entregam ao dashboard, em JSON validado por Zod | Ver [`docs/contrato-dados.md`](contrato-dados.md). Entradas e saídas da rede: `dashboard/src/modules/treino/domain/rede.ts` |
 | Alface na tela | Desenhos gerados por IA, escolhidos pelo estado | Ver [`docs/decisoes/0003-alface-por-ia.md`](decisoes/0003-alface-por-ia.md) |
@@ -334,17 +334,19 @@ Instalação: ver [`docs/prompt-treino.md`](prompt-treino.md).
 
 ### PC com a placa AMD (fases pesadas)
 
-Placa do Gabriel: **AMD Radeon RX 7600 XT** (ele falou em 6 GB de VRAM; a
-7600 XT costuma ter 16 GB, conferir). O ambiente do Claude na nuvem não tem
-GPU: o treino roda no PC do Gabriel (dá para ligar o PC à sessão pelo Remote
-Control do app do Claude).
+Placa do Gabriel: **AMD Radeon RX 7600** (não a XT; corrigido em 2026-11-24).
+A RX 7600 tem 8 GB de VRAM (a memória da própria placa); conferir no PC, porque
+o Gabriel lembrava de 6 GB. É outro PC, não o notebook. O ambiente do Claude na
+nuvem não tem GPU: o treino roda no PC do Gabriel (dá para ligar o PC à sessão
+pelo Remote Control do app do Claude). Para acompanhar de longe, o treino manda
+os números para o Supabase e o dashboard no Vercel mostra no celular: ver
+[Acompanhar de longe](#acompanhar-de-longe).
 
 - **Linux** é o caminho mais tranquilo (ROCm completo). O RX 7600 entrou na
-  lista oficial do **ROCm 7.12** (prévia, março de 2026), com PyTorch 2.10. A
-  7600 XT tem o mesmo chip (gfx1102); nenhuma fonte a cita pelo nome. Se não for
-  reconhecida: `HSA_OVERRIDE_GFX_VERSION=11.0.0`.
+  lista oficial do **ROCm 7.12** (prévia, março de 2026), com PyTorch 2.10
+  (chip gfx1102). Se não for reconhecida: `HSA_OVERRIDE_GFX_VERSION=11.0.0`.
 - **Windows:** PyTorch nativo da AMD (só PyTorch, não o ROCm inteiro); a lista
-  de janeiro de 2026 não traz a 7600 nem a 7600 XT. Testar.
+  de janeiro de 2026 não traz a RX 7600. Testar.
 - Teste:
 
   ```bash
@@ -356,6 +358,27 @@ Fontes:
 - [ROCm Core SDK 7.12.0 release notes](https://rocm.docs.amd.com/en/7.12.0-preview/about/release-notes.html)
 - [AMD Windows PyTorch release notes](https://www.amd.com/en/resources/support-articles/release-notes/RN-AMDGPU-WINDOWS-PYTORCH-7-2.html)
 - [Radeon Limitations and recommended settings](https://rocm.docs.amd.com/projects/radeon-ryzen/en/docs-7.1.1/docs/limitations/limitationsrad.html)
+
+## Acompanhar de longe
+
+O treino roda horas num PC sem ninguém olhando. Para ver pelo celular:
+
+```
+PC do treino ──> treino/saidas/<execucao>/*.json ──> treino/nuvem.py ──> Supabase ──> dashboard (Vercel) ──> celular
+```
+
+- **Supabase** (projeto PequiDev, schema `genesis`, separado do blog): as
+  tabelas `execucoes`, `geracoes`, `modelos`, `gravacoes` e o bucket
+  `genesis-gravacoes`. Migração em
+  [`supabase/migrations/`](../supabase/migrations/).
+- **Quem pode o quê:** qualquer um lê (curvas de treino, nada sensível, e ajuda
+  no artigo); só a conta do treino escreve (`app_metadata.genesis_escritor`).
+- **`treino/nuvem.py`:** fica olhando a pasta de saída e manda o que mudou. Não
+  depende do código do treino: o treino só precisa exportar os JSON do
+  contrato, como já está no [prompt do treino](prompt-treino.md).
+- **Dashboard:** com `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`, o
+  treino e as gravações vêm do Supabase, ao vivo (Realtime). A estufa continua
+  no simulador de brinquedo. Passo a passo em [`docs/nuvem.md`](nuvem.md).
 
 ## Organização proposta
 

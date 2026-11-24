@@ -1,2 +1,9 @@
 estudo/saidas/
 __pycache__/
+
+# segredos (a senha da conta do treino; ver docs/nuvem.md)
+.env
+.env.*
+!.env.exemplo
+!dashboard/.env.exemplo
+treino/saidas/
