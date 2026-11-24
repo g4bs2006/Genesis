@@ -1,0 +1,42 @@
+.card {
+  height: 100%;
+  transition: border-color var(--mov-base) var(--ease-ios);
+}
+/* cor só onde informa: a borda muda quando a variável pede atenção */
+.atencao {
+  border-color: var(--atencao) !important;
+}
+.risco {
+  border-color: var(--risco) !important;
+}
+
+.valor,
+.valorCompacto {
+  font-family: var(--font-family-code);
+  font-variant-numeric: tabular-nums;
+  color: var(--texto);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.valor {
+  font-size: 32px;
+}
+.valorCompacto {
+  font-size: 26px;
+}
+.unidade {
+  font-family: var(--font-family-code);
+  font-size: 13px;
+  color: var(--texto-3);
+  padding-bottom: 2px;
+}
+.apoio {
+  color: var(--texto-3);
+  font-weight: 400;
+}
+.faixa {
+  font-family: var(--font-family-code);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--texto-3);
+}

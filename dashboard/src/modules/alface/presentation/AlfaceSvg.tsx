@@ -144,8 +144,15 @@ function useParametrosSuaves(alvo: ParametrosAlface): ParametrosAlface {
   const { massa, turgor, clorose, necrose } = alvo
   useEffect(() => {
     const destino = { massa, turgor, clorose, necrose }
-    const reduzir = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const inicio = atualRef.current
+    // Mudança pequena (o passo de 10 min da estufa): pula direto, sem animar.
+    // Só um estado novo de verdade ganha a transição de ~600ms.
+    const pequena =
+      Math.abs(destino.massa - inicio.massa) < 3 &&
+      Math.abs(destino.turgor - inicio.turgor) < 0.05 &&
+      Math.abs(destino.clorose - inicio.clorose) < 0.05 &&
+      Math.abs(destino.necrose - inicio.necrose) < 0.05
+    const reduzir = pequena || window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const t0 = performance.now()
     let quadro = 0
     const passo = (agora: number) => {

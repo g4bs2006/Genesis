@@ -17,7 +17,10 @@
       try {
         var tema = JSON.parse(localStorage.getItem('genesis:preferencias') || '{}').state?.tema
         var forcado = location.pathname.indexOf('/visor') === 0 ? 'dark' : { claro: 'light', escuro: 'dark' }[tema]
-        if (forcado) document.documentElement.setAttribute('data-theme', forcado)
+        if (forcado) {
+          document.documentElement.setAttribute('data-theme', forcado)
+          document.documentElement.style.colorScheme = forcado
+        }
       } catch (e) {}
     </script>
   </head>

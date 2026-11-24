@@ -1,0 +1,8 @@
+/* o estágio de agora em destaque; os que ainda vêm, tracejados e apagados */
+.atual {
+  border-color: var(--ok) !important;
+}
+.futuro {
+  border-style: dashed !important;
+  opacity: 0.7;
+}

@@ -627,7 +627,7 @@ CONFIGURACOES.forEach((c, n) => {
     s,
     c.ajustes,
   )
-  estufas.push({ ...c.estufa, origem: 'simulada', plantas: 120, diaDoCiclo: DIA_DO_CICLO, diasDoCiclo: DIAS_DO_CICLO })
+  estufas.push({ ...c.estufa, origem: 'simulada', plantas: 1000, diaDoCiclo: DIA_DO_CICLO, diasDoCiclo: DIAS_DO_CICLO })
   passosPorEstufa[c.estufa.id] = passos
   consumos[c.estufa.id] = consumo
 })

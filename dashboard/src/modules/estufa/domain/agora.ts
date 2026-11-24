@@ -86,7 +86,8 @@ export function tendencia(passos: Passo[], variavel: Variavel): Tendencia {
   const antes = passos.at(-7)
   if (!agora || !antes) return 'estavel'
   const delta = valorDe(agora.leitura, variavel) - valorDe(antes.leitura, variavel)
-  const limiar = (FAIXAS[variavel].max - FAIXAS[variavel].min) * 0.03
+  // zona morta de 8% da faixa: a seta não troca a cada leitura
+  const limiar = (FAIXAS[variavel].max - FAIXAS[variavel].min) * 0.08
   return delta > limiar ? 'subindo' : delta < -limiar ? 'caindo' : 'estavel'
 }
 
@@ -150,7 +151,18 @@ function oQueFoiFeito(passos: Passo[], v: Variavel, acima: boolean): string {
     const i = ultimo((p) => p.acoes.reposicaoAgua)
     if (i >= 0) return `O agente já começou a repor água ${ha(i)}.`
   }
-  return 'O agente está acompanhando e ainda não precisou agir.'
+  // Ainda sem ação: o agente espera a leitura se confirmar antes de agir
+  // (aprendeu na fase 4 do currículo a não reagir a ruído do sensor)
+  const remedio: Partial<Record<Variavel, string>> = {
+    ph: acima ? 'dosar ácido' : 'corrigir',
+    ec: acima ? 'diluir com água' : 'dosar nutriente',
+    temperatura: acima ? 'ventilar' : 'fechar a ventilação',
+    nivel: 'repor água',
+  }
+  const acao = remedio[v]
+  return acao
+    ? `O agente está acompanhando: espera a leitura se confirmar antes de ${acao}, para não reagir a erro do sensor.`
+    : 'O agente está acompanhando; ainda não precisou agir.'
 }
 
 function formatar(valor: number, casas: number): string {

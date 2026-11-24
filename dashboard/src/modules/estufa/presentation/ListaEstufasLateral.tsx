@@ -26,9 +26,9 @@ export function ListaEstufasLateral() {
   return (
     <SideNavSection title="Estufas">
       {esboco && (
-        <VStack gap={2} paddingInline={2} paddingBlock={1}>
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} height={20} radius={2} index={i} />
+        <VStack gap={0.5} paddingInline={2}>
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} height={34} radius={2} index={i} />
           ))}
         </VStack>
       )}

@@ -6,7 +6,7 @@
       "controlador": { "tipo": "agente", "modeloId": "g812" },
       "massaPorPe": 182,
       "origem": "simulada",
-      "plantas": 120,
+      "plantas": 1000,
       "diaDoCiclo": 23,
       "diasDoCiclo": 35
     },
@@ -16,7 +16,7 @@
       "controlador": { "tipo": "agente", "modeloId": "g540" },
       "massaPorPe": 178,
       "origem": "simulada",
-      "plantas": 120,
+      "plantas": 1000,
       "diaDoCiclo": 23,
       "diasDoCiclo": 35
     },
@@ -26,7 +26,7 @@
       "controlador": { "tipo": "pid" },
       "massaPorPe": 173,
       "origem": "simulada",
-      "plantas": 120,
+      "plantas": 1000,
       "diaDoCiclo": 23,
       "diasDoCiclo": 35
     },
@@ -36,7 +36,7 @@
       "controlador": { "tipo": "regras" },
       "massaPorPe": 165,
       "origem": "simulada",
-      "plantas": 120,
+      "plantas": 1000,
       "diaDoCiclo": 23,
       "diasDoCiclo": 35
     }

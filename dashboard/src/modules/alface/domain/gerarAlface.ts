@@ -382,5 +382,6 @@ export function gerarAlface(parametros: ParametrosAlface, semente: number): Dese
     .sort((a, b) => a.profundidade - b.profundidade)
     .map((f) => f.desenho)
 
-  return { viewBox: '0 0 210 196', folhas, ...desenharCano(p.massa) }
+  // o céu acima do pé maior fica de fora (corte em y=44)
+  return { viewBox: '0 44 210 152', folhas, ...desenharCano(p.massa) }
 }

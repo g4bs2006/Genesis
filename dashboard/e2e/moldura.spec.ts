@@ -1,9 +1,19 @@
 import { expect, test } from '@playwright/test'
 
-test('produtor: abre no Agora com o selo de dados de exemplo', async ({ page }) => {
+test('produtor: abre no Agora com a frase de estado e o selo de dados de exemplo', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1, name: 'Agora' })).toBeVisible()
+  // estufa 1 dos dados de exemplo: só o pH pede atenção
+  await expect(page.getByRole('heading', { level: 1, name: 'Quase tudo na faixa' })).toBeVisible()
+  await expect(page.getByText('1 ponto pede atenção')).toBeVisible()
   await expect(page.getByText('estufa simulada · dados de exemplo')).toBeVisible()
+  await expect(page.getByText('Lucro previsto do ciclo')).toBeVisible()
+})
+
+test('ciclo: estágios, curva e histórico de alertas', async ({ page }) => {
+  await page.goto('/ciclo')
+  await expect(page.getByRole('heading', { level: 1, name: 'Ciclo' })).toBeVisible()
+  await expect(page.getByText('Crescimento rápido')).toBeVisible()
+  await expect(page.getByRole('img', { name: /Curva de crescimento/ })).toBeVisible()
 })
 
 test('navega pelas abas (celular) ou pela barra lateral (desktop)', async ({ page, isMobile }) => {
