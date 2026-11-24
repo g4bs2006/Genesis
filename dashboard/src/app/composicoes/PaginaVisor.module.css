@@ -1,0 +1,271 @@
+/* Visor: lido de longe. Tudo cresce com a tela (clamp + vmin); cor só onde informa.
+   Paisagem 16:9 primeiro: alface à esquerda, 4 cards à direita; em pé, um embaixo do outro. */
+.tela {
+  --visor-gap: clamp(0.75rem, 2vmin, 2rem);
+  --visor-titulo: clamp(1.5rem, 3.4vmin, 3.5rem);
+  --visor-relogio: clamp(3rem, 11vmin, 10rem);
+  --visor-valor: clamp(2.5rem, 9vmin, 8.5rem);
+  --visor-unidade: clamp(1rem, 2.8vmin, 2.5rem);
+  --visor-texto: clamp(1rem, 2.4vmin, 2.25rem);
+  --visor-pequeno: clamp(0.8rem, 1.7vmin, 1.5rem);
+  --visor-alerta: clamp(3.5rem, 9vmin, 7rem);
+
+  display: grid;
+  grid-template-areas:
+    'topo topo'
+    'alface cards'
+    'alerta alerta';
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--visor-gap);
+  /* a tela inteira, descontado o respiro da CascaVisor */
+  min-height: calc(100dvh - 2 * clamp(1rem, 3vw, 3rem));
+}
+.tela p,
+.tela h1,
+.tela figure {
+  margin: 0;
+}
+
+/* ---- topo: nome, ciclo e o relógio grande ---- */
+.topo {
+  grid-area: topo;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--visor-gap);
+}
+.titulo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  min-width: 0;
+}
+.nome {
+  font-size: var(--visor-titulo);
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--texto);
+}
+.ciclo {
+  font-size: var(--visor-texto);
+  color: var(--texto-2);
+}
+.relogioBloco {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4em;
+}
+.relogio {
+  font-family: var(--font-family-code);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--visor-relogio);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--texto);
+}
+.parado {
+  font-size: var(--visor-pequeno);
+  color: var(--texto-3);
+}
+
+/* ---- alface grande e a massa por pé ---- */
+.alface {
+  grid-area: alface;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--visor-gap);
+  min-height: 0;
+}
+.desenho {
+  display: block;
+  width: min(100%, 46vmin);
+}
+.massa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  column-gap: 0.4em;
+}
+.meta {
+  flex-basis: 100%;
+  text-align: center;
+  font-size: var(--visor-pequeno);
+  color: var(--texto-3);
+}
+
+/* ---- os 4 cards ---- */
+.cards {
+  grid-area: cards;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: var(--visor-gap);
+  min-height: 0;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.5em;
+  min-width: 0;
+  padding: clamp(1rem, 2.6vmin, 2.75rem);
+  background: var(--cartao);
+  border: 0.125rem solid var(--linha);
+  border-radius: var(--radius-container);
+}
+/* a borda só muda quando a variável pede atenção */
+.card[data-estado='atencao'] {
+  border-color: var(--atencao);
+}
+.card[data-estado='risco'] {
+  border-color: var(--risco);
+}
+.cardTopo {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  font-size: var(--visor-texto);
+  color: var(--texto-2);
+}
+.cardNome {
+  flex: 1;
+  font-weight: 500;
+}
+.exemplo {
+  font-size: var(--visor-pequeno);
+  color: var(--texto-3);
+}
+.bolinha {
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  background: var(--ok);
+}
+.bolinha[data-estado='atencao'] {
+  background: var(--atencao);
+}
+.bolinha[data-estado='risco'] {
+  background: var(--risco);
+}
+.cardValor {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3em;
+}
+.valor {
+  font-family: var(--font-family-code);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--visor-valor);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--texto);
+}
+.unidade {
+  font-family: var(--font-family-code);
+  font-size: var(--visor-unidade);
+  color: var(--texto-3);
+}
+.detalhe {
+  font-size: var(--visor-texto);
+  color: var(--texto-2);
+  font-variant-numeric: tabular-nums;
+}
+.faixa {
+  font-family: var(--font-family-code);
+  font-size: var(--visor-pequeno);
+  color: var(--texto-3);
+}
+
+/* barra do reservatório: cinza; amarela/vermelha só quando baixa */
+.reservatorio {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+.barra {
+  display: block;
+  height: clamp(0.5rem, 1.4vmin, 1.25rem);
+  border-radius: var(--radius-element);
+  background: var(--color-track);
+  overflow: hidden;
+}
+.barraCheia {
+  display: block;
+  height: 100%;
+  background: var(--texto-3);
+}
+.barra[data-estado='atencao'] .barraCheia {
+  background: var(--atencao);
+}
+.barra[data-estado='risco'] .barraCheia {
+  background: var(--risco);
+}
+
+/* ---- faixa de alerta embaixo ---- */
+.alerta {
+  grid-area: alerta;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 1em;
+  min-height: var(--visor-alerta);
+  padding-inline: clamp(1rem, 2.6vmin, 2.75rem);
+  font-size: var(--visor-texto);
+  background: var(--cartao);
+  border-radius: var(--radius-container);
+  border-inline-start: 0.4rem solid var(--linha);
+}
+.alerta[data-estado='atencao'] {
+  border-inline-start-color: var(--atencao);
+}
+.alerta[data-estado='risco'] {
+  border-inline-start-color: var(--risco);
+}
+.alertaTitulo {
+  font-weight: 600;
+  color: var(--texto);
+}
+.alerta[data-estado='ok'] .alertaTitulo {
+  font-weight: 500;
+  color: var(--texto-2);
+}
+.alertaFeito {
+  color: var(--texto-2);
+}
+
+/* ---- sem leitura nova há mais de 2 min: números esmaecem ---- */
+.tela[data-parado='true'] :is(.cards, .massa) {
+  opacity: 0.4;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cards,
+  .massa {
+    transition: opacity var(--mov-lento) var(--ease-ios);
+  }
+}
+
+/* ---- tablet em pé: uma coluna, alface deitada ao lado da massa ---- */
+@media (orientation: portrait) {
+  .tela {
+    grid-template-areas: 'topo' 'alface' 'cards' 'alerta';
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+  .alface {
+    flex-direction: row;
+  }
+  .desenho {
+    width: min(45%, 30vmin);
+  }
+  .massa {
+    justify-content: flex-start;
+  }
+  .meta {
+    text-align: start;
+  }
+}
