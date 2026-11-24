@@ -30,7 +30,7 @@ export const roteador = createBrowserRouter([
       { path: '/ajustes', element: <PaginaAjustes /> },
       { path: '/dev', ...pagina(() => import('./composicoes/PaginaResumoDev'), 'PaginaDev') },
       { path: '/dev/treino', ...pagina(() => import('@/modules/treino'), 'PaginaTreino') },
-      { path: '/dev/modelo', element: <PaginaEsboco titulo="Modelo" fase={9} /> },
+      { path: '/dev/modelo', ...pagina(() => import('./composicoes/PaginaModelo'), 'PaginaModelo') },
       { path: '/dev/gravacoes', element: <PaginaEsboco titulo="Gravações" fase={10} /> },
       {
         path: '/laboratorio/alface',
