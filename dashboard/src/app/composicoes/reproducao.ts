@@ -97,8 +97,9 @@ export function eventosDaGravacao(passos: readonly Passo[]): EventoGravacao[] {
   passos.forEach((p, i) => {
     const anterior = passos[i - 1]
     for (const v of VARIAVEIS_COM_ESTADO) {
+      // só a entrada em risco conta: "atenção" na beira da faixa daria centenas de eventos
       const agora = estadoDaVariavel(p, v)
-      if (agora !== 'ok' && (!anterior || estadoDaVariavel(anterior, v) === 'ok'))
+      if (agora === 'risco' && (!anterior || estadoDaVariavel(anterior, v) !== 'risco'))
         eventos.push({ passo: i, tipo: 'saiu', texto: `${FAIXAS[v].nome} saiu da faixa` })
     }
     for (const b of p.barradas)

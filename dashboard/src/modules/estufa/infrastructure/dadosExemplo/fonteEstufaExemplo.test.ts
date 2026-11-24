@@ -51,10 +51,13 @@ describe('estufas.json (dados de exemplo)', () => {
 describe('criarFonteEstufaExemplo', () => {
   afterEach(() => vi.useRealTimers())
 
-  it('assinarPassos entrega o último passo na hora e depois um passo novo a cada 3 s', () => {
+  it('assinarPassos entrega o último passo na hora e depois um passo novo a cada 3 s', async () => {
     vi.useFakeTimers()
     const recebidos: string[] = []
     const cancelar = criarFonteEstufaExemplo().assinarPassos('estufa-1', (p) => recebidos.push(p.leitura.instante))
+    // o JSON chega por import() dinâmico: espera ele (e a promessa da assinatura) antes de conferir
+    await vi.dynamicImportSettled()
+    await Promise.resolve()
     expect(recebidos).toEqual(['2026-11-23T14:30:00-03:00'])
 
     vi.advanceTimersByTime(6000)
