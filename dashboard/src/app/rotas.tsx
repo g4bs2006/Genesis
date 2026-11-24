@@ -28,7 +28,7 @@ export const roteador = createBrowserRouter([
       { path: '/dinheiro', ...pagina(() => import('./composicoes/PaginaDinheiro'), 'PaginaDinheiro') },
       { path: '/agente-x-regras', ...pagina(() => import('./composicoes/PaginaAgenteRegras'), 'PaginaAgenteRegras') },
       { path: '/ajustes', element: <PaginaAjustes /> },
-      { path: '/dev', element: <PaginaEsboco titulo="Estufas lado a lado" fase={7} /> },
+      { path: '/dev', ...pagina(() => import('./composicoes/PaginaResumoDev'), 'PaginaDev') },
       { path: '/dev/treino', element: <PaginaEsboco titulo="Treino e gerações" fase={8} /> },
       { path: '/dev/modelo', element: <PaginaEsboco titulo="Modelo" fase={9} /> },
       { path: '/dev/gravacoes', element: <PaginaEsboco titulo="Gravações" fase={10} /> },

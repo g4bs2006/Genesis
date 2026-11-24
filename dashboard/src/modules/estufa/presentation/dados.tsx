@@ -7,7 +7,7 @@
  * assinatura da porta para os passos ao vivo.
  */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ControleSimulacao, EstadoRelogio, FonteEstufa } from '../application/portas'
 import { usePreferencias } from '@/shared/stores/preferencias'
 import type { Estufa, Passo } from '../domain/contrato'
@@ -33,6 +33,14 @@ export function useEstufas() {
 export function useEventos(estufaId: string) {
   const { fonte } = useDependencias()
   return useQuery({ queryKey: ['eventos', estufaId], queryFn: () => fonte.eventos(estufaId) })
+}
+
+/** Os resumos de várias estufas de uma vez (comparação lado a lado). */
+export function useResumos(estufaIds: string[]) {
+  const { fonte } = useDependencias()
+  return useQueries({
+    queries: estufaIds.map((id) => ({ queryKey: ['resumo', id], queryFn: () => fonte.resumoCiclo(id) })),
+  })
 }
 
 export function useResumoCiclo(estufaId: string) {
