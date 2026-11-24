@@ -23,14 +23,14 @@ type Props = {
 export function CurvaCrescimento(props: Props) {
   return (
     // altura explícita: o ParentSize mede o pai, e um pai de altura automática mede zero
-    <ParentSize debounceTime={50} parentSizeStyles={{ width: '100%', height: props.altura ?? 160 }}>
+    <ParentSize debounceTime={50} style={{ width: '100%', height: props.altura ?? 160 }}>
       {({ width }) => (width > 0 ? <Desenho {...props} largura={width} /> : null)}
     </ParentSize>
   )
 }
 
 function Desenho({ curva, hoje, massaHoje, altura = 160, largura }: Props & { largura: number }) {
-  const m = { topo: 8, direita: 8, baixo: 22, esquerda: 36 }
+  const m = { topo: 8, direita: 12, baixo: 22, esquerda: 48 }
   const w = largura - m.esquerda - m.direita
   const h = altura - m.topo - m.baixo
   const ultimo = curva.at(-1)?.dia ?? 35

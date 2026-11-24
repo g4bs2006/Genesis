@@ -20,10 +20,10 @@ export const roteador = createBrowserRouter([
     element: <Moldura />,
     children: [
       { path: '/', ...pagina(() => import('./composicoes/PaginaAgora'), 'PaginaAgora') },
-      { path: '/historico', element: <PaginaEsboco titulo="Histórico" fase={4} /> },
+      { path: '/historico', ...pagina(() => import('./composicoes/PaginaHistorico'), 'PaginaHistorico') },
       { path: '/ciclo', ...pagina(() => import('./composicoes/PaginaCiclo'), 'PaginaCiclo') },
       { path: '/dinheiro', element: <PaginaEsboco titulo="Dinheiro" fase={5} /> },
-      { path: '/agente-x-regras', element: <PaginaEsboco titulo="Agente × regras" fase={4} /> },
+      { path: '/agente-x-regras', ...pagina(() => import('./composicoes/PaginaAgenteRegras'), 'PaginaAgenteRegras') },
       { path: '/ajustes', element: <PaginaAjustes /> },
       { path: '/dev', element: <PaginaEsboco titulo="Estufas lado a lado" fase={7} /> },
       { path: '/dev/treino', element: <PaginaEsboco titulo="Treino e gerações" fase={8} /> },
