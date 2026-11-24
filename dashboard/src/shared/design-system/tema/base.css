@@ -16,20 +16,34 @@ body {
    Calmo e curto: só o que explica o que mudou. Tokens --mov-* e --ease-ios.
    ============================================================================= */
 
-/* Trocar de página: só o conteúdo esmaece; abas e barra lateral ficam paradas.
-   (View Transitions: o navegador fotografa o antes e o depois e cruza os dois.) */
-.conteudo-pagina {
-  view-transition-name: conteudo;
-}
-::view-transition-old(conteudo),
-::view-transition-new(conteudo) {
+/* Trocar de página ou de tema: o navegador fotografa o antes e o depois e
+   cruza os dois (View Transitions). Cruzamento da tela inteira, sem grupo
+   nomeado: um grupo nomeado "deslizava" quando a página estava rolada.
+   Abas e barra lateral não mudam, então ficam paradas no cruzamento. */
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
   animation-duration: var(--mov-base);
   animation-timing-function: var(--ease-ios);
 }
-/* Trocar o tema: o app inteiro cruza claro e escuro em 200ms */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: var(--mov-base);
+
+/* Algo que entra empurrando o resto (o alerta): abre a altura e esmaece,
+   e os cards de baixo deslizam em vez de pular */
+.revelar {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--mov-base) var(--ease-ios),
+    opacity var(--mov-base) var(--ease-ios);
+}
+.revelar[data-aberto='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.revelar > * {
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* Dado que chega (fim do skeleton): sobe 4px enquanto aparece */

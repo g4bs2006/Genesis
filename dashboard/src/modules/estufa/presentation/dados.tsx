@@ -7,7 +7,7 @@
  * assinatura da porta para os passos ao vivo.
  */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ControleSimulacao, EstadoRelogio, FonteEstufa } from '../application/portas'
 import { usePreferencias } from '@/shared/stores/preferencias'
 import type { Estufa, Passo } from '../domain/contrato'
@@ -57,30 +57,32 @@ const DIA_MS = 24 * 60 * 60 * 1000
  */
 export function useJanela(estufaId: string, duracaoMs = DIA_MS) {
   const { fonte } = useDependencias()
-  // Tudo que chega pela assinatura fica num estado só, atualizado no callback
-  // (o jeito certo de ouvir algo de fora no React). A âncora é o instante do
-  // primeiro passo: o histórico é buscado até ela; os seguintes se acumulam.
-  const [estado, setEstado] = useState<EstadoJanela>(janelaVazia(estufaId))
-  useEffect(
-    () =>
-      fonte.assinarPassos(estufaId, (passo) =>
-        setEstado((e) => {
-          const base = e.estufaId === estufaId ? e : janelaVazia(estufaId)
-          if (!base.ancora) return { ...base, ancora: passo.leitura.instante, atual: passo }
-          const repetido = base.novos.at(-1)?.leitura.instante === passo.leitura.instante
-          if (passo.leitura.instante <= base.ancora || repetido) return { ...base, atual: passo }
-          const limite = new Date(passo.leitura.instante).getTime() - duracaoMs
-          const novos = [...base.novos, passo].filter((p) => new Date(p.leitura.instante).getTime() > limite)
-          return { ...base, novos, atual: passo }
-        }),
-      ),
-    [fonte, estufaId, duracaoMs],
+  const cliente = useQueryClient()
+  // A janela fica guardada no cache do React Query, por estufa: voltar ao
+  // Agora mostra tudo na hora (sem esboço nem pulo) e só continua de onde parou.
+  const chave = ['janela', estufaId, duracaoMs]
+  const [estado, setEstado] = useState<EstadoJanela>(
+    () => cliente.getQueryData<EstadoJanela>(chave) ?? janelaVazia(estufaId),
   )
-  const { ancora, novos, atual } = estado.estufaId === estufaId ? estado : janelaVazia(estufaId)
+  useEffect(() => {
+    const chaveCache = ['janela', estufaId, duracaoMs]
+    let atual = cliente.getQueryData<EstadoJanela>(chaveCache) ?? janelaVazia(estufaId)
+    // A âncora é o instante do primeiro passo: o histórico é buscado até ela;
+    // os passos seguintes se acumulam aqui, no callback da assinatura.
+    return fonte.assinarPassos(estufaId, (passo) => {
+      atual = acumular(atual, passo, duracaoMs)
+      cliente.setQueryData(chaveCache, atual)
+      setEstado(atual)
+    })
+  }, [fonte, cliente, estufaId, duracaoMs])
+  // trocou de estufa e o primeiro passo ainda não chegou: usa o que está no cache
+  const { ancora, novos, atual } =
+    estado.estufaId === estufaId ? estado : (cliente.getQueryData<EstadoJanela>(chave) ?? janelaVazia(estufaId))
 
   const historico = useQuery({
     queryKey: ['historico', estufaId, ancora, duracaoMs],
     enabled: !!ancora,
+    staleTime: Infinity, // o passado não muda
     queryFn: () => {
       const ate = new Date(ancora!)
       return fonte.historico(estufaId, new Date(ate.getTime() - duracaoMs).toISOString(), ancora!)
@@ -92,6 +94,15 @@ export function useJanela(estufaId: string, duracaoMs = DIA_MS) {
     (p) => new Date(p.leitura.instante).getTime() > fim - duracaoMs,
   )
   return { passos, atual, carregando: !atual || historico.isPending }
+}
+
+function acumular(e: EstadoJanela, passo: Passo, duracaoMs: number): EstadoJanela {
+  if (!e.ancora) return { ...e, ancora: passo.leitura.instante, atual: passo }
+  const repetido = e.novos.at(-1)?.leitura.instante === passo.leitura.instante
+  if (passo.leitura.instante <= e.ancora || repetido) return { ...e, atual: passo }
+  const limite = new Date(passo.leitura.instante).getTime() - duracaoMs
+  const novos = [...e.novos, passo].filter((p) => new Date(p.leitura.instante).getTime() > limite)
+  return { ...e, novos, atual: passo }
 }
 
 type EstadoJanela = { estufaId: string; ancora?: string; atual?: Passo; novos: Passo[] }

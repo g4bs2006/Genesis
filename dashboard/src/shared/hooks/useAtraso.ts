@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react'
 /**
  * Fica `true` só depois de `ms` milissegundos com `ativo` ligado.
  * Uso: mostrar o skeleton (o "esboço cinza" do que vai carregar) apenas se a
- * espera for longa. Carregamento de 80ms não deve piscar um esboço na tela.
+ * espera for longa. Carregamento de 200ms não deve piscar um esboço na tela.
  */
-export function useAtraso(ativo: boolean, ms = 150): boolean {
+export function useAtraso(ativo: boolean, ms = 250): boolean {
   const [passou, setPassou] = useState(false)
   useEffect(() => {
     if (!ativo) return

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { Outlet, ScrollRestoration, useLocation, useNavigate, useNavigation } from 'react-router-dom'
 import { CascaCelular } from '@/shared/design-system/templates/CascaCelular'
 import { CascaDesktop } from '@/shared/design-system/templates/CascaDesktop'
@@ -32,6 +32,13 @@ export function Moldura() {
   useEffect(() => {
     if (modo !== guardado) trocarModo(modo)
   }, [modo, guardado, trocarModo])
+
+  // A rolagem do desktop mora num container interno (o ScrollRestoration só
+  // cuida da janela): página nova ou estufa nova começa do topo.
+  const estufaId = usePreferencias((p) => p.estufaId)
+  useLayoutEffect(() => {
+    document.querySelector('.astryx-layout-content')?.scrollTo(0, 0)
+  }, [pathname, estufaId])
 
   // Página nova ainda carregando (código sob demanda): barrinha no topo
   const carregando = useNavigation().state === 'loading'

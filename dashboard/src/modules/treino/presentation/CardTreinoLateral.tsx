@@ -11,18 +11,16 @@ import { useEstadoTreino } from './dados'
 export function CardTreinoLateral() {
   const { data, isPending } = useEstadoTreino()
   const esboco = useAtraso(isPending)
+  // nada até ter o esboço ou o dado: sem card vazio piscando
+  if (!esboco && !data) return null
   return (
     <VStack paddingInline={2} paddingBlock={3}>
       <Card padding={3}>
-        {esboco && <Skeleton height={56} radius={2} />}
+        {esboco && !data && <Skeleton height={72} radius={2} />}
         {data && (
           <VStack gap={1} className="surgir">
             <HStack gap={1.5} align="center">
-              <StatusDot
-                variant={data.rodando ? 'success' : 'neutral'}
-                label={data.rodando ? 'rodando' : 'parado'}
-                isPulsing={data.rodando}
-              />
+              <StatusDot variant={data.rodando ? 'success' : 'neutral'} label={data.rodando ? 'rodando' : 'parado'} />
               <Text weight="medium">{data.rodando ? 'Treino rodando' : 'Treino parado'}</Text>
             </HStack>
             <Text type="supporting" color="secondary">
