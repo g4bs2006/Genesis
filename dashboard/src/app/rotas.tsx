@@ -3,6 +3,7 @@ import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import { CascaVisor } from '@/shared/design-system/templates/CascaVisor'
+import { PaginaLaboratorioAlface } from '@/modules/alface'
 import { Moldura } from './Moldura'
 import { PaginaAjustes } from './PaginaAjustes'
 import { PaginaEsboco } from './PaginaEsboco'
@@ -25,6 +26,7 @@ export const roteador = createBrowserRouter([
       { path: '/dev/treino', element: <PaginaEsboco titulo="Treino e gerações" fase={8} /> },
       { path: '/dev/modelo', element: <PaginaEsboco titulo="Modelo" fase={9} /> },
       { path: '/dev/gravacoes', element: <PaginaEsboco titulo="Gravações" fase={10} /> },
+      { path: '/laboratorio/alface', element: <PaginaLaboratorioAlface /> },
       { path: '*', element: <PaginaEsboco titulo="Página não encontrada" fase={0} /> },
     ],
   },

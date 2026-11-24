@@ -9,4 +9,7 @@
  *   presentation/    páginas, componentes e hooks
  * As pastas nascem quando a primeira peça delas chega.
  */
-export {}
+export * from './dominio'
+export { AlfaceSvg } from './presentation/AlfaceSvg'
+export { PaginaLaboratorioAlface } from './presentation/PaginaLaboratorioAlface'
+export { CardAlface } from './presentation/CardAlface'
