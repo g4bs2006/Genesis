@@ -1,0 +1,23 @@
+/* O mínimo global que o Astryx não cobre. Valores sempre por token do tema. */
+
+body {
+  background: var(--color-background-body);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Dado numérico: algarismos tabulares (as colunas de números não "dançam") */
+.numeros {
+  font-family: var(--font-family-code);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
