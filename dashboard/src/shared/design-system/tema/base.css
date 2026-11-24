@@ -82,6 +82,9 @@ body {
   .tocavel:active {
     transform: none;
   }
+  .revelar {
+    transition: opacity var(--mov-rapido);
+  }
   html {
     scroll-behavior: auto;
   }

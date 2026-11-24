@@ -63,7 +63,7 @@ export function Moldura() {
     <CascaDesktop
       itens={navegacao[modo].desktop}
       extras={modo === 'produtor' ? <ListaEstufasLateral /> : <CardTreinoLateral />}
-      rodape={<SeletorModo valor={modo} aoTrocar={aoTrocarModo} />}
+      rodape={<SeletorModo valor={modo} aoTrocar={aoTrocarModo} tamanho="sm" />}
     >
       {conteudo}
     </CascaDesktop>

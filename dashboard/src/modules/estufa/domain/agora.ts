@@ -52,6 +52,25 @@ export function estadoDoGrupo(passo: Passo, grupo: Pick<Grupo, 'variaveis'>): Es
   return piorEstado(grupo.variaveis.map((v) => estadoDaVariavel(passo, v)))
 }
 
+/**
+ * Estado confirmado: só sai de "ok" se os dois últimos passos concordam.
+ * Mesma histerese do alerta: a frase, as bordas e o alerta nunca se contradizem
+ * quando o valor oscila na beira da faixa.
+ */
+export function estadoConfirmado(passos: Passo[], v: Variavel): EstadoVariavel {
+  const a = passos.at(-1)
+  const b = passos.at(-2)
+  if (!a) return 'ok'
+  const ea = estadoDaVariavel(a, v)
+  if (!b) return ea
+  const eb = estadoDaVariavel(b, v)
+  if (ea === 'ok' || eb === 'ok') return 'ok'
+  return ea === 'risco' && eb === 'risco' ? 'risco' : 'atencao'
+}
+
+export const estadoConfirmadoDoGrupo = (passos: Passo[], variaveis: Variavel[]) =>
+  piorEstado(variaveis.map((v) => estadoConfirmado(passos, v)))
+
 const NOME_DO_CONTROLE: Record<Controlador['tipo'], string> = {
   agente: 'O agente está no controle.',
   regras: 'As regras fixas estão no controle.',
@@ -60,8 +79,8 @@ const NOME_DO_CONTROLE: Record<Controlador['tipo'], string> = {
 }
 
 /** A frase grande do topo e a linha de apoio. */
-export function fraseDeEstado(passo: Passo, controlador: Controlador): { titulo: string; apoio: string } {
-  const estados = VARIAVEIS_COM_ESTADO.map((v) => estadoDaVariavel(passo, v))
+export function fraseDeEstado(passos: Passo[], controlador: Controlador): { titulo: string; apoio: string } {
+  const estados = VARIAVEIS_COM_ESTADO.map((v) => estadoConfirmado(passos, v))
   const atencao = estados.filter((e) => e === 'atencao').length
   const risco = estados.filter((e) => e === 'risco').length
   const quem = NOME_DO_CONTROLE[controlador.tipo]

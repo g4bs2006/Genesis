@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider, Link as LinkRouter } from 'react-router-dom'
 import type { ComponentProps } from 'react'
+import { InternationalizationProvider } from '@astryxdesign/core/i18n'
 import { LinkProvider } from '@astryxdesign/core/Link'
 import { Theme } from '@astryxdesign/core/theme'
 import { genesisTheme } from '@/shared/design-system/tema/genesis'
@@ -27,16 +28,19 @@ export function App() {
   return (
     <QueryClientProvider client={clienteConsultas}>
       <Theme theme={genesisTheme} mode={modoDoTema[tema]}>
-        <LinkProvider component={LinkRota}>
-          {/* cada módulo recebe aqui o adaptador escolhido em dependencias.ts */}
-          <ProvedorEstufa fonte={d.fonteEstufa} controle={d.controleSimulacao}>
-            <ProvedorTreino treino={d.fonteTreino} gravacoes={d.fonteGravacoes}>
-              <ProvedorDinheiro precos={d.repositorioPrecos}>
-                <RouterProvider router={roteador} />
-              </ProvedorDinheiro>
-            </ProvedorTreino>
-          </ProvedorEstufa>
-        </LinkProvider>
+        {/* pt-BR: vírgula decimal nos campos de número e textos dos componentes */}
+        <InternationalizationProvider locale="pt-BR">
+          <LinkProvider component={LinkRota}>
+            {/* cada módulo recebe aqui o adaptador escolhido em dependencias.ts */}
+            <ProvedorEstufa fonte={d.fonteEstufa} controle={d.controleSimulacao}>
+              <ProvedorTreino treino={d.fonteTreino} gravacoes={d.fonteGravacoes}>
+                <ProvedorDinheiro precos={d.repositorioPrecos}>
+                  <RouterProvider router={roteador} />
+                </ProvedorDinheiro>
+              </ProvedorTreino>
+            </ProvedorEstufa>
+          </LinkProvider>
+        </InternationalizationProvider>
       </Theme>
     </QueryClientProvider>
   )

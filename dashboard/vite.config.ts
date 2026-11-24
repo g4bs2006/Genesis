@@ -36,7 +36,9 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
+        // as gravações (~300 KB cada) só baixam quando abertas, não no precache
+        globIgnores: ['**/gravacao-*'],
       },
     }),
   ],

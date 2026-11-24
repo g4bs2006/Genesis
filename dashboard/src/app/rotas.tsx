@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
 import type { ComponentType } from 'react'
+import { BarraProgresso } from '@/shared/design-system/atoms/BarraProgresso'
 import { Moldura } from './Moldura'
 import { PaginaAjustes } from './PaginaAjustes'
 import { PaginaEsboco } from './PaginaEsboco'
@@ -13,6 +14,8 @@ import { PaginaEsboco } from './PaginaEsboco'
  */
 const pagina = <T,>(carregar: () => Promise<T>, nome: keyof T) => ({
   lazy: async () => ({ Component: (await carregar())[nome] as ComponentType }),
+  // primeira abertura (carga fria): a barrinha aparece enquanto o código chega
+  HydrateFallback: () => <BarraProgresso ativa />,
 })
 
 export const roteador = createBrowserRouter([
@@ -22,7 +25,7 @@ export const roteador = createBrowserRouter([
       { path: '/', ...pagina(() => import('./composicoes/PaginaAgora'), 'PaginaAgora') },
       { path: '/historico', ...pagina(() => import('./composicoes/PaginaHistorico'), 'PaginaHistorico') },
       { path: '/ciclo', ...pagina(() => import('./composicoes/PaginaCiclo'), 'PaginaCiclo') },
-      { path: '/dinheiro', element: <PaginaEsboco titulo="Dinheiro" fase={5} /> },
+      { path: '/dinheiro', ...pagina(() => import('./composicoes/PaginaDinheiro'), 'PaginaDinheiro') },
       { path: '/agente-x-regras', ...pagina(() => import('./composicoes/PaginaAgenteRegras'), 'PaginaAgenteRegras') },
       { path: '/ajustes', element: <PaginaAjustes /> },
       { path: '/dev', element: <PaginaEsboco titulo="Estufas lado a lado" fase={7} /> },

@@ -6,7 +6,7 @@
  * backend tiver um modelo de estresse, a aparência vem dele.
  */
 import { FAIXAS, type Leitura } from '@/modules/estufa/dominio'
-import type { ParametrosAlface } from './gerarAlface'
+import type { ParametrosAlface } from './escolherDesenho'
 
 const clamp = (n: number) => Math.min(1, Math.max(0, n))
 /** Quanto passou do limite, em frações da largura da faixa (0 dentro da faixa) */
@@ -31,16 +31,22 @@ export function aparenciaDaPlanta(leitura: Leitura, massa: number): ParametrosAl
   return { massa, turgor, clorose, necrose }
 }
 
+/**
+ * Aparência pela média das leituras recentes (~1 h): a planta não muda de cara
+ * a cada passo de 10 min. Arredonda em 0,05 para a tela só mudar quando a
+ * diferença aparece de verdade.
+ */
+export function aparenciaMedia(leituras: Leitura[], massa: number): ParametrosAlface {
+  if (leituras.length === 0) return { massa, turgor: 1, clorose: 0, necrose: 0 }
+  const todas = leituras.map((l) => aparenciaDaPlanta(l, massa))
+  const media = (k: 'turgor' | 'clorose' | 'necrose') =>
+    Math.round((todas.reduce((s, p) => s + p[k], 0) / todas.length) * 20) / 20
+  return { massa: Math.round(massa), turgor: media('turgor'), clorose: media('clorose'), necrose: media('necrose') }
+}
+
 /** Uma frase curta para o leitor de tela e para o card. */
 export function descreverPlanta(p: ParametrosAlface): string {
   const estado =
     p.turgor < 0.6 ? 'murcha' : p.clorose > 0.3 ? 'amarelando' : p.necrose > 0.3 ? 'com bordas queimadas' : 'saudável'
   return `Alface de ${Math.round(p.massa)} g, ${estado}`
-}
-
-/** Semente estável por estufa: cada estufa tem a "sua" alface. */
-export function sementeDaEstufa(id: string): number {
-  let h = 7
-  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0
-  return h % 1000
 }

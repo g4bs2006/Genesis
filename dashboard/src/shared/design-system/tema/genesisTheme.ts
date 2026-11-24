@@ -176,18 +176,6 @@ export const genesisTheme = defineTheme({
     '--mov-lento': 'var(--duration-medium)',
     '--ease-ios': 'var(--ease-standard)',
 
-    // A alface (modules/alface): o perfil NFT branco e a lâmina de água.
-    // No escuro o cano é cinza-claro, para não ofuscar ao lado das folhas.
-    '--alface-cano-topo': ['#FFFFFF', '#D9D9D6'],
-    '--alface-cano-frente': ['#F1F1EE', '#BDBDB9'],
-    '--alface-cano-lado': ['#E2E2DE', '#A4A4A0'],
-    '--alface-cano-linha': ['rgb(0 0 0 / 0.14)', 'rgb(0 0 0 / 0.35)'],
-    '--alface-furo': ['#3A3F36', '#1F221D'],
-    '--alface-copo': ['#2B2F28', '#151714'],
-    '--alface-janela': ['#DCE6E8', '#5C6A6D'],
-    '--alface-agua': ['#9CCBD6', '#4D8C9B'],
-    '--alface-raiz': ['#F3EDD9', '#E6DDC2'],
-
     // Celular: alvo de toque mínimo e título grande
     '--toque-minimo': '44px',
     '--titulo-grande': '28px',

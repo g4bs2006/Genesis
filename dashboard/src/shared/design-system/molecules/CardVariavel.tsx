@@ -23,6 +23,8 @@ type Props = {
   /** valor de exemplo (o simulador de brinquedo não mede isso) */
   exemplo?: boolean
   tamanho?: 'compacto' | 'normal'
+  /** seta de tendência (↑ ↓), num lugar fixo: o número não sai do lugar quando ela some */
+  tendencia?: string
 }
 
 /** Card de uma variável da estufa: valor, faixa e bolinha. Borda amarela/vermelha quando pede atenção. */
@@ -37,6 +39,7 @@ export function CardVariavel({
   grafico,
   exemplo,
   tamanho = 'normal',
+  tendencia,
 }: Props) {
   return (
     <Card padding={tamanho === 'compacto' ? 3 : 4} className={`${css.card} ${css[estado]}`}>
@@ -51,6 +54,11 @@ export function CardVariavel({
         <HStack gap={1} align="end">
           <span className={tamanho === 'compacto' ? css.valorCompacto : css.valor}>{valor}</span>
           {unidade && <span className={css.unidade}>{unidade}</span>}
+          {tendencia !== undefined && (
+            <span className={css.seta} aria-hidden style={{ visibility: tendencia ? 'visible' : 'hidden' }}>
+              {tendencia || '↑'}
+            </span>
+          )}
           {exemplo && <Badge variant="neutral" label="exemplo" />}
         </HStack>
         {grafico}

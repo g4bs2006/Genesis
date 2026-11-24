@@ -42,7 +42,7 @@ test('desktop: Agora com gráficos e a comparação com as regras', async ({ pag
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Últimas 24 horas' })).toBeVisible()
   await expect(page.getByText(/O agente rende R\$/)).toBeVisible()
-  await page.getByRole('tab', { name: 'pH e EC' }).click()
+  await page.getByRole('button', { name: 'pH e EC' }).click()
   await expect(page.getByText('pH da solução')).toBeVisible()
 })
 
@@ -52,4 +52,17 @@ test('histórico exporta CSV', async ({ page, isMobile }) => {
   const download = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Exportar CSV' }).click()
   expect((await download).suggestedFilename()).toMatch(/^genesis-.*\.csv$/)
+})
+
+test('dinheiro: lucro previsto e editar preço com vírgula', async ({ page }) => {
+  await page.goto('/dinheiro')
+  await expect(page.getByRole('heading', { level: 1, name: 'Dinheiro' })).toBeVisible()
+  await expect(page.getByText('Para onde vai o dinheiro da venda')).toBeVisible()
+  await page.getByRole('button', { name: 'Editar preços' }).click()
+  const medio = page.getByLabel('Preço médio')
+  await medio.fill('2,5')
+  await medio.press('Enter')
+  await page.getByRole('button', { name: 'Salvar preços' }).click()
+  // o cenário médio passa a mostrar o preço novo
+  await expect(page.getByText(/R\$\s?2,50\/pé/)).toBeVisible()
 })

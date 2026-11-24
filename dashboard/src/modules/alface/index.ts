@@ -10,6 +10,7 @@
  * As pastas nascem quando a primeira peça delas chega.
  */
 export * from './dominio'
-export { AlfaceSvg } from './presentation/AlfaceSvg'
+export { AlfaceImagem } from './presentation/AlfaceImagem'
+export { DESENHOS } from './presentation/desenhos'
 export { PaginaLaboratorioAlface } from './presentation/PaginaLaboratorioAlface'
 export { CardAlface } from './presentation/CardAlface'
