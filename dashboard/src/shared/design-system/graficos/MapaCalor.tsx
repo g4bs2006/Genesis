@@ -38,11 +38,7 @@ export function MapaCalor({ linhas, colunas, valores, formatar, rotulo }: Props)
               const v = valores[i]?.[j] ?? 0
               return (
                 <td key={c} className={css.celula}>
-                  <span
-                    className={css.fundo}
-                    style={{ opacity: v > 0 ? 0.12 + 0.68 * (v / max) : 0 }}
-                    aria-hidden
-                  />
+                  <span className={css.fundo} style={{ opacity: v > 0 ? 0.12 + 0.68 * (v / max) : 0 }} aria-hidden />
                   <span className={css.valor}>{formatar(v)}</span>
                 </td>
               )
