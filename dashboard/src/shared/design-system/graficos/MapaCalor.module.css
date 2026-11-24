@@ -1,0 +1,41 @@
+.tabela {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 3px;
+  font-family: var(--font-family-code);
+  font-size: 12px;
+}
+.cabeca {
+  font-weight: 400;
+  color: var(--texto-3);
+  text-align: center;
+  padding: 4px;
+}
+.linha {
+  font-weight: 400;
+  color: var(--texto-2);
+  text-align: right;
+  padding-right: 8px;
+  white-space: nowrap;
+  font-family: var(--font-family-body);
+  font-size: 13px;
+}
+.celula {
+  position: relative;
+  text-align: center;
+  height: 34px;
+  border-radius: var(--radius-inner);
+  background: var(--linha);
+  overflow: hidden;
+}
+.fundo {
+  position: absolute;
+  inset: 0;
+  background: var(--risco);
+  transition: opacity var(--mov-lento) var(--ease-ios);
+}
+.valor {
+  position: relative;
+  color: var(--texto);
+  font-variant-numeric: tabular-nums;
+}
