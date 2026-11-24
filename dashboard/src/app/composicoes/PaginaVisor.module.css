@@ -240,7 +240,7 @@
 
 /* ---- sem leitura nova há mais de 2 min: números esmaecem ---- */
 .tela[data-parado='true'] :is(.cards, .massa) {
-  opacity: 0.4;
+  opacity: 0.7;
 }
 @media (prefers-reduced-motion: no-preference) {
   .cards,

@@ -13,6 +13,5 @@ export * from './dominio'
 export type { FonteTreino, FonteGravacoes } from './application/portas'
 export * from './presentation/dados'
 export { CardTreinoLateral } from './presentation/CardTreinoLateral'
-export { PaginaTreino } from './presentation/PaginaTreino'
 // Adaptadores (só app/dependencias.ts deve usar)
 export { criarFonteTreinoExemplo, criarFonteGravacoesExemplo } from './infrastructure/dadosExemplo'

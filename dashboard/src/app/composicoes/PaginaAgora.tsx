@@ -144,7 +144,13 @@ function Alerta({ passos }: { passos: Passo[] }) {
   // O alerta abre espaço deslizando (os cards de baixo não pulam) e é lido
   // pelo leitor de tela quando aparece (aria-live)
   return (
-    <VStack className="revelar" data-aberto={alerta.aberto} aria-live="polite">
+    <VStack
+      className="revelar"
+      data-aberto={alerta.aberto}
+      aria-live="polite"
+      aria-hidden={!alerta.aberto}
+      inert={!alerta.aberto}
+    >
       <VStack>
         {alerta.ultimo && (
           <CardAlerta titulo={alerta.ultimo.titulo} feito={alerta.ultimo.feito} estado={alerta.ultimo.estado} />

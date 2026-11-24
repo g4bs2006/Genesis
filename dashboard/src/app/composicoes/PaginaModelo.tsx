@@ -293,7 +293,7 @@ function RedePorDentro({ modelo, estufa, aoLado }: { modelo: Modelo; estufa: Est
               <Selector
                 label="Saída"
                 isLabelHidden
-                size="sm"
+                size="md"
                 value={String(saida)}
                 onChange={(v) => setSaida(Number(v ?? 0))}
                 options={SAIDAS.map((s, i) => ({ value: String(i), label: s.rotulo }))}
@@ -422,7 +422,7 @@ function AcertosErros({ estufa }: { estufa: Estufa }) {
             <ToggleButton
               key={t.tipo}
               size="sm"
-              label={t.rotulo}
+              label={`${t.rotulo} · ${eventos.data?.filter((e) => e.tipo === t.tipo).length ?? 0}`}
               isPressed={tipos.has(t.tipo)}
               onPressedChange={(ligado) => alternar(t.tipo, ligado)}
             >

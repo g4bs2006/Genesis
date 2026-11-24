@@ -223,7 +223,7 @@ function Comparar({
           idKey="id"
           density="compact"
           columns={[
-            { key: 'metrica', header: '' },
+            { key: 'metrica', header: 'Métrica' },
             { key: 'a', header: `g${a}`, align: 'end' },
             { key: 'b', header: `g${b}`, align: 'end' },
           ]}

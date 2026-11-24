@@ -32,7 +32,7 @@ for (const n of nomes) {
       }
       if (!corrigir) return { baixos, maxCanto, lado }
       ctx.putImageData(d, 0, 0)
-      const blob = await new Promise((ok) => c.toBlob(ok, 'image/webp', 0.86))
+      const blob = await new Promise((ok) => c.toBlob(ok, 'image/webp', 0.75))
       const buf = new Uint8Array(await blob.arrayBuffer())
       return { baixos, maxCanto, lado, bytes: Array.from(buf) }
     },

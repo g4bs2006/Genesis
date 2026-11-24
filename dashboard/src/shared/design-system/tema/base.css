@@ -89,3 +89,10 @@ body {
     scroll-behavior: auto;
   }
 }
+
+/* toque: as abas do Astryx têm 32px; no dedo, o mínimo é 44px */
+@media (pointer: coarse) {
+  .astryx-tab {
+    min-height: var(--toque-minimo);
+  }
+}
