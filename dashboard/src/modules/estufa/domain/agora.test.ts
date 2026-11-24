@@ -31,14 +31,18 @@ const comPh = (ph: number, dosagemAcido = 0): Passo => ({
 
 describe('fraseDeEstado', () => {
   it('tudo bem', () => {
-    expect(fraseDeEstado(passoBase, { tipo: 'agente', modeloId: 'g812' })).toEqual({
+    expect(fraseDeEstado([passoBase], { tipo: 'agente', modeloId: 'g812' })).toEqual({
       titulo: 'Tudo na faixa',
       apoio: 'O agente está no controle.',
     })
   })
 
+  it('oscilar na beira da faixa não muda a frase (precisa de 2 passos)', () => {
+    expect(fraseDeEstado([comPh(6.4), comPh(6.6)], { tipo: 'agente', modeloId: 'g812' }).titulo).toBe('Tudo na faixa')
+  })
+
   it('um ponto de atenção, como no rascunho', () => {
-    expect(fraseDeEstado(comPh(6.6), { tipo: 'agente', modeloId: 'g812' })).toEqual({
+    expect(fraseDeEstado([comPh(6.6), comPh(6.6)], { tipo: 'agente', modeloId: 'g812' })).toEqual({
       titulo: 'Quase tudo na faixa',
       apoio: 'O agente está no controle. 1 ponto pede atenção.',
     })

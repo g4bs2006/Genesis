@@ -1,14 +1,6 @@
 import { CardVariavel } from '@/shared/design-system/molecules/CardVariavel'
 import { Sparkline } from '@/shared/design-system/graficos/Sparkline'
-import {
-  estadoDaVariavel,
-  FAIXAS,
-  piorEstado,
-  valorDe,
-  valorExibido,
-  type Passo,
-  type Variavel,
-} from '@/modules/estufa'
+import { estadoConfirmadoDoGrupo, FAIXAS, valorDe, valorExibido, type Passo, type Variavel } from '@/modules/estufa'
 import { ehExemplo, faixaTexto, formatarVariavel } from './variaveis'
 
 /**
@@ -26,7 +18,7 @@ export function CardVariavelDesktop({
 }) {
   const [v, segunda] = variaveis as [Variavel, Variavel | undefined]
   const f = FAIXAS[v]
-  const estado = piorEstado(variaveis.map((x) => estadoDaVariavel(passo, x)))
+  const estado = estadoConfirmadoDoGrupo(passos, variaveis)
   const unidade = (x: Variavel) => (x === 'nivel' ? '%' : FAIXAS[x].unidade)
   const detalhe = segunda
     ? `${FAIXAS[segunda].nome} ${formatarVariavel(segunda, valorDe(passo.leitura, segunda))} ${unidade(segunda)}${

@@ -1,0 +1,31 @@
+.quadro {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+.imagem {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.entrando {
+  animation: entrar var(--mov-lento) var(--ease-ios) both;
+}
+@keyframes entrar {
+  from {
+    opacity: 0;
+  }
+}
+/* movimento reduzido: troca quase instantânea (1 ms, para o fim da animação
+   ainda avisar e o desenho antigo sair de baixo) */
+@media (prefers-reduced-motion: reduce) {
+  .entrando {
+    animation-duration: 1ms;
+  }
+}

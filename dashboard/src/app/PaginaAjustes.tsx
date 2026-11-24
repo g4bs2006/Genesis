@@ -8,6 +8,8 @@ import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/Segme
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import { CheckIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
+import { FormularioPrecos } from '@/modules/dinheiro'
 import { useEstufaAtual, useEstufas } from '@/modules/estufa'
 import { SeletorModo } from '@/shared/design-system/molecules/SeletorModo'
 import { useInstalarApp } from '@/shared/hooks/useInstalarApp'
@@ -20,13 +22,14 @@ export function PaginaAjustes() {
   const estufas = useEstufas()
   const atual = useEstufaAtual()
   const app = useInstalarApp()
+  const [precos, setPrecos] = useState(false)
 
   return (
     <VStack gap={6} paddingBlock={4} maxWidth={560}>
       <Heading level={1}>Ajustes</Heading>
 
       <Secao titulo="Estufa" apoio="Qual estufa o Agora, o Ciclo e o Dinheiro mostram.">
-        <Card padding={1}>
+        <Card padding={2}>
           <List edge="padded">
             {estufas.data?.map((e) => (
               <ListItem
@@ -42,10 +45,19 @@ export function PaginaAjustes() {
         </Card>
       </Secao>
 
+      <Secao
+        titulo="Preços"
+        apoio="Alface, energia, nutrientes, água, mudas e custos fixos: a conta do Dinheiro usa os seus."
+      >
+        <Button label="Editar preços" onClick={() => setPrecos(true)} />
+        <FormularioPrecos aberto={precos} aoMudar={setPrecos} />
+      </Secao>
+
       <Secao titulo="Tema">
         <SegmentedControl
           label="Tema"
           layout="fill"
+          size="lg"
           value={tema}
           onChange={(v) => trocarComTransicao(() => trocarTema(v as Tema))}
         >

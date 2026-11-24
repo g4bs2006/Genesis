@@ -9,7 +9,7 @@ import { HStack } from '@astryxdesign/core/HStack'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
-import { AlfaceSvg, sementeDaEstufa } from '@/modules/alface'
+import { AlfaceImagem } from '@/modules/alface'
 import {
   curvaDeCrescimento,
   ESTAGIOS,
@@ -45,7 +45,6 @@ function Ciclo({ estufa }: { estufa: Estufa }) {
   const colheita = passo
     ? formatarData(new Date(new Date(passo.leitura.instante).getTime() + faltam * DIA_MS).toISOString())
     : null
-  const semente = sementeDaEstufa(estufa.id)
 
   return (
     <VStack gap={5} paddingBlock={4}>
@@ -66,9 +65,8 @@ function Ciclo({ estufa }: { estufa: Estufa }) {
             return (
               <Card key={e.nome} padding={3} className={e === atual ? css.atual : passou ? '' : css.futuro}>
                 <VStack gap={1}>
-                  <AlfaceSvg
+                  <AlfaceImagem
                     parametros={{ massa: massaEsperada(diaDoDesenho), turgor: 1, clorose: 0, necrose: 0 }}
-                    semente={semente}
                     rotulo={`${e.nome}: cerca de ${Math.round(massaEsperada(diaDoDesenho))} g`}
                   />
                   <HStack justify="between" align="center">

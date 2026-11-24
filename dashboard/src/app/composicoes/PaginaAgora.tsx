@@ -51,10 +51,10 @@ function Agora({ estufa }: { estufa: Estufa }) {
   if (!atual) return <EsbocoAgora />
   if (largo) return <AgoraDesktop estufa={estufa} passos={passos} atual={atual} />
   return (
-    <VStack gap={4} paddingBlock={4} className="surgir">
+    <VStack gap={4} paddingBlock={4}>
       <Cabecalho estufa={estufa} passo={atual} />
-      <Frase estufa={estufa} passo={atual} />
-      <CardAlface estufa={estufa} leitura={atual.leitura} />
+      <Frase estufa={estufa} passos={passos} />
+      <CardAlface estufa={estufa} leitura={atual.leitura} recentes={passos.slice(-6).map((p) => p.leitura)} />
       <Grid columns={2} gap={3}>
         {GRUPOS_CELULAR.map((g) => (
           <CardGrupo key={g.id} grupo={g} passo={atual} passos={passos} />
@@ -68,16 +68,18 @@ function Agora({ estufa }: { estufa: Estufa }) {
 
 /** Desktop: tudo do celular e mais os gráficos e a comparação com as regras fixas. */
 function AgoraDesktop({ estufa, passos, atual }: { estufa: Estufa; passos: Passo[]; atual: Passo }) {
+  const resumo = useResumoCiclo(estufa.id)
   return (
-    <VStack gap={5} paddingBlock={6} className="surgir">
+    <VStack gap={5} paddingBlock={6}>
       <VStack gap={3}>
         <Cabecalho estufa={estufa} passo={atual} />
-        <Frase estufa={estufa} passo={atual} />
+        <Frase estufa={estufa} passos={passos} />
       </VStack>
       <section className={css.colunas}>
         <CardAlface
           estufa={estufa}
           leitura={atual.leitura}
+          recentes={passos.slice(-6).map((p) => p.leitura)}
           rodape={
             <CurvaCrescimento
               curva={curvaDeCrescimento(estufa.diasDoCiclo)}
@@ -93,6 +95,7 @@ function AgoraDesktop({ estufa, passos, atual }: { estufa: Estufa; passos: Passo
             ))}
           </section>
           <Alerta passos={passos} />
+          <LucroPrevisto resumo={resumo.data} plantas={estufa.plantas} />
         </VStack>
       </section>
       <Card>
@@ -125,8 +128,8 @@ function Cabecalho({ estufa, passo }: { estufa: Estufa; passo: Passo }) {
   )
 }
 
-function Frase({ estufa, passo }: { estufa: Estufa; passo: Passo }) {
-  const { titulo, apoio } = fraseDeEstado(passo, estufa.controlador)
+function Frase({ estufa, passos }: { estufa: Estufa; passos: Passo[] }) {
+  const { titulo, apoio } = fraseDeEstado(passos, estufa.controlador)
   return (
     <VStack gap={1}>
       {origemDosDados === 'exemplo' && <SeloDados origem="exemplo" />}
@@ -141,8 +144,12 @@ function Alerta({ passos }: { passos: Passo[] }) {
   // O alerta abre espaço deslizando (os cards de baixo não pulam) e é lido
   // pelo leitor de tela quando aparece (aria-live)
   return (
-    <VStack className="revelar" data-aberto={!!alerta} aria-live="polite">
-      <VStack>{alerta && <CardAlerta titulo={alerta.titulo} feito={alerta.feito} estado={alerta.estado} />}</VStack>
+    <VStack className="revelar" data-aberto={alerta.aberto} aria-live="polite">
+      <VStack>
+        {alerta.ultimo && (
+          <CardAlerta titulo={alerta.ultimo.titulo} feito={alerta.ultimo.feito} estado={alerta.ultimo.estado} />
+        )}
+      </VStack>
     </VStack>
   )
 }

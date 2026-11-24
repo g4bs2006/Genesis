@@ -1,3 +1,3 @@
-/** Domínio puro da alface: o gerador de formas e a aparência a partir da leitura. */
-export * from './domain/gerarAlface'
+/** Domínio puro da alface: qual desenho mostrar e a aparência a partir da leitura. */
+export * from './domain/escolherDesenho'
 export * from './domain/estadoDaPlanta'

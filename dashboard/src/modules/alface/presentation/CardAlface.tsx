@@ -5,8 +5,8 @@ import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import { massaEsperada, type Estufa, type Leitura } from '@/modules/estufa/dominio'
 import { formatarData, formatarNumero } from '@/shared/lib/formatar'
-import { aparenciaDaPlanta, descreverPlanta, sementeDaEstufa } from '../domain/estadoDaPlanta'
-import { AlfaceSvg } from './AlfaceSvg'
+import { aparenciaMedia, descreverPlanta } from '../domain/estadoDaPlanta'
+import { AlfaceImagem } from './AlfaceImagem'
 
 const DIA_MS = 24 * 60 * 60 * 1000
 
@@ -16,22 +16,23 @@ export function CardAlface({
   leitura,
   deitado = false,
   rodape,
+  recentes,
 }: {
   estufa: Estufa
   leitura: Leitura
   deitado?: boolean
   /** conteúdo extra embaixo (a curva de crescimento, no desktop) */
   rodape?: React.ReactNode
+  /** leituras da última hora: a aparência é a média delas */
+  recentes?: Leitura[]
 }) {
-  const parametros = aparenciaDaPlanta(leitura, estufa.massaPorPe)
+  const parametros = aparenciaMedia(recentes?.length ? recentes : [leitura], estufa.massaPorPe)
   const meta = massaEsperada(estufa.diaDoCiclo)
   const faltam = Math.max(0, Math.ceil(estufa.diasDoCiclo - estufa.diaDoCiclo))
   const colheita = new Date(new Date(leitura.instante).getTime() + faltam * DIA_MS).toISOString()
   const dia = Math.floor(estufa.diaDoCiclo)
 
-  const desenho = (
-    <AlfaceSvg parametros={parametros} semente={sementeDaEstufa(estufa.id)} rotulo={descreverPlanta(parametros)} />
-  )
+  const desenho = <AlfaceImagem parametros={parametros} rotulo={descreverPlanta(parametros)} largura={340} />
   const numeros = (
     <VStack gap={2}>
       <HStack justify="between" align="end">

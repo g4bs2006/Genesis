@@ -13,5 +13,6 @@ export * from './dominio'
 export type { RepositorioPrecos } from './application/portas'
 export * from './presentation/dados'
 export { LucroPrevisto } from './presentation/LucroPrevisto'
+export { FormularioPrecos } from './presentation/FormularioPrecos'
 // Adaptadores (só app/dependencias.ts deve usar)
 export { criarRepositorioPrecosLocal, PRECOS_PADRAO } from './infrastructure/precosLocal'

@@ -60,9 +60,15 @@ export function criarFonteEstufaExemplo(): FonteEstufa {
       // Reprise: o dia gravado termina agora (14h30). O passo k de ontem, um dia
       // depois, cai exatamente 10 min × (k+1) à frente: a hora do dia bate com o
       // clima gravado e o relógio da tela só anda para frente.
+      // A junção hoje→ontem é descontínua (ex.: pH 6,6 às 14h30 e 5,6 às 14h40
+      // de ontem, logo depois de uma dose). Na primeira volta, soma-se a
+      // diferença entre os dois pontos, que vai a zero em 3 h: a tela não "pula".
+      const salto = diferenca(ultimo.leitura, passos[0]!.leitura)
       let k = 0
       const id = setInterval(() => {
-        aoReceber(adiantar(passos[k % passos.length]!, 1 + Math.floor(k / passos.length)))
+        const passo = adiantar(passos[k % passos.length]!, 1 + Math.floor(k / passos.length))
+        const peso = Math.max(0, 1 - k / PASSOS_DE_EMENDA)
+        aoReceber(peso > 0 ? emendar(passo, salto, peso) : passo)
         k++
       }, INTERVALO_REPRISE_MS)
       return () => clearInterval(id)
@@ -85,5 +91,30 @@ export function criarFonteEstufaExemplo(): FonteEstufa {
         if (!resumo) throw new Error(`Estufa sem resumo de ciclo: ${estufaId}`)
         return resumo
       }),
+  }
+}
+
+const PASSOS_DE_EMENDA = 18 // 3 h de 10 min
+
+type Numeros = { ar: Record<string, number>; solucao: Record<string, number>; fora: Record<string, number> }
+
+function diferenca(a: Passo['leitura'], b: Passo['leitura']): Numeros {
+  const sub = (x: Record<string, number>, y: Record<string, number>) =>
+    Object.fromEntries(Object.keys(x).map((k) => [k, (x[k] ?? 0) - (y[k] ?? 0)]))
+  return { ar: sub(a.ar, b.ar), solucao: sub(a.solucao, b.solucao), fora: sub(a.fora, b.fora) }
+}
+
+function emendar(passo: Passo, salto: Numeros, peso: number): Passo {
+  const soma = <T extends Record<string, number>>(x: T, d: Record<string, number>) =>
+    Object.fromEntries(Object.entries(x).map(([k, v]) => [k, v + (d[k] ?? 0) * peso])) as T
+  const l = passo.leitura
+  return {
+    ...passo,
+    leitura: {
+      ...l,
+      ar: soma(l.ar, salto.ar),
+      solucao: soma(l.solucao, salto.solucao),
+      fora: soma(l.fora, salto.fora),
+    },
   }
 }

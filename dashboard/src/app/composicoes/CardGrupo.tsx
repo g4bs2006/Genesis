@@ -1,5 +1,13 @@
 import { CardVariavel } from '@/shared/design-system/molecules/CardVariavel'
-import { estadoDoGrupo, FAIXAS, tendencia, valorDe, type Grupo, type Passo, type Variavel } from '@/modules/estufa'
+import {
+  estadoConfirmadoDoGrupo,
+  FAIXAS,
+  tendencia,
+  valorDe,
+  type Grupo,
+  type Passo,
+  type Variavel,
+} from '@/modules/estufa'
 import { ehExemplo, faixaTexto, formatarVariavel } from './variaveis'
 
 const SETA = { subindo: '↑', caindo: '↓', estavel: '' } as const
@@ -18,10 +26,11 @@ export function CardGrupo({ grupo, passo, passos }: { grupo: Grupo; passo: Passo
     <CardVariavel
       tamanho="compacto"
       nome={grupo.nome}
-      valor={`${formatarVariavel(principal, valorDe(passo.leitura, principal))}${seta ? ` ${seta}` : ''}`}
+      valor={formatarVariavel(principal, valorDe(passo.leitura, principal))}
+      tendencia={seta}
       unidade={f.unidade}
       faixa={faixaTexto(principal)}
-      estado={estadoDoGrupo(passo, grupo)}
+      estado={estadoConfirmadoDoGrupo(passos, grupo.variaveis)}
       detalhe={detalhe}
       exemplo={grupo.variaveis.some((v) => ehExemplo(passo, v))}
     />

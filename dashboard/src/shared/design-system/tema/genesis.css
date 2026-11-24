@@ -257,15 +257,6 @@
     --mov-base: var(--duration-fast-max);
     --mov-lento: var(--duration-medium);
     --ease-ios: var(--ease-standard);
-    --alface-cano-topo: light-dark(#FFFFFF, #D9D9D6);
-    --alface-cano-frente: light-dark(#F1F1EE, #BDBDB9);
-    --alface-cano-lado: light-dark(#E2E2DE, #A4A4A0);
-    --alface-cano-linha: light-dark(rgb(0 0 0 / 0.14), rgb(0 0 0 / 0.35));
-    --alface-furo: light-dark(#3A3F36, #1F221D);
-    --alface-copo: light-dark(#2B2F28, #151714);
-    --alface-janela: light-dark(#DCE6E8, #5C6A6D);
-    --alface-agua: light-dark(#9CCBD6, #4D8C9B);
-    --alface-raiz: light-dark(#F3EDD9, #E6DDC2);
     --toque-minimo: 44px;
     --titulo-grande: 28px;
   }
