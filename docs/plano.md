@@ -7,8 +7,8 @@ dashboard (celular e desktop) que mostra a estufa e projeta lucro e gasto.
 O nome vem do dispositivo Gênesis de *Star Trek II*, que transforma um planeta
 morto em vida. Escolhido pelo Gabriel em 2026-11-23, no estilo do Tesserato.
 
-Este documento é o plano, conversado em 2026-11-23. **Nada foi implementado
-ainda.**
+Este documento é o plano, conversado em 2026-11-23. O que já foi feito está
+marcado nas [Etapas](#etapas) e contado em [`docs/diario.md`](diario.md).
 
 ## De onde veio
 
@@ -34,7 +34,10 @@ ainda.**
 | Onde mora | Repositório próprio, `g4bs2006/Genesis`, fora do PequiDev | Precisa de interface mais séria e identidade própria |
 | Interface | Dashboard informativo, bom no celular e no desktop | Pedido do Gabriel |
 | Financeiro | Projeção de lucro × gasto no dashboard | Pedido do Gabriel |
-| Treino | Na placa do Gabriel (AMD Radeon RX 7600 XT) | Ver [Treino na GPU](#treino-na-gpu) |
+| Treino | Fase 1 no notebook do Gabriel, no processador; as fases pesadas depois, no PC com a RX 7600 XT | Ver [Onde o treino roda](#onde-o-treino-roda) |
+| Dashboard | React 19 + Vite + Astryx, com a linguagem Lightfield do Tesserato (feito, fases 0 a 12) | Ver [`docs/prompt-frontend.md`](prompt-frontend.md) e [`dashboard/README.md`](../dashboard/README.md) |
+| Contrato backend → dashboard | O que o treino e o simulador entregam ao dashboard, em JSON validado por Zod | Ver [`docs/contrato-dados.md`](contrato-dados.md). Entradas e saídas da rede: `dashboard/src/modules/treino/domain/rede.ts` |
+| Alface na tela | Desenhos gerados por IA, escolhidos pelo estado | Ver [`docs/decisoes/0003-alface-por-ia.md`](decisoes/0003-alface-por-ia.md) |
 | Tarifa de energia variável | Entra na fase 3 do currículo, junto com o clima real | A nota já desconta energia desde a fase 1; a tarifa variável só muda o preço. O fim do currículo fica só com o mundo "sujo" |
 | Jeito de trabalhar | Explicar cada passo | É a primeira vez do Gabriel implementando algo assim. Ver [CLAUDE.md](../CLAUDE.md) |
 
@@ -304,7 +307,32 @@ Campeões de gerações diferentes lado a lado; agente × regras fixas.
 As ações são gravadas junto com os pesos porque a GPU calcula em float32 e o
 navegador pode arredondar diferente: com as ações, a reprodução é fiel.
 
-## Treino na GPU
+## Onde o treino roda
+
+O ambiente do Claude na nuvem não tem GPU. O treino roda nas máquinas do Gabriel.
+
+### Notebook (fase 1 em diante)
+
+Levantado em 2026-11-24:
+
+| Item | Notebook |
+| --- | --- |
+| Sistema | Windows (PowerShell) |
+| Processador | Intel Core Ultra 5 125H, 14 núcleos, 18 linhas de execução |
+| Vídeo | Intel Arc integrado (sem NVIDIA) |
+| Memória e disco | 15 GB de RAM, 77 GB livres |
+| Python / Git | 3.13.2 / 2.55 |
+| PyTorch | não instalado ainda |
+
+**A fase 1 treina no processador (PyTorch para CPU).** A rede é pequena (~2 mil
+pesos) e cada estufa é uma conta simples: com mil estufas, o processador dá
+conta, e numa conta tão pequena a GPU às vezes é até mais lenta (o custo de
+mandar o trabalho para ela não compensa). O PyTorch tem versão para placas
+Intel (XPU), que pode ser testada depois; não é necessária agora.
+
+Instalação: ver [`docs/prompt-treino.md`](prompt-treino.md).
+
+### PC com a placa AMD (fases pesadas)
 
 Placa do Gabriel: **AMD Radeon RX 7600 XT** (ele falou em 6 GB de VRAM; a
 7600 XT costuma ter 16 GB, conferir). O ambiente do Claude na nuvem não tem
@@ -339,23 +367,23 @@ dashboard/      App web responsivo (PWA)
 docs/           Este plano e os próximos
 ```
 
-Stack do dashboard a decidir. Candidata natural, por ser o que o Gabriel já usa
-no PequiDev: Next.js + Tailwind + Supabase (Realtime para as leituras ao vivo).
+Stack do dashboard decidida: React 19 + Vite + TypeScript + Astryx (ver
+[`dashboard/README.md`](../dashboard/README.md)).
 
 ## Etapas
 
 | Etapa | Entrega |
 | --- | --- |
-| 0. Preparação | Repositório criado (**feito**); PyTorch com a GPU funcionando no PC |
+| 0. Preparação | Repositório criado (**feito**); PyTorch funcionando no notebook (fase 1, CPU) e depois no PC (GPU) |
 | 0b. Estudo | Estufa de brinquedo em NumPy: simulador, rede e evolução, para aprender as ideias (**feito**, em [`estudo/`](../estudo/README.md)) |
 | 1. Simulador do ar | Van Henten em PyTorch, clima do INMET, conferido com a literatura |
 | 2. Regras fixas e PID | As comparações rodando no simulador, com métricas |
 | 3. Neuroevolução | Agente aprende a fase 1, milhares de estufas na GPU |
 | 4. Solução nutritiva | pH, EC, água e reservatório; clima do INMET e tarifa variável; currículo fases 2 e 3 |
 | 5. Mundo sujo | Ruído, descalibração, falhas; fases 4 a 6; camada de segurança |
-| 6. Dashboard | Tela do agora, histórico, ciclo, agente × regras, celular e desktop |
-| 7. Financeiro | Lucro × gasto projetado, cenários, preços editáveis |
-| 8. Gravações | Reprodução do ciclo acelerado e das gerações |
+| 6. Dashboard | Tela do agora, histórico, ciclo, agente × regras, celular e desktop (**feito**, com dados de exemplo e a estufa de brinquedo; falta ligar ao treino de verdade) |
+| 7. Financeiro | Lucro × gasto projetado, cenários, preços editáveis (**feito** no dashboard) |
+| 8. Gravações | Reprodução do ciclo acelerado e das gerações (**feito** no dashboard; falta o treino exportar as gravações) |
 | 9. Validação | Comparar com GreenLight e com resultados publicados |
 | 10. Hardware (futuro) | ESP32 + sensores pela mesma interface, dados reais calibrando o simulador |
 
@@ -365,6 +393,14 @@ no PequiDev: Next.js + Tailwind + Supabase (Realtime para as leituras ao vivo).
   rigor de validação.
 - **Estufa real:** o orientador ou a instituição tem estufa ou bancada
   hidropônica? Define quais sensores e atuadores entram no simulador.
-- **Região:** qual estação do INMET usar para o clima.
-- **Sistema do PC:** Windows ou Linux.
-- **Stack do dashboard.**
+- **Região:** qual estação do INMET usar para o clima (necessária a partir da
+  fase 3 do currículo).
+- **Van Henten adaptado:** o modelo original controla aquecimento, CO₂ e
+  ventilação; o Genesis tem exaustor, nebulização, sombreamento e luz. Quais
+  equações entram e com que parâmetros fica registrado numa decisão em
+  `docs/decisoes/` quando o simulador for escrito.
+- **Normalização das entradas:** o dashboard estimou centros e escalas
+  (`dashboard/src/modules/treino/domain/rede.ts`); o treino deve exportar os
+  dele para o dashboard usar.
+- **Placa Intel do notebook (XPU):** testar se acelera; não é necessária para a
+  fase 1.
