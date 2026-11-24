@@ -46,6 +46,8 @@ export function criarFonteTreinoExemplo(): FonteTreino {
     geracoes: () => comAtraso((d) => d.geracoes),
     modelos: () => comAtraso((d) => d.modelos),
     configuracao: () => comAtraso((d) => d.configuracao),
+    // exemplo não muda: nada a avisar
+    assinarMudancas: () => () => {},
   }
 }
 

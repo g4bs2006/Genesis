@@ -65,7 +65,7 @@ export type ResumoGravacao = z.infer<typeof ResumoGravacao>
 /** Proposta nova: onde e como o treino está rodando agora. */
 export const EstadoTreino = z.object({
   rodando: z.boolean(),
-  onde: z.string(), // ex.: "PC do Gabriel · RX 7600 XT"
+  onde: z.string(), // ex.: "PC do Gabriel · RX 7600"
   faseAtual: FaseCurriculo,
   geracaoAtual: z.number().int().min(0),
   iniciadoEm: z.iso.datetime({ offset: true }),

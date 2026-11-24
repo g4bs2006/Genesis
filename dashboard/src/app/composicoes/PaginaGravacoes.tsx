@@ -31,7 +31,7 @@ import {
   type Grupo,
   type Passo,
 } from '@/modules/estufa'
-import { useGravacao, useGravacoes, type Gravacao, type ResumoGravacao } from '@/modules/treino'
+import { AvisoTreino, useGravacao, useGravacoes, type Gravacao, type ResumoGravacao } from '@/modules/treino'
 import { useAtraso } from '@/shared/hooks/useAtraso'
 import { formatarData, formatarHora, formatarNumero } from '@/shared/lib/formatar'
 import css from './PaginaGravacoes.module.css'
@@ -56,7 +56,7 @@ import {
 export function PaginaGravacoes() {
   const lista = useGravacoes()
   const esboco = useAtraso(!lista.data)
-  if (lista.error) return <Text color="secondary">Não deu para carregar a lista de gravações.</Text>
+  if (lista.error) return <AvisoTreino erro={lista.error} />
   if (!lista.data) return esboco ? <Skeleton height={600} radius={3} /> : null
   // só monta a reprodução com a lista em mãos: os parâmetros do link são conferidos contra ela
   return <Reproducao resumos={lista.data} />

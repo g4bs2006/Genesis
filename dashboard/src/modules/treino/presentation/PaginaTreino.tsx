@@ -21,7 +21,8 @@ import { useAtraso } from '@/shared/hooks/useAtraso'
 import { formatarNumero } from '@/shared/lib/formatar'
 import type { ConfigTreino, EstadoTreino, Geracao, Modelo } from '../domain/contrato'
 import { FASES, LIMIAR_ESQUECEU, provas, situacaoDasFases } from '../domain/curriculo'
-import { useConfigTreino, useEstadoTreino, useGeracoes, useModelos } from './dados'
+import { useConfigTreino, useEstadoTreino, useGeracoes, useModelos, useOrigemTreino } from './dados'
+import { AvisoTreino } from './AvisoTreino'
 import css from './PaginaTreino.module.css'
 
 const nota = (v: number) => `R$ ${formatarNumero(v)}`
@@ -32,8 +33,11 @@ export function PaginaTreino() {
   const modelos = useModelos()
   const config = useConfigTreino()
   const pronto = estado.data && geracoes.data && modelos.data && config.data
-  const esboco = useAtraso(!pronto)
+  const erro = estado.error ?? geracoes.error ?? modelos.error ?? config.error
+  const esboco = useAtraso(!pronto && !erro)
+  if (erro && !pronto) return <AvisoTreino erro={erro} />
   if (!pronto) return esboco ? <Skeleton height={640} radius={3} /> : null
+  if (geracoes.data.length === 0) return <AvisoTreino semGeracoes />
   return <Treino estado={estado.data} geracoes={geracoes.data} modelos={modelos.data} config={config.data} />
 }
 
@@ -55,15 +59,26 @@ function Treino({
   const melhorDeTodas = Math.max(...geracoes.map((g) => g.melhor))
   const fases = situacaoDasFases(estado)
   const campeao = [...modelos].sort((a, b) => b.geracao - a.geracao)[0]
+  const origem = useOrigemTreino()
   const [a, setA] = useState(Math.max(1, ultima.numero - 270))
   const [b, setB] = useState(ultima.numero)
+  // Ao vivo: se o "b" da comparação estava na última geração, ele acompanha as
+  // novas. Se o Gabriel escolheu outra, respeitamos a escolha.
+  // (Ajuste de estado durante o render, o jeito que o React recomenda para
+  // "estado que depende de prop", em vez de um useEffect.)
+  const [ultimaVista, setUltimaVista] = useState(ultima.numero)
+  if (ultima.numero !== ultimaVista) {
+    if (b === ultimaVista) setB(ultima.numero)
+    setUltimaVista(ultima.numero)
+  }
 
   return (
     <VStack gap={5} paddingBlock={6}>
       <VStack gap={1}>
         <Heading level={1}>Treino e gerações</Heading>
         <Text color="secondary">
-          {estado.rodando ? 'Rodando' : 'Parado'} em {estado.onde} · dados de exemplo até o treino real exportar os seus
+          {estado.rodando ? 'Rodando' : 'Parado'} em {estado.onde} ·{' '}
+          {origem === 'nuvem' ? 'ao vivo, direto do treino' : 'dados de exemplo até o treino real exportar os seus'}
         </Text>
       </VStack>
 

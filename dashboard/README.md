@@ -23,6 +23,10 @@ Rode dentro de `dashboard/`.
 
 Antes de abrir PR: `npm run typecheck && npm run lint && npm test && npm run build`.
 
+**Treino de verdade:** com `dashboard/.env.local` (copie de `.env.exemplo`), o
+`npm run dev` lê o treino e as gravações do Supabase, ao vivo. No Vercel, as
+mesmas variáveis. Guia completo: [`docs/nuvem.md`](../docs/nuvem.md).
+
 ## Rotas
 
 | Rota                                                    | Tela                                                                                 |

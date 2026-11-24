@@ -723,7 +723,7 @@ const modelos = (
 
 const estadoTreino = {
   rodando: true,
-  onde: 'PC do Gabriel · RX 7600 XT',
+  onde: 'PC do Gabriel · RX 7600',
   faseAtual: 4,
   geracaoAtual: ULTIMA_GERACAO,
   iniciadoEm: iso(iniciadoEm),
