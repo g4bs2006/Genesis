@@ -29,9 +29,10 @@ export const roteador = createBrowserRouter([
       { path: '/agente-x-regras', ...pagina(() => import('./composicoes/PaginaAgenteRegras'), 'PaginaAgenteRegras') },
       { path: '/ajustes', element: <PaginaAjustes /> },
       { path: '/dev', ...pagina(() => import('./composicoes/PaginaResumoDev'), 'PaginaDev') },
-      { path: '/dev/treino', element: <PaginaEsboco titulo="Treino e gerações" fase={8} /> },
-      { path: '/dev/modelo', element: <PaginaEsboco titulo="Modelo" fase={9} /> },
-      { path: '/dev/gravacoes', element: <PaginaEsboco titulo="Gravações" fase={10} /> },
+      { path: '/dev/treino', ...pagina(() => import('@/modules/treino'), 'PaginaTreino') },
+      { path: '/dev/modelo', ...pagina(() => import('./composicoes/PaginaModelo'), 'PaginaModelo') },
+      { path: '/glossario', ...pagina(() => import('@/modules/glossario'), 'PaginaGlossario') },
+      { path: '/dev/gravacoes', ...pagina(() => import('./composicoes/PaginaGravacoes'), 'PaginaGravacoes') },
       {
         path: '/laboratorio/alface',
         ...pagina(() => import('@/modules/alface'), 'PaginaLaboratorioAlface'),

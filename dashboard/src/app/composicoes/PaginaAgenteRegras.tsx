@@ -6,6 +6,7 @@
 import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Heading } from '@astryxdesign/core/Heading'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import {
@@ -62,7 +63,7 @@ export function PaginaAgenteRegras() {
 function ForaPorVariavel({ agente, regras }: { agente: Estufa; regras: Estufa }) {
   const ra = useResumoCiclo(agente.id).data
   const rr = useResumoCiclo(regras.id).data
-  if (!ra || !rr) return null
+  if (!ra || !rr) return <Skeleton height={250} radius={2} />
   const variaveis = Object.keys(ra.foraPorVariavel) as Variavel[]
   return (
     <BarrasComparadas

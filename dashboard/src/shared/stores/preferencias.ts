@@ -18,9 +18,12 @@ type Preferencias = {
   tema: Tema
   /** Estufa aberta no modo Produtor (null = a primeira com agente) */
   estufaId: string | null
+  /** o tour do modo Desenvolvedor já foi visto (aparece uma vez só) */
+  tourDevVisto: boolean
   trocarModo: (modo: Modo) => void
   trocarTema: (tema: Tema) => void
   escolherEstufa: (estufaId: string) => void
+  marcarTourDev: () => void
 }
 
 export const usePreferencias = create<Preferencias>()(
@@ -29,9 +32,11 @@ export const usePreferencias = create<Preferencias>()(
       modo: 'produtor',
       tema: 'sistema',
       estufaId: null,
+      tourDevVisto: false,
       trocarModo: (modo) => set({ modo }),
       trocarTema: (tema) => set({ tema }),
       escolherEstufa: (estufaId) => set({ estufaId }),
+      marcarTourDev: () => set({ tourDevVisto: true }),
     }),
     { name: 'genesis:preferencias' },
   ),

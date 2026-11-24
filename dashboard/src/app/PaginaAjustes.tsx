@@ -53,6 +53,10 @@ export function PaginaAjustes() {
         <FormularioPrecos aberto={precos} aoMudar={setPrecos} />
       </Secao>
 
+      <Secao titulo="Glossário" apoio="Os termos do Genesis (VPD, EC, elitismo, mutação...) em português simples.">
+        <Button label="Abrir o glossário" href="/glossario" />
+      </Secao>
+
       <Secao titulo="Tema">
         <SegmentedControl
           label="Tema"

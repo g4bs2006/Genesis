@@ -36,7 +36,7 @@ test('desktop: Agora com gráficos e a comparação com as regras', async ({ pag
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Últimas 24 horas' })).toBeVisible()
   await expect(page.getByText(/O agente rende R\$/)).toBeVisible()
-  await page.getByRole('button', { name: 'pH e EC' }).click()
+  await page.getByRole('tab', { name: 'pH e EC' }).click()
   await expect(page.getByText('pH da solução')).toBeVisible()
 })
 
@@ -59,4 +59,29 @@ test('dinheiro: lucro previsto e editar preço com vírgula', async ({ page }) =
   await page.getByRole('button', { name: 'Salvar preços' }).click()
   // o cenário médio passa a mostrar o preço novo
   await expect(page.getByText(/R\$\s?2,50\/pé/)).toBeVisible()
+})
+
+test('treino: currículo, curva de aprendizado e esquecimento', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'treino detalhado é do desktop')
+  await page.goto('/dev/treino')
+  await expect(page.getByRole('heading', { name: 'Curva de aprendizado' })).toBeVisible()
+  await expect(page.getByText('Esqueceu um pouco da fase 2')).toBeVisible()
+  await expect(page.getByText(/aprendendo agora/)).toBeVisible()
+})
+
+test('glossário: busca sem acento', async ({ page }) => {
+  await page.goto('/glossario')
+  await page.getByPlaceholder('Buscar (ex.: VPD, mutação)').fill('mutacao')
+  await expect(page.getByText('Mutação', { exact: false }).first()).toBeVisible()
+})
+
+test('tour do desenvolvedor aparece uma vez', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'o tour é do desktop')
+  await page.goto('/dev')
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('button', { name: 'Pular' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await page.reload()
+  await expect(page.getByRole('heading', { level: 1, name: 'Estufas lado a lado' })).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 })

@@ -6,6 +6,7 @@ import { NumberInput } from '@astryxdesign/core/NumberInput'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import { Folha } from '@/shared/design-system/organisms/Folha'
+import css from './FormularioPrecos.module.css'
 import { Precos } from '../domain/contrato'
 import { PRECOS_PADRAO } from '../infrastructure/precosLocal'
 import { usePrecos, useSalvarPrecos } from './dados'
@@ -94,11 +95,13 @@ function Campos({ inicial, aoTerminar }: { inicial: Precos; aoTerminar: () => vo
         )}
       </FormLayout>
       {!conferido.success && <Text color="secondary">Confira os valores: nenhum pode ser negativo.</Text>}
-      <HStack gap={2} justify="between">
+      {/* ações presas embaixo: o "Salvar" fica à vista sem rolar os 9 campos */}
+      <HStack gap={2} justify="between" className={css.acoes}>
         <Button label="Voltar aos valores de referência" variant="ghost" onClick={() => setP(PRECOS_PADRAO)} />
         <Button
           label="Salvar preços"
           variant="primary"
+          size="lg"
           isDisabled={!conferido.success}
           clickAction={async () => {
             if (!conferido.success) return
