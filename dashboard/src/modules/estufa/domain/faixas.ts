@@ -7,16 +7,7 @@ import type { Leitura } from './contrato'
 
 export type EstadoVariavel = 'ok' | 'atencao' | 'risco'
 
-export type Variavel =
-  | 'temperatura'
-  | 'umidade'
-  | 'vpd'
-  | 'co2'
-  | 'luz'
-  | 'ph'
-  | 'ec'
-  | 'temperaturaAgua'
-  | 'nivel'
+export type Variavel = 'temperatura' | 'umidade' | 'vpd' | 'co2' | 'luz' | 'ph' | 'ec' | 'temperaturaAgua' | 'nivel'
 
 export type Faixa = {
   min: number

@@ -22,6 +22,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
+    "resolveJsonModule": true,
     "noFallthroughCasesInSwitch": true,
 
     /* "@/modules/estufa" em vez de "../../../modules/estufa" */

@@ -91,4 +91,9 @@ export default defineConfig(
       ],
     },
   },
+  {
+    // provedor + hooks de dados no mesmo arquivo é o padrão dos módulos
+    files: ['src/modules/*/presentation/dados.tsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 )

@@ -1,11 +1,25 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-astryx-theme="genesis">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Genesis</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- barra de status do celular acompanha o tema do sistema -->
+    <meta name="theme-color" content="#f5f5f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#151515" media="(prefers-color-scheme: dark)" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+      // Pinta o tema certo antes do React montar: sem isso, quem escolheu
+      // "escuro" vê um clarão branco ao abrir o app. Mesmo dado do Zustand
+      // (src/shared/stores/preferencias.ts); o visor é sempre escuro.
+      try {
+        var tema = JSON.parse(localStorage.getItem('genesis:preferencias') || '{}').state?.tema
+        var forcado = location.pathname.indexOf('/visor') === 0 ? 'dark' : { claro: 'light', escuro: 'dark' }[tema]
+        if (forcado) document.documentElement.setAttribute('data-theme', forcado)
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

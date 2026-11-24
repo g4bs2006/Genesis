@@ -7,7 +7,7 @@ import css from './CascaCelular.module.css'
 export function CascaCelular({ abas, children }: { abas: ItemNavegacao[]; children: ReactNode }) {
   return (
     <>
-      <main className={css.casca}>{children}</main>
+      <main className={`${css.casca} conteudo-pagina`}>{children}</main>
       <BarraAbas itens={abas} />
     </>
   )

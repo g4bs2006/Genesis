@@ -1,0 +1,1 @@
+export { criarFonteEstufaExemplo } from './fonteEstufaExemplo'

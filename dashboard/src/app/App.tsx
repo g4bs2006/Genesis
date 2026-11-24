@@ -5,6 +5,10 @@ import { LinkProvider } from '@astryxdesign/core/Link'
 import { Theme } from '@astryxdesign/core/theme'
 import { genesisTheme } from '@/shared/design-system/tema/genesis'
 import { modoDoTema, usePreferencias } from '@/shared/stores/preferencias'
+import { ProvedorEstufa } from '@/modules/estufa'
+import { ProvedorTreino } from '@/modules/treino'
+import { ProvedorDinheiro } from '@/modules/dinheiro'
+import { dependencias as d } from './dependencias'
 import { roteador } from './rotas'
 
 // React Query: cuida das leituras assíncronas (buscar, guardar em cache,
@@ -14,7 +18,8 @@ const clienteConsultas = new QueryClient()
 // Os links do Astryx (SideNavItem, Button com href) passam pelo roteador:
 // trocar de página não recarrega o app inteiro.
 function LinkRota({ href, ...resto }: Omit<ComponentProps<typeof LinkRouter>, 'to'> & { href: string }) {
-  return <LinkRouter to={href} {...resto} />
+  // viewTransition: o conteúdo esmaece na troca de página (base.css)
+  return <LinkRouter to={href} viewTransition {...resto} />
 }
 
 export function App() {
@@ -23,7 +28,14 @@ export function App() {
     <QueryClientProvider client={clienteConsultas}>
       <Theme theme={genesisTheme} mode={modoDoTema[tema]}>
         <LinkProvider component={LinkRota}>
-          <RouterProvider router={roteador} />
+          {/* cada módulo recebe aqui o adaptador escolhido em dependencias.ts */}
+          <ProvedorEstufa fonte={d.fonteEstufa} controle={d.controleSimulacao}>
+            <ProvedorTreino treino={d.fonteTreino} gravacoes={d.fonteGravacoes}>
+              <ProvedorDinheiro precos={d.repositorioPrecos}>
+                <RouterProvider router={roteador} />
+              </ProvedorDinheiro>
+            </ProvedorTreino>
+          </ProvedorEstufa>
         </LinkProvider>
       </Theme>
     </QueryClientProvider>

@@ -87,7 +87,8 @@ export const genesisTheme = defineTheme({
     '--color-on-accent': ['#FFFFFF', '#111111'],
     '--color-accent-muted': ['rgb(0 0 0 / 0.05)', 'rgb(255 255 255 / 0.08)'],
     '--color-icon-accent': m(texto),
-    '--focus-outline-color': 'rgb(75 156 242 / 0.6)',
+    // anel de foco opaco: passa 3:1 contra a página nos dois temas (WCAG 1.4.11)
+    '--focus-outline-color': ['#2F6FC4', '#6AAEF5'],
 
     // semáforo
     '--color-success': ok,
@@ -105,6 +106,19 @@ export const genesisTheme = defineTheme({
 
     // título grande de 28px (regra do celular, igual ao Tesserato)
     '--text-heading-1-size': '28px',
+
+    // Movimento: uma fonte só. Os tempos do Astryx viram os do Tesserato
+    // (mais curtos e calmos), e as nossas animações leem os mesmos tokens.
+    '--duration-fast-min': '120ms',
+    '--duration-fast': '160ms',
+    '--duration-fast-max': '200ms',
+    '--duration-medium-min': '280ms',
+    '--duration-medium': '340ms',
+    '--duration-medium-max': '420ms',
+    // curva das folhas do iOS: desacelera sem passar do ponto
+    '--ease-standard': 'cubic-bezier(0.32, 0.72, 0, 1)',
+    '--ease-entrance': 'cubic-bezier(0.32, 0.72, 0, 1)',
+    '--ease-move': 'cubic-bezier(0.32, 0.72, 0, 1)',
 
     // raios do Lightfield: 5, 8 e 12px
     '--radius-inner': '5px',
@@ -156,11 +170,23 @@ export const genesisTheme = defineTheme({
     '--serie-menta': '#3FB8A8',
     '--serie-cinza': '#8E8E93',
 
-    // Movimento: curva das folhas do iOS na entrada, saída mais curta
-    '--mov-rapido': '120ms',
-    '--mov-base': '200ms',
-    '--mov-lento': '340ms',
-    '--ease-ios': 'cubic-bezier(0.32, 0.72, 0, 1)',
+    // Atalhos para os tokens de movimento do Astryx (definidos acima)
+    '--mov-rapido': 'var(--duration-fast-min)',
+    '--mov-base': 'var(--duration-fast-max)',
+    '--mov-lento': 'var(--duration-medium)',
+    '--ease-ios': 'var(--ease-standard)',
+
+    // A alface (modules/alface): o perfil NFT branco e a lâmina de água.
+    // No escuro o cano é cinza-claro, para não ofuscar ao lado das folhas.
+    '--alface-cano-topo': ['#FFFFFF', '#D9D9D6'],
+    '--alface-cano-frente': ['#F1F1EE', '#BDBDB9'],
+    '--alface-cano-lado': ['#E2E2DE', '#A4A4A0'],
+    '--alface-cano-linha': ['rgb(0 0 0 / 0.14)', 'rgb(0 0 0 / 0.35)'],
+    '--alface-furo': ['#3A3F36', '#1F221D'],
+    '--alface-copo': ['#2B2F28', '#151714'],
+    '--alface-janela': ['#DCE6E8', '#5C6A6D'],
+    '--alface-agua': ['#9CCBD6', '#4D8C9B'],
+    '--alface-raiz': ['#F3EDD9', '#E6DDC2'],
 
     // Celular: alvo de toque mínimo e título grande
     '--toque-minimo': '44px',

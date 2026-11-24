@@ -2,3 +2,4 @@
 export * from './domain/contrato'
 export * from './domain/faixas'
 export * from './domain/crescimento'
+export * from './domain/agora'

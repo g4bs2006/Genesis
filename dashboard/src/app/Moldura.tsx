@@ -1,12 +1,21 @@
 import { useEffect } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { SideNavSection, SideNavItem } from '@astryxdesign/core/SideNav'
+import { Outlet, ScrollRestoration, useLocation, useNavigate, useNavigation } from 'react-router-dom'
 import { CascaCelular } from '@/shared/design-system/templates/CascaCelular'
 import { CascaDesktop } from '@/shared/design-system/templates/CascaDesktop'
 import { SeletorModo } from '@/shared/design-system/molecules/SeletorModo'
+import { BarraProgresso } from '@/shared/design-system/atoms/BarraProgresso'
 import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
 import { usePreferencias, type Modo } from '@/shared/stores/preferencias'
+import { ListaEstufasLateral } from '@/modules/estufa'
+import { CardTreinoLateral } from '@/modules/treino'
 import { navegacao } from './navegacao'
+
+/** /dev é sempre Desenvolvedor; Ajustes vale para os dois; o resto é Produtor. */
+function modoDaRota(caminho: string, guardado: Modo): Modo {
+  if (caminho.startsWith('/dev')) return 'desenvolvedor'
+  if (caminho === '/ajustes') return guardado
+  return 'produtor'
+}
 
 /**
  * Escolhe a casca (celular ou desktop) e os itens do modo atual.
@@ -14,50 +23,42 @@ import { navegacao } from './navegacao'
  */
 export function Moldura() {
   const largo = useTelaLarga()
-  const { modo, trocarModo } = usePreferencias()
+  const { modo: guardado, trocarModo } = usePreferencias()
   const navegar = useNavigate()
   const { pathname } = useLocation()
-
-  // Abrir um link de outro modo (ex.: /dev/treino) troca o modo junto,
-  // para a barra lateral não mostrar itens que não batem com a página.
+  // O modo sai da rota já na renderização: abrir /dev/treino nunca pisca a
+  // barra do Produtor. O efeito só guarda a escolha.
+  const modo = modoDaRota(pathname, guardado)
   useEffect(() => {
-    const modoDaRota: Modo | null = pathname.startsWith('/dev')
-      ? 'desenvolvedor'
-      : pathname === '/ajustes'
-        ? null
-        : 'produtor'
-    if (modoDaRota && modoDaRota !== modo) trocarModo(modoDaRota)
-  }, [pathname, modo, trocarModo])
+    if (modo !== guardado) trocarModo(modo)
+  }, [modo, guardado, trocarModo])
+
+  // Página nova ainda carregando (código sob demanda): barrinha no topo
+  const carregando = useNavigation().state === 'loading'
 
   const aoTrocarModo = (novo: Modo) => {
     trocarModo(novo)
-    navegar(novo === 'produtor' ? '/' : '/dev')
+    // viewTransition: menu e conteúdo trocam juntos, num esmaecer curto
+    navegar(novo === 'produtor' ? '/' : '/dev', { viewTransition: true })
   }
 
-  if (!largo) {
-    return (
-      <CascaCelular abas={navegacao[modo].celular}>
-        <Outlet />
-      </CascaCelular>
-    )
-  }
+  const conteudo = (
+    <>
+      <BarraProgresso ativa={carregando} />
+      <ScrollRestoration />
+      <Outlet />
+    </>
+  )
+
+  if (!largo) return <CascaCelular abas={navegacao[modo].celular}>{conteudo}</CascaCelular>
 
   return (
     <CascaDesktop
       itens={navegacao[modo].desktop}
-      extras={modo === 'produtor' ? <ListaEstufas /> : null}
+      extras={modo === 'produtor' ? <ListaEstufasLateral /> : <CardTreinoLateral />}
       rodape={<SeletorModo valor={modo} aoTrocar={aoTrocarModo} />}
     >
-      <Outlet />
+      {conteudo}
     </CascaDesktop>
-  )
-}
-
-// shortcut: lista fixa até a Fase 1 ligar a FonteEstufa; depois vem das portas
-function ListaEstufas() {
-  return (
-    <SideNavSection title="Estufas">
-      <SideNavItem label="Estufa 1 · simulada" href="/" />
-    </SideNavSection>
   )
 }
