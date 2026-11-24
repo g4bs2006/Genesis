@@ -4,6 +4,7 @@
  * Celular: só o crucial. Desktop (Fase 4): cards com sparkline e gráficos.
  */
 import { Badge } from '@astryxdesign/core/Badge'
+import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
@@ -15,7 +16,9 @@ import { LucroPrevisto } from '@/modules/dinheiro'
 import {
   fraseDeEstado,
   GRUPOS_CELULAR,
+  curvaDeCrescimento,
   useEstufaAtual,
+  VARIAVEIS_DESKTOP,
   useJanela,
   useResumoCiclo,
   type Estufa,
@@ -28,6 +31,12 @@ import { useAlertaEstavel } from './useAlertaEstavel'
 import { formatarHora } from '@/shared/lib/formatar'
 import { origemDosDados } from '../dependencias'
 import { CardGrupo } from './CardGrupo'
+import { CardVariavelDesktop } from './CardVariavelDesktop'
+import { ComparacaoAgenteRegras } from './ComparacaoAgenteRegras'
+import { GraficosAbas } from './GraficosAbas'
+import { CurvaCrescimento } from '@/shared/design-system/graficos/CurvaCrescimento'
+import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
+import css from './PaginaAgora.module.css'
 
 export function PaginaAgora() {
   const estufa = useEstufaAtual()
@@ -36,9 +45,11 @@ export function PaginaAgora() {
 }
 
 function Agora({ estufa }: { estufa: Estufa }) {
+  const largo = useTelaLarga()
   const { passos, atual } = useJanela(estufa.id)
   const resumo = useResumoCiclo(estufa.id)
   if (!atual) return <EsbocoAgora />
+  if (largo) return <AgoraDesktop estufa={estufa} passos={passos} atual={atual} />
   return (
     <VStack gap={4} paddingBlock={4} className="surgir">
       <Cabecalho estufa={estufa} passo={atual} />
@@ -51,6 +62,51 @@ function Agora({ estufa }: { estufa: Estufa }) {
       </Grid>
       <Alerta passos={passos} />
       <LucroPrevisto resumo={resumo.data} plantas={estufa.plantas} />
+    </VStack>
+  )
+}
+
+/** Desktop: tudo do celular e mais os gráficos e a comparação com as regras fixas. */
+function AgoraDesktop({ estufa, passos, atual }: { estufa: Estufa; passos: Passo[]; atual: Passo }) {
+  return (
+    <VStack gap={5} paddingBlock={6} className="surgir">
+      <VStack gap={3}>
+        <Cabecalho estufa={estufa} passo={atual} />
+        <Frase estufa={estufa} passo={atual} />
+      </VStack>
+      <section className={css.colunas}>
+        <CardAlface
+          estufa={estufa}
+          leitura={atual.leitura}
+          rodape={
+            <CurvaCrescimento
+              curva={curvaDeCrescimento(estufa.diasDoCiclo)}
+              hoje={estufa.diaDoCiclo}
+              massaHoje={estufa.massaPorPe}
+            />
+          }
+        />
+        <VStack gap={3}>
+          <section className={css.cards}>
+            {VARIAVEIS_DESKTOP.map((vs) => (
+              <CardVariavelDesktop key={vs.join('-')} variaveis={vs} passo={atual} passos={passos} />
+            ))}
+          </section>
+          <Alerta passos={passos} />
+        </VStack>
+      </section>
+      <Card>
+        <VStack gap={3}>
+          <Heading level={2}>Últimas 24 horas</Heading>
+          <GraficosAbas passos={passos} />
+        </VStack>
+      </Card>
+      <Card>
+        <VStack gap={3}>
+          <Heading level={2}>Agente × regras fixas</Heading>
+          <ComparacaoAgenteRegras />
+        </VStack>
+      </Card>
     </VStack>
   )
 }

@@ -36,3 +36,20 @@ test('visor: tela cheia, sem navegação', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Visor' })).toBeVisible()
   await expect(page.getByRole('navigation')).toHaveCount(0)
 })
+
+test('desktop: Agora com gráficos e a comparação com as regras', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'gráficos e comparação são do desktop')
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: 'Últimas 24 horas' })).toBeVisible()
+  await expect(page.getByText(/O agente rende R\$/)).toBeVisible()
+  await page.getByRole('tab', { name: 'pH e EC' }).click()
+  await expect(page.getByText('pH da solução')).toBeVisible()
+})
+
+test('histórico exporta CSV', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'histórico é do desktop')
+  await page.goto('/historico')
+  const download = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Exportar CSV' }).click()
+  expect((await download).suggestedFilename()).toMatch(/^genesis-.*\.csv$/)
+})

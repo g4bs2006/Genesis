@@ -15,10 +15,13 @@ export function CardAlface({
   estufa,
   leitura,
   deitado = false,
+  rodape,
 }: {
   estufa: Estufa
   leitura: Leitura
   deitado?: boolean
+  /** conteúdo extra embaixo (a curva de crescimento, no desktop) */
+  rodape?: React.ReactNode
 }) {
   const parametros = aparenciaDaPlanta(leitura, estufa.massaPorPe)
   const meta = massaEsperada(estufa.diaDoCiclo)
@@ -70,6 +73,7 @@ export function CardAlface({
             {desenho}
           </VStack>
           {numeros}
+          {rodape}
         </VStack>
       )}
     </Card>

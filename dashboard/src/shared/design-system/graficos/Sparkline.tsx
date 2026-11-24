@@ -18,7 +18,7 @@ type Props = {
 /** Minigráfico de 24 h, sem eixos. Largura fluida (ocupa o card). */
 export function Sparkline(props: Props) {
   return (
-    <ParentSize debounceTime={50} parentSizeStyles={{ width: '100%', height: props.altura ?? 36 }}>
+    <ParentSize debounceTime={50} style={{ width: '100%', height: props.altura ?? 36 }}>
       {({ width }) => (width > 0 ? <Desenho {...props} largura={width} /> : null)}
     </ParentSize>
   )
