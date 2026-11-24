@@ -36,7 +36,7 @@ const ALTURA_TRILHA = 16
 export function GraficoSerie(props: Props) {
   const altura = (props.altura ?? 240) + (props.acoes?.length ?? 0) * ALTURA_TRILHA + (props.acoes?.length ? 10 : 0)
   return (
-    <ParentSize debounceTime={50} style={{ width: '100%', height: altura }}>
+    <ParentSize debounceTime={50} initialSize={{ width: 300, height: 0 }} style={{ width: '100%', height: altura }}>
       {({ width }) => (width > 0 ? <Desenho {...props} largura={width} /> : null)}
     </ParentSize>
   )
@@ -146,12 +146,12 @@ function Desenho({
               </text>
               <rect x={0} width={w} y={2} height={ALTURA_TRILHA - 4} fill={COR.grade} rx={3} />
               {a.tipo === 'intensidade'
-                ? a.pontos.map((p) =>
+                ? trechos(a.pontos).map((p) =>
                     p.v > 0.02 ? (
                       <rect
                         key={p.t}
                         x={x(p.t)}
-                        width={Math.max(1, passoX)}
+                        width={Math.max(1, x(p.fim) - x(p.t) + passoX)}
                         y={2}
                         height={ALTURA_TRILHA - 4}
                         fill={a.cor}
@@ -211,4 +211,18 @@ function Desenho({
       </Group>
     </svg>
   )
+}
+
+/**
+ * Junta passos vizinhos de intensidade parecida (diferença < 0,05) num trecho
+ * só: 144 retângulos viram uns 20, e o gráfico fica leve a cada passo novo.
+ */
+function trechos(pontos: PontoSerie[]): (PontoSerie & { fim: number })[] {
+  const saida: (PontoSerie & { fim: number })[] = []
+  for (const p of pontos) {
+    const ultimo = saida.at(-1)
+    if (ultimo && Math.abs(ultimo.v - p.v) < 0.05) ultimo.fim = p.t
+    else saida.push({ ...p, fim: p.t })
+  }
+  return saida
 }

@@ -1,0 +1,7 @@
+.acoes {
+  position: sticky;
+  bottom: 0;
+  padding-block: 12px;
+  background: var(--color-background-popover);
+  border-top: 1px solid var(--linha);
+}

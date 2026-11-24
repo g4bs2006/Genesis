@@ -7,7 +7,7 @@
  * assinatura da porta para os passos ao vivo.
  */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ControleSimulacao, EstadoRelogio, FonteEstufa } from '../application/portas'
 import { usePreferencias } from '@/shared/stores/preferencias'
 import type { Estufa, Passo } from '../domain/contrato'
@@ -91,6 +91,8 @@ export function useJanela(estufaId: string, duracaoMs = DIA_MS) {
     queryKey: ['historico', estufaId, ancora, duracaoMs],
     enabled: !!ancora,
     staleTime: Infinity, // o passado não muda
+    // trocar o intervalo mantém o gráfico anterior até o novo chegar (sem tela vazia)
+    placeholderData: keepPreviousData,
     queryFn: () => {
       const ate = new Date(ancora!)
       return fonte.historico(estufaId, new Date(ate.getTime() - duracaoMs).toISOString(), ancora!)

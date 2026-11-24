@@ -27,7 +27,13 @@ export function ComparacaoAgenteRegras() {
 
   if (estufas.data && (!agente || !regras))
     return <Text color="secondary">Para comparar, é preciso uma estufa com o agente e outra com as regras fixas.</Text>
-  if (!pronto) return esboco ? <Skeleton height={260} radius={3} /> : null
+  // reserva a altura mesmo antes do esboço aparecer: nada embaixo é empurrado
+  if (!pronto)
+    return (
+      <span style={{ display: 'block', visibility: esboco ? 'visible' : 'hidden' }}>
+        <Skeleton height={320} radius={3} />
+      </span>
+    )
 
   const plantas = agente.plantas
   const resultado = (r: ResumoCiclo) => resultadoDoCiclo(r, plantas, precos.data, 'medio').lucro

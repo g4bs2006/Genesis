@@ -17,3 +17,9 @@
   border-radius: 3px;
   flex: none;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .fatia {
+    transition: none;
+  }
+}

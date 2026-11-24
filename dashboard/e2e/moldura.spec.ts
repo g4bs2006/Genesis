@@ -36,7 +36,7 @@ test('desktop: Agora com gráficos e a comparação com as regras', async ({ pag
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Últimas 24 horas' })).toBeVisible()
   await expect(page.getByText(/O agente rende R\$/)).toBeVisible()
-  await page.getByRole('button', { name: 'pH e EC' }).click()
+  await page.getByRole('tab', { name: 'pH e EC' }).click()
   await expect(page.getByText('pH da solução')).toBeVisible()
 })
 
