@@ -35,7 +35,7 @@ const riscoTexto = ['#B8322B', '#FF7B72'] as const
 // Verde e amarelo puros não passam 4,5:1 como texto sobre branco: versões
 // mais escuras (claro) e mais claras (escuro) só para letra.
 const okTexto = ['#2C7D45', '#6FD08C'] as const
-const atencaoTexto = ['#8A6A12', '#E9C766'] as const
+const atencaoTexto = ['#7A5C0C', '#E9C766'] as const
 
 const m = (par: readonly [string, string]) => [...par] as [string, string]
 

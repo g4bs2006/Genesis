@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider, Link as LinkRouter } from 'react-router-dom'
 import type { ComponentProps } from 'react'
 import { InternationalizationProvider } from '@astryxdesign/core/i18n'
+import ptBR from '@astryxdesign/core/locales/pt-BR.generated.js'
 import { LinkProvider } from '@astryxdesign/core/Link'
 import { Theme } from '@astryxdesign/core/theme'
 import { genesisTheme } from '@/shared/design-system/tema/genesis'
@@ -29,7 +30,7 @@ export function App() {
     <QueryClientProvider client={clienteConsultas}>
       <Theme theme={genesisTheme} mode={modoDoTema[tema]}>
         {/* pt-BR: vírgula decimal nos campos de número e textos dos componentes */}
-        <InternationalizationProvider locale="pt-BR">
+        <InternationalizationProvider locale="pt-BR" messages={{ 'pt-BR': ptBR }}>
           <LinkProvider component={LinkRota}>
             {/* cada módulo recebe aqui o adaptador escolhido em dependencias.ts */}
             <ProvedorEstufa fonte={d.fonteEstufa} controle={d.controleSimulacao}>

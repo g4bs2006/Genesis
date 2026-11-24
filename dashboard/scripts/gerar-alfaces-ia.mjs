@@ -7,7 +7,7 @@
 //   nunca vai para o repositório nem para a saída.
 // - <id-anterior>: continua a conversa de uma imagem já gerada, para manter o
 //   mesmo traço, o mesmo cano e o mesmo ângulo em todos os desenhos.
-// - Salva em src/modules/alface/assets/<nome>.webp e imprime o id da resposta
+// - Salva em src/modules/alface/assets/<nome>.webp (depois rode scripts/limpar-alfaces.mjs) e imprime o id da resposta
 //   e o uso de tokens (para acompanhar o gasto).
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 

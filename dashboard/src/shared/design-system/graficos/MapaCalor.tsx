@@ -20,7 +20,9 @@ export function MapaCalor({ linhas, colunas, valores, formatar, rotulo }: Props)
     <table className={css.tabela} aria-label={rotulo}>
       <thead>
         <tr>
-          <th />
+          <th scope="col" className={css.oculto}>
+            Variável
+          </th>
           {colunas.map((c) => (
             <th key={c} scope="col" className={css.cabeca}>
               {c}
@@ -38,7 +40,7 @@ export function MapaCalor({ linhas, colunas, valores, formatar, rotulo }: Props)
               const v = valores[i]?.[j] ?? 0
               return (
                 <td key={c} className={css.celula}>
-                  <span className={css.fundo} style={{ opacity: v > 0 ? 0.12 + 0.68 * (v / max) : 0 }} aria-hidden />
+                  <span className={css.fundo} style={{ opacity: v > 0 ? 0.12 + 0.6 * (v / max) : 0 }} aria-hidden />
                   <span className={css.valor}>{formatar(v)}</span>
                 </td>
               )

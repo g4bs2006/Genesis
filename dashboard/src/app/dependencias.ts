@@ -23,7 +23,7 @@ export const origemDosDados: 'exemplo' | 'simulada' = demo ? 'exemplo' : 'simula
 const simulador = demo ? null : criarSimuladorBrinquedo()
 
 export const dependencias = {
-  fonteEstufa: simulador ?? criarFonteEstufaExemplo(),
+  fonteEstufa: demo ? criarFonteEstufaExemplo() : simulador!,
   controleSimulacao: simulador,
   fonteTreino: criarFonteTreinoExemplo(),
   fonteGravacoes: criarFonteGravacoesExemplo(),

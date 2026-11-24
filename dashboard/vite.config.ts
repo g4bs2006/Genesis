@@ -38,7 +38,8 @@ export default defineConfig({
         navigateFallback: '/index.html',
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
         // as gravações (~300 KB cada) só baixam quando abertas, não no precache
-        globIgnores: ['**/gravacao-*'],
+        // nem as fontes de alfabetos que o app em português não usa
+        globIgnores: ['**/gravacao-*', '**/*-{cyrillic,cyrillic-ext,vietnamese,symbols2,greek,greek-ext}-*'],
       },
     }),
   ],

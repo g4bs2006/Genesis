@@ -29,7 +29,12 @@ export const roteador = createBrowserRouter([
       { path: '/agente-x-regras', ...pagina(() => import('./composicoes/PaginaAgenteRegras'), 'PaginaAgenteRegras') },
       { path: '/ajustes', element: <PaginaAjustes /> },
       { path: '/dev', ...pagina(() => import('./composicoes/PaginaResumoDev'), 'PaginaDev') },
-      { path: '/dev/treino', ...pagina(() => import('@/modules/treino'), 'PaginaTreino') },
+      {
+        path: '/dev/treino',
+        // direto do arquivo (e não do index do módulo, que a barra lateral já importa):
+        // assim a página e os gráficos dela só baixam quando a rota abre
+        ...pagina(() => import('@/modules/treino/presentation/PaginaTreino'), 'PaginaTreino'),
+      },
       { path: '/dev/modelo', ...pagina(() => import('./composicoes/PaginaModelo'), 'PaginaModelo') },
       { path: '/glossario', ...pagina(() => import('@/modules/glossario'), 'PaginaGlossario') },
       { path: '/dev/gravacoes', ...pagina(() => import('./composicoes/PaginaGravacoes'), 'PaginaGravacoes') },

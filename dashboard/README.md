@@ -25,11 +25,23 @@ Antes de abrir PR: `npm run typecheck && npm run lint && npm test && npm run bui
 
 ## Rotas
 
-| Rota                                                                     | Tela                                               |
-| ------------------------------------------------------------------------ | -------------------------------------------------- |
-| `/`, `/historico`, `/ciclo`, `/dinheiro`, `/agente-x-regras`, `/ajustes` | Produtor                                           |
-| `/dev`, `/dev/treino`, `/dev/modelo`, `/dev/gravacoes`                   | Desenvolvedor                                      |
-| `/visor`                                                                 | Tela fixa na estufa (sempre escura, sem controles) |
+| Rota                                                    | Tela                                                                                 |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `/`                                                     | Agora (celular: o crucial; desktop: cards com sparkline, gráficos e Agente × regras) |
+| `/historico`, `/ciclo`, `/dinheiro`, `/agente-x-regras` | Produtor                                                                             |
+| `/ajustes`, `/glossario`                                | Estufa, preços, tema, modo, instalar o app; os termos                                |
+| `/dev`                                                  | Estufas lado a lado (desktop) ou o resumo do treino (celular)                        |
+| `/dev/treino`, `/dev/modelo`, `/dev/gravacoes`          | Desenvolvedor                                                                        |
+| `/visor`                                                | Tela fixa na estufa (sempre escura, sem controles)                                   |
+| `/laboratorio/alface`                                   | Os desenhos da alface e como cada estado escolhe um                                  |
+
+## Scripts
+
+| Script                                                                                  | O que faz                                       |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `node scripts/gerar-dados-exemplo.ts`                                                   | Regera os dados de exemplo (determinístico)     |
+| `GENESIS_CHAVE_ARQUIVO=<.env> node scripts/gerar-alfaces-ia.mjs <nome> "<pedido>" [id]` | Gera um desenho da alface por IA (decisão 0003) |
+| `node scripts/limpar-alfaces.mjs --corrigir`                                            | Limpa o fundo e reduz os desenhos para 640 px   |
 
 ## Arquitetura
 

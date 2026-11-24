@@ -9,7 +9,6 @@
 import { z } from 'zod'
 import { ConfigTreino, EstadoTreino, Geracao, Gravacao, Modelo, ResumoGravacao } from '../../domain/contrato'
 import type { FonteGravacoes, FonteTreino } from '../../application/portas'
-import arquivo from './treino.json'
 
 /** O formato de treino.json, gerado por scripts/gerar-dados-exemplo.ts. */
 export const DadosTreinoExemplo = z.object({
@@ -23,26 +22,30 @@ export type DadosTreinoExemplo = z.infer<typeof DadosTreinoExemplo>
 
 const LATENCIA_MS = 150
 
-let dados: DadosTreinoExemplo | undefined
-const carregar = () => (dados ??= DadosTreinoExemplo.parse(arquivo))
+let promessa: Promise<DadosTreinoExemplo> | undefined
+/** import() dinâmico: os ~140 KB do JSON só baixam quando alguém pede. */
+const carregar = () => (promessa ??= import('./treino.json').then((m) => DadosTreinoExemplo.parse(m.default)))
 
-const comAtraso = <T>(valor: () => T) =>
-  new Promise<T>((resolver, rejeitar) =>
-    setTimeout(() => {
-      try {
-        resolver(valor())
-      } catch (erro) {
-        rejeitar(erro)
-      }
-    }, LATENCIA_MS),
+const comAtraso = <T>(valor: (d: DadosTreinoExemplo) => T) =>
+  carregar().then(
+    (d) =>
+      new Promise<T>((resolver, rejeitar) =>
+        setTimeout(() => {
+          try {
+            resolver(valor(d))
+          } catch (erro) {
+            rejeitar(erro)
+          }
+        }, LATENCIA_MS),
+      ),
   )
 
 export function criarFonteTreinoExemplo(): FonteTreino {
   return {
-    estado: () => comAtraso(() => carregar().estado),
-    geracoes: () => comAtraso(() => carregar().geracoes),
-    modelos: () => comAtraso(() => carregar().modelos),
-    configuracao: () => comAtraso(() => carregar().configuracao),
+    estado: () => comAtraso((d) => d.estado),
+    geracoes: () => comAtraso((d) => d.geracoes),
+    modelos: () => comAtraso((d) => d.modelos),
+    configuracao: () => comAtraso((d) => d.configuracao),
   }
 }
 
@@ -55,7 +58,7 @@ const ARQUIVOS_GRAVACAO = import.meta.glob<unknown>('./gravacao-*.json', { impor
 
 export function criarFonteGravacoesExemplo(): FonteGravacoes {
   return {
-    listar: () => comAtraso(() => carregar().gravacoes),
+    listar: () => comAtraso((d) => d.gravacoes),
     async obter(id) {
       const importar = ARQUIVOS_GRAVACAO[`./${id}.json`]
       if (!importar) throw new Error(`Gravação não encontrada: ${id}`)
