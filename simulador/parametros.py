@@ -49,6 +49,13 @@ class VanHenten:
     c_v_5: float = 239.0  # p4,7: vapor saturado, constante 3 (°C)
 
 
+# CALIBRAÇÃO (decisão 0004): o Van Henten foi ajustado com alface holandesa e pouca
+# luz; no sol daqui ele cultivava ~1,8 vez a referência brasileira (209–250 g por pé
+# aos 30 dias, Santos et al. 2023). Só um coeficiente muda: c_alfa_beta, de 0,544
+# para 0,307, que leva um termostato simples a ~230 g no dia 30 (média de 3 climas).
+CALIBRADO = VanHenten(c_alfa_beta=0.307)
+
+
 @dataclass(frozen=True)
 class Adaptacao:
     """Fontes completas (com links) na decisão 0004."""

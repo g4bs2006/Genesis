@@ -75,21 +75,20 @@ def test_uma_estufa_igual_a_estufa_zero_de_mil():
     assert torch.isfinite(mil.temperatura).all() and torch.isfinite(mil.massa).all()
 
 
-def test_ciclo_de_35_dias_da_massa_plausivel():
+def test_ciclo_de_30_dias_da_massa_comercial():
     """
-    Com um termostato simples, 35 dias dão alface de tamanho comercial; sem
-    fazer nada, a estufa cozinha e a alface quase não cresce. A referência é
-    Santos et al. 2023: 209 a 250 g por pé aos 30 dias. O Van Henten sem
-    calibrar dá ~1,8 vez isso no sol daqui (decisão 0004), por isso a faixa
-    aceita aqui é larga: o teste pega erro de ordem de grandeza, não de calibração.
+    Com um termostato simples, 30 dias dão alface de tamanho comercial: a
+    referência é Santos et al. 2023, 209 a 250 g por pé aos 30 dias em NFT (a
+    calibração da decisão 0004 mira 230 g). Sem fazer nada, a estufa cozinha e
+    a alface quase não cresce.
     """
-    clima = clima_ameno(35, semente=1)
+    clima = clima_ameno(30, semente=1)
     nada, termostato = Estufa(1, clima), Estufa(1, clima)
     while not nada.fim:
         nada.acionar({})
         t = termostato.ler_sensores()["ar"]["temperatura"]
         termostato.acionar({"exaustor": (t > 22).float()})
-    assert 150 < float(termostato.massa_por_pe[0]) < 600
+    assert 200 < float(termostato.massa_por_pe[0]) < 260
     assert float(nada.massa_por_pe[0]) < 50
 
 

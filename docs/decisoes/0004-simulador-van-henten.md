@@ -1,6 +1,6 @@
 # 0004 — O simulador do ar: Van Henten (1994) adaptado
 
-**Data:** 24/11/2026 · **Situação:** aceita, com uma questão em aberto (a escala da massa)
+**Data:** 24/11/2026 · **Situação:** aceita (com um coeficiente calibrado: ver "Calibração")
 
 ## Contexto
 
@@ -103,9 +103,9 @@ coeficiente de uso da luz.
 
 Os dados do INMET só entram na fase 3.
 
-## Em aberto: a escala da massa
+## Calibração: a escala da massa
 
-Em 35 dias de clima ameno:
+Com o modelo puro, em 30 dias de clima ameno:
 
 | Controle | Massa por pé, dia 30 |
 | --- | --- |
@@ -114,11 +114,30 @@ Em 35 dias de clima ameno:
 | exaustor + sombra 50% | ~290 g |
 | referência: Santos et al. (2023), NFT no Brasil | 209 a 250 g |
 
-O Van Henten sem calibrar cultiva cerca de 1,8 vez mais que a referência.
-Esperado: ele foi ajustado com alface holandesa, com pouca luz, e aqui o sol é
-forte. O comportamento qualitativo está certo (calor e CO₂ baixo freiam,
-ventilação ajuda, sombra demais tira luz). Calibrar a escala é decisão do
-Gabriel, porque mexe num coeficiente do modelo.
+O Van Henten puro cultiva cerca de 1,8 vez a referência. Isso é esperado: ele
+foi ajustado com alface holandesa, com pouca luz, e aqui o sol é forte. O
+comportamento qualitativo estava certo: calor e CO₂ baixo freiam, ventilação
+ajuda, sombra demais tira luz.
+
+O problema estava na nota. A receita do dashboard (`dinheiro/domain/contas.ts`)
+cresce com a massa só até 242 g por pé. Com o modelo puro, quase qualquer
+controle já ganharia o máximo, e a rede não teria motivo para cuidar do
+crescimento.
+
+**Decisão do Gabriel:** calibrar **um** coeficiente. O `c_alfa_beta` (quanto do
+CO₂ fixado vira massa seca) passou de 0,544 para **0,307**, valor escolhido
+assim:
+
+- foram 41 estufas em paralelo, cada uma com um valor entre 0,20 e 0,544;
+- cada uma rodou 3 climas, com um termostato simples (exaustor ligado acima de 22 °C);
+- 0,307 é o valor que dá ~230 g no dia 30, no meio da referência (219 a 232 g nos 3 climas).
+
+Os outros 33 coeficientes não mudaram. O valor calibrado é `CALIBRADO` em
+`simulador/parametros.py` e é o padrão da `Estufa`. O modelo original continua
+disponível com `VanHenten()`.
+
+Limite: calibramos com uma referência só e um controle só. Quando houver
+dados da estufa física (ou mais trabalhos brasileiros), refazer.
 
 ## Consequências
 

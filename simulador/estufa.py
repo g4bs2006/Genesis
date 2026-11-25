@@ -30,7 +30,7 @@ from datetime import datetime, timedelta, timezone
 import torch
 
 from simulador.clima import MINUTOS_POR_PASSO, Clima
-from simulador.parametros import M_CO2, PRESSAO, R, Adaptacao, VanHenten
+from simulador.parametros import CALIBRADO, M_CO2, PRESSAO, R, Adaptacao, VanHenten
 
 ATUADORES = (
     "exaustor",
@@ -98,7 +98,7 @@ class Estufa:
         self,
         n: int,
         clima: Clima,
-        vh: VanHenten = VanHenten(),
+        vh: VanHenten = CALIBRADO,  # VanHenten() para o modelo original, sem calibração
         ad: Adaptacao = Adaptacao(),
         sub_passos: int = 10,
         inicio: datetime = datetime(2026, 10, 1, tzinfo=FUSO),
