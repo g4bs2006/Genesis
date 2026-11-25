@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>02 · Simulador do ar · Genesis</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+  <div class="olho">Passo 02 · Fase B · 24/11/2026</div>
+  <h1>O simulador do ar (Van Henten) e a calibração</h1>
+  <p class="resumo">A rede aprende o que o simulador deixa. Por isso a estufa virtual usa física publicada, cada número tem fonte, e só um coeficiente foi ajustado, com o motivo registrado.</p>
+
+  <h2>O que foi feito</h2>
+  <ul>
+    <li>Pacote <code>simulador/</code>: o modelo de Van Henten (1994) para alface em estufa, em PyTorch.</li>
+    <li><strong>Vetorizado:</strong> N estufas de uma vez. Cada variável é um <em>tensor</em> (uma tabela de números) com uma posição por estufa, e um passo é uma conta só sobre a tabela inteira.</li>
+    <li>Passo de 10 min, integrado em 10 sub-passos de 1 min pelo método de Euler.</li>
+    <li>Atuadores do Genesis no lugar dos controles originais: exaustor, névoa, tela de sombra e LED.</li>
+    <li>Clima ameno sintético com semente, e <code>ler_sensores()</code> / <code>acionar()</code> com os nomes do contrato.</li>
+    <li>10 testes de sanidade.</li>
+  </ul>
+
+  <h2>Por quê</h2>
+  <div class="decisao">
+    <div class="rotulo">Decisão · o modelo de Van Henten</div>
+    <p>É o modelo mais usado em trabalhos de controle de estufa (MPC e aprendizado por reforço). Tem só 4 estados (massa seca, CO₂, temperatura e umidade) e cabe numa conta vetorizada. Os 34 coeficientes foram conferidos em duas fontes: Morcego et al. (2023) e Svensen et al. (2024).</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · integrar com Euler, 1 min por sub-passo</div>
+    <p>O modelo diz quanto cada coisa muda por segundo. Integrar é andar 1 min com essa taxa, recalcular e repetir. O termo mais rápido (a troca de ar com o exaustor no máximo) leva ~100 s para acontecer; com 60 s por sub-passo a conta fica estável. Passos grandes demais fariam a conta "explodir".</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · a névoa esfria e umedece, e para com o ar saturado</div>
+    <p>No estudo a nebulização não tinha efeito colateral e o campeão abusou dela. Aqui a água só evapora se o ar tiver espaço para o vapor: a vazão efetiva é a máxima × (1 − umidade relativa).</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · ventilação de estufa brasileira</div>
+    <p>O Van Henten original vai só até 0,0075 m³/s por m². No sol daqui isso deixaria a estufa acima de 40 °C mesmo aberta. Com exaustores, a recomendação é 1 troca de ar por minuto: 0,041 m³/s por m² (UF/IFAS).</p>
+  </div>
+
+  <h3>Os números da adaptação, com fonte</h3>
+  <div class="tabela"><table>
+    <tr><th>Item</th><th>Valor</th><th>Fonte</th></tr>
+    <tr><td>Ventilação máxima</td><td class="n">0,041 m³/s/m²</td><td>Watson et al., UF/IFAS AE030 (2019)</td></tr>
+    <tr><td>Névoa</td><td class="n">8,9 g/m²/min</td><td>Ishii et al. (2016), JARQ</td></tr>
+    <tr><td>Tela de sombra</td><td class="n">até 50%</td><td>Cometti et al. (2020), Hortic. Bras.</td></tr>
+    <tr><td>LED</td><td class="n">200 µmol/m²/s · 80 W/m²</td><td>Both (2003); DLC Hort V4.0 (2,5 µmol/J)</td></tr>
+    <tr><td>Matéria seca da alface</td><td class="n">4,5%</td><td>Both (2003); Santos et al. (2023)</td></tr>
+    <tr><td>Pés por m²</td><td class="n">16 (25 × 25 cm)</td><td>Santos et al. (2023), Irriga</td></tr>
+    <tr><td>Transmissão da cobertura</td><td class="n">0,7</td><td><strong>sem fonte</strong>: estimativa, só afeta o sensor de luz</td></tr>
+  </table></div>
+
+  <h2>O que surpreendeu: a alface grande demais</h2>
+  <p>Com o modelo puro e um termostato simples, a alface chegava a <strong>~435 g por pé no dia 30</strong>. A referência brasileira (Santos et al. 2023, NFT) é <strong>209 a 250 g</strong>. Isso é esperado: o Van Henten foi ajustado com alface holandesa e pouca luz, e aqui o sol é forte.</p>
+  <p>Isso importava por causa da nota: a receita do dashboard cresce com a massa só até 242 g por pé. Com o modelo puro, quase qualquer controle ganharia o máximo, e a rede não teria motivo para cuidar do crescimento.</p>
+  <div class="decisao">
+    <div class="rotulo">Decisão do Gabriel · calibrar um coeficiente</div>
+    <p>Mudou só o <code>c_alfa_beta</code> (quanto do CO₂ fixado vira massa seca), de 0,544 para <strong>0,307</strong>. Os outros 33 ficaram iguais à tese, e o modelo original continua disponível em <code>VanHenten()</code>.</p>
+    <p>Alternativas descartadas: manter o modelo puro (a nota passaria a medir quase só energia); mudar a régua de preço do dashboard (ela representa o mercado, não o modelo).</p>
+  </div>
+  <figure>
+    <img class="grafico" src="imagens/02-calibracao.png" alt="Massa por pé no dia 30 contra o valor de c_alfa_beta, com a faixa de referência de 209 a 250 g">
+    <figcaption>41 estufas em paralelo, cada uma com um valor de <code>c_alfa_beta</code>, em 3 climas. A curva cruza a faixa verde da referência; 0,307 dá ~230 g, no meio dela. O ponto vermelho é o modelo original.</figcaption>
+  </figure>
+
+  <h3>Resultado com a calibração (dia 30)</h3>
+  <div class="tabela"><table>
+    <tr><th>Controle</th><th>Massa por pé</th><th>Temperatura máxima</th></tr>
+    <tr><td>Não fazer nada</td><td class="n">15 g</td><td class="n">50 °C</td></tr>
+    <tr><td>Termostato simples</td><td class="n">219 a 232 g (3 climas)</td><td class="n">~29 °C</td></tr>
+  </table></div>
+  <p>Com a estufa fechada, ela vira um forno e a alface consome o CO₂ do ar até quase parar de crescer. É o que acontece numa estufa real fechada.</p>
+
+  <h2>Como reproduzir</h2>
+<pre><code>.venv\Scripts\python.exe -m pytest simulador</code></pre>
+
+  <h2>Em aberto</h2>
+  <div class="aberto">
+    <p>A calibração usou uma referência só e um controle só. Refazer quando houver dados da estufa física ou mais trabalhos brasileiros.</p>
+    <p>Um ciclo de 35 dias leva ~15 s, quase tudo sobrecarga do Python por sub-passo.</p>
+  </div>
+
+  <h2>Links</h2>
+  <ul>
+    <li>Commits <code>f096124</code>, <code>f22f417</code>, <code>6e9e4a7</code> · PR <a href="https://github.com/g4bs2006/Genesis/pull/30">#30</a></li>
+    <li><a href="../decisoes/0004-simulador-van-henten.md">Decisão 0004</a> (todas as fontes, com links) · <code>simulador/estufa.py</code> · <code>simulador/parametros.py</code></li>
+  </ul>
+
+  <div class="navegacao"><a href="01-ambiente.html">← 01 · Ambiente</a><a href="03-controle-e-nota.html">03 · Controle e nota →</a></div>
+</main>
+</body>
+</html>

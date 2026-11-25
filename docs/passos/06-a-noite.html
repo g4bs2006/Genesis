@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>06 · A noite de treino · Genesis</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+  <div class="olho">Passo 06 · Fase E · 24–25/11/2026</div>
+  <h1>A primeira noite de treino</h1>
+  <p class="resumo">A fase 1 do currículo treinando sozinha, das 23h28 às 5h, em 3 sementes, mandando cada geração para o celular. Esta página tem o plano; os resultados entram de manhã.</p>
+
+  <h2>O que está rodando</h2>
+<pre><code>.venv\Scripts\python.exe -m treino.treinar --horas 5.45 --sementes 3 --nuvem --onde "notebook · processador"</code></pre>
+  <div class="tabela"><table>
+    <tr><th>Semente</th><th>Pasta</th><th>Horário previsto</th></tr>
+    <tr><td>7</td><td><code>treino/saidas/fase1-semente7-20261124</code></td><td>23h28 → ~01h17</td></tr>
+    <tr><td>8</td><td><code>treino/saidas/fase1-semente8-20261124</code></td><td>~01h17 → ~03h09</td></tr>
+    <tr><td>9</td><td><code>treino/saidas/fase1-semente9-20261124</code></td><td>~03h09 → 05h00</td></tr>
+  </table></div>
+  <p>População de 1024 redes, ~40 a 55 s por geração: umas 120 gerações por semente. Prova do campeão a cada 25 gerações e checkpoint a cada 5.</p>
+
+  <h2>Por quê</h2>
+  <div class="decisao">
+    <div class="rotulo">Decisão · 3 sementes em sequência</div>
+    <p>A semente fixa a população inicial e os climas. Se as 3 chegarem a resultados parecidos, o resultado é do método e não da sorte. O artigo vai pedir isso.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · uma janela própria, fora da sessão do Claude</div>
+    <p>O treino não pode morrer se o Claude Code fechar ou ficar sem memória: mais cedo, ele parou os processos em segundo plano para liberar memória. A janela "Genesis - treino da noite" é um PowerShell independente.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão do Gabriel · até as 5h</div>
+    <p>O orçamento é 5,45 h, repartido pelo tempo que sobra a cada semente.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Energia</div>
+    <p>Na tomada, o Windows já estava configurado para nunca suspender. Na bateria ele suspende em 15 min, por isso o notebook fica na tomada e com a tampa aberta.</p>
+  </div>
+
+  <h2>Checklist da manhã</h2>
+  <ol>
+    <li>A janela "Genesis - treino da noite" deve dizer <em>fim da execução fase1-semente9-…</em>. No celular, a execução mais recente aparece como parada.</li>
+    <li>Gerar o relatório de cada semente: a curva (<code>curva.png</code>) e a tabela campeão × regras × PID × nada em 10 climas inéditos (<code>relatorio.md</code>), dentro da pasta da execução:
+<pre><code>.venv\Scripts\python.exe -m treino.relatorio treino/saidas/fase1-semente7-20261124
+.venv\Scripts\python.exe -m treino.relatorio treino/saidas/fase1-semente8-20261124
+.venv\Scripts\python.exe -m treino.relatorio treino/saidas/fase1-semente9-20261124</code></pre></li>
+    <li>Conferir os arquivos contra o contrato:
+<pre><code>cd dashboard; node scripts/validar-treino.mjs ../treino/saidas/fase1-semente7-20261124</code></pre></li>
+    <li>Se o treino tiver parado no meio (queda de energia), continuar de onde parou:
+<pre><code>.venv\Scripts\python.exe -m treino.treinar --retomar treino/saidas/fase1-semente8-20261124 --horas 1 --nuvem</code></pre></li>
+  </ol>
+
+  <h2>Riscos</h2>
+  <div class="aberto">
+    <p><strong>Queda de energia:</strong> o celular fica parado na última geração enviada, sem aviso de "parado". O checkpoint guarda tudo a cada 5 gerações.</p>
+    <p><strong>Memória:</strong> com outras sessões abertas, a memória livre chegou a 2 GB mais cedo. O treino em si usa pouco.</p>
+  </div>
+
+  <h2>Resultados</h2>
+  <div class="aberto"><p>Entram aqui de manhã: as 3 curvas, a tabela das 3 sementes e o que o campeão aprendeu a fazer.</p></div>
+
+  <div class="navegacao"><a href="05-vies-e-envio.html">← 05 · Viés e envio</a><a href="index.html">índice</a></div>
+</main>
+</body>
+</html>

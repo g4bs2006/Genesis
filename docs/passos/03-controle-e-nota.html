@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>03 · Controle e nota · Genesis</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+  <div class="olho">Passo 03 · Fase C · 24/11/2026</div>
+  <h1>Os controladores de comparação e a nota em R$</h1>
+  <p class="resumo">A rede aprende a maximizar a nota, e só ela: a nota define o comportamento. Este passo cria a régua (os controladores que a rede precisa vencer), a camada de segurança e a própria nota.</p>
+
+  <h2>O que foi feito</h2>
+  <ul>
+    <li>Pacote <code>controle/</code>, com três controladores que seguem a mesma interface da rede, <code>decidir(observacao) → acoes</code>:
+      <ul>
+        <li><strong>Nada:</strong> o piso, quanto a estufa sofre sozinha.</li>
+        <li><strong>Regras fixas:</strong> termostato e umidostato, como a maioria das estufas hoje.</li>
+        <li><strong>PID:</strong> o controle clássico da indústria.</li>
+      </ul>
+    </li>
+    <li>A camada de segurança, entre a decisão e o atuador.</li>
+    <li>O <code>ResumoCiclo</code> do contrato e a nota.</li>
+    <li>7 testes.</li>
+  </ul>
+
+  <h2>Por quê</h2>
+  <div class="decisao">
+    <div class="rotulo">Decisão · PID com split range, sem o D</div>
+    <p><strong>P</strong> reage ao erro de agora; <strong>I</strong>, à insistência do erro (a soma no tempo); <strong>D</strong>, à velocidade da mudança. O D ficou em zero, porque com passo de 10 min ele só amplifica oscilação. <em>Split range</em> é usar uma saída só para dois atuadores em sequência: a demanda de 0 a 1 liga o exaustor, e de 1 a 2 entra a névoa.</p>
+    <p>O <em>anti-windup</em> impede a integral de acumular quando a saída já está no limite. Sem ele, depois de uma noite fria a integral fica tão negativa que o exaustor demora horas para ligar quando o sol chega.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · a segurança corta a ação, além de anotar</div>
+    <p>Ela barra a névoa com o ar acima de 90% de umidade e reduz o LED quando a potência total passa de 82 W/m². O roteiro dizia que, no simulador, ela "só registra"; ela passou a cortar também, para o treino viver as mesmas regras que o hardware. Cada ação barrada custa R$ 0,05, para a rede não usar a segurança como muleta.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · a punição começa no MEIO da faixa</div>
+    <p>A lição do estudo: a nota não punia nada dentro da faixa, e o campeão viveu colado em 25,9 °C, logo abaixo do limite de 26. Aqui a punição cresce devagar do meio até a borda (no máximo R$ 0,01 por passo) e rápido fora dela (R$ 0,50 por meia-faixa).</p>
+    <p>A umidade não entra na punição, porque o VPD já mede o que ela faz com a planta, e contar as duas puniria o mesmo problema duas vezes.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · receita e custos iguais aos do dashboard</div>
+    <p>Mesmos preços (pé a R$ 2,00, R$ 0,85/kWh, mudas, fixos) e mesma régua de peso: o pé de 220 g vale o preço cheio, abaixo de 120 g não vende, e o máximo é +10%. Assim o número do treino e o da tela de Dinheiro batem.</p>
+  </div>
+
+  <h2>A nota</h2>
+<pre><code>nota = receita − custos − punição          (R$ por ciclo, estufa de 1000 pés)
+d = |valor − meio da faixa| ÷ meia largura   (0 no meio, 1 na borda)
+punição por passo = peso × (0,01 × d²  +  0,50 × (d − 1) se d &gt; 1)
+pesos: temperatura 1 · VPD 1 · CO₂ 0,5 · cada ação barrada R$ 0,05</code></pre>
+
+  <h2>Números (35 dias, clima ameno, sementes 1 e 2)</h2>
+  <div class="tabela"><table>
+    <tr><th>Controlador</th><th>Nota (R$)</th><th>Massa por pé</th><th>Energia</th><th>Água da névoa</th><th>Punição</th></tr>
+    <tr><td>Nada</td><td class="n">−8.355 / −7.779</td><td class="n">8 g</td><td class="n">0</td><td class="n">0</td><td class="n">~7.700</td></tr>
+    <tr><td>Regras fixas</td><td class="n">364 / 393</td><td class="n">250 g</td><td class="n">~171 kWh</td><td class="n">~3,2 m³</td><td class="n">~1.320</td></tr>
+    <tr><td>PID</td><td class="n">677 / 713</td><td class="n">267 g</td><td class="n">~171 kWh</td><td class="n">~11,9 m³</td><td class="n">~935</td></tr>
+  </table></div>
+  <figure>
+    <img class="grafico" src="imagens/03-nota-e-lucro.png" alt="Lucro, punição e nota das regras fixas e do PID">
+    <figcaption>A nota não é o lucro. As duas regras lucram parecido (~R$ 1.650), mas o PID mantém o clima perto do meio da faixa, paga menos punição e tira quase o dobro da nota.</figcaption>
+  </figure>
+
+  <h2>O que se aprendeu</h2>
+  <div class="erro">
+    <div class="rotulo">Parte da punição é inevitável</div>
+    <p>Sem aquecedor, as noites de 13 °C deixam a estufa abaixo de 18 °C, e o ar úmido da noite deixa o VPD abaixo de 0,5. Para a evolução isso não pesa, porque ela compara redes no mesmo clima e uma parcela igual para todas não muda a ordem. Mas a rede pode aprender algo útil: fechar a estufa à noite segura o calor.</p>
+  </div>
+
+  <h2>Como reproduzir</h2>
+<pre><code>.venv\Scripts\python.exe -m pytest controle</code></pre>
+
+  <h2>Em aberto</h2>
+  <div class="aberto">
+    <p>Os pesos da punição são escolha nossa, não física: dizem quanto vale em reais o risco que o modelo não simula (queima de borda, fungo). Revisar depois do primeiro treino.</p>
+    <p>As potências (exaustor ~4,4 W/m², névoa ~2,1 W/m²) são ordem de grandeza com a conta à vista, e os 82 W/m² disponíveis são uma suposição (não há projeto elétrico ainda).</p>
+  </div>
+
+  <h2>Links</h2>
+  <ul>
+    <li>Commits <code>2c2fc01</code>, <code>80fc871</code> · PR <a href="https://github.com/g4bs2006/Genesis/pull/31">#31</a></li>
+    <li><a href="../decisoes/0005-controle-e-nota.md">Decisão 0005</a> · <code>controle/</code></li>
+  </ul>
+
+  <div class="navegacao"><a href="02-simulador.html">← 02 · Simulador</a><a href="04-rede-e-ensaio.html">04 · A rede e o ensaio →</a></div>
+</main>
+</body>
+</html>
