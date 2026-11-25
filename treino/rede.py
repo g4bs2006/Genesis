@@ -48,6 +48,7 @@ ENTRADAS = (
 )
 SAIDAS = ("exaustor", "sombreamento", "nebulizacao", "luz", "dosagemAB", "dosagemAcido", "reposicaoAgua", "bomba")
 PASSOS_POR_HORA = 6
+VIES_SAIDA_INICIAL = -2.0  # ver pesos_iniciais
 
 
 def n_pesos(arq=ARQUITETURA) -> int:
@@ -102,12 +103,18 @@ def pesos_iniciais(p: int, g: torch.Generator, arq=ARQUITETURA) -> torch.Tensor:
     """
     P redes sorteadas. Cada peso ~ normal com desvio 1/√(entradas da camada),
     para a soma de um neurônio começar do tamanho de uma entrada (nem morta em
-    zero, nem saturada em ±1). Vieses começam em zero.
+    zero, nem saturada em ±1). Vieses das ocultas começam em zero.
+
+    Os vieses da SAÍDA começam em VIES_SAIDA_INICIAL (−2): sigmoide(−2) ≈ 0,12,
+    então toda rede nasce com os atuadores quase desligados. Com viés 0 elas
+    nasciam com tudo a ~50%, LED incluído, e o primeiro ensaio gastou 7× a
+    energia das regras (docs/passos/04-rede-e-ensaio.html).
     """
     partes = []
-    for a, b in zip(arq[:-1], arq[1:]):
+    pares = list(zip(arq[:-1], arq[1:]))
+    for k, (a, b) in enumerate(pares):
         partes.append(torch.randn(p, a * b, generator=g) / math.sqrt(a))
-        partes.append(torch.zeros(p, b))
+        partes.append(torch.full((p, b), VIES_SAIDA_INICIAL if k == len(pares) - 1 else 0.0))
     return torch.cat(partes, dim=1)
 
 

@@ -37,6 +37,12 @@ def test_propagar_igual_a_conta_do_dashboard():
     assert torch.allclose(rapido[1], torch.tensor(a), atol=1e-5)
 
 
+def test_redes_novas_nascem_com_atuadores_quase_desligados():
+    g = torch.Generator().manual_seed(4)
+    saidas = propagar(pesos_iniciais(200, g), torch.randn(200, 20, generator=g))
+    assert 0.08 < float(saidas.mean()) < 0.2  # ~sigmoide(−2) = 0,12, e não 0,5
+
+
 def test_evolucao_guarda_a_elite_e_o_tamanho():
     g = torch.Generator().manual_seed(2)
     pop = torch.randn(40, 5, generator=g)
