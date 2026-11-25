@@ -109,6 +109,11 @@ O que foi feito, em ordem, e onde está cada coisa. As decisões ficam no
     receita do dashboard satura em 242 g por pé. A rede não teria motivo para
     cuidar do crescimento. Um coeficiente foi calibrado (`c_alfa_beta` 0,544 →
     0,307) contra Santos et al. (2023): ~230 g no dia 30.
+- **Fase C (controle):** `controle/`, com Nada, Regras fixas, PID (split range
+  exaustor → névoa), a camada de segurança, o `ResumoCiclo` e a nota em R$.
+  A punição começa no meio da faixa (lição do estudo). Em 35 dias: regras fixas
+  ~R$ 380, PID ~R$ 700, não fazer nada ~R$ −8.000. Ver a
+  [decisão 0005](decisoes/0005-controle-e-nota.md).
 
 ## Onde está cada coisa
 
