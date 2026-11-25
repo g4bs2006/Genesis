@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>05 · Viés de saída e envio · Genesis</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+  <div class="olho">Passo 05 · Fase D/E · 24/11/2026</div>
+  <h1>Redes que nascem quase desligadas, e o envio de dentro do treino</h1>
+  <p class="resumo">Duas mudanças antes da noite. A primeira faz as redes começarem perto do sensato: o ensaio 2 rendeu ~R$ 400 a mais desde a primeira geração. A segunda faz o próprio treino mandar os números ao celular, para as 3 sementes rodarem numa janela só.</p>
+
+  <h2>1. O viés de saída em −2</h2>
+  <div class="decisao">
+    <div class="rotulo">Decisão do Gabriel · começar o viés das 8 saídas em −2</div>
+    <p>No ensaio 1 (passo 04), toda rede nascia com as saídas em ~0,5, ou seja, todos os atuadores ligados pela metade, dia e noite, inclusive o LED. Com o viés da última camada em −2, a sigmoide começa em ~0,12. A arquitetura e o contrato não mudam: é só o valor inicial de 8 dos 1.992 pesos.</p>
+    <p>Alternativas descartadas:</p>
+    <ul>
+      <li>Esperar a evolução aprender a desligar sozinha: ela aprende, mas gasta gerações saindo de muito longe.</li>
+      <li>Tirar o LED da fase 1: mudaria o vetor de ações, que precisa ser o mesmo em todas as fases.</li>
+    </ul>
+  </div>
+  <figure>
+    <img class="grafico" src="imagens/05-ensaios-comparados.png" alt="Melhor nota por geração nos ensaios 1 e 2">
+    <figcaption>Mesma semente, logo o mesmo clima a cada geração: a comparação é justa. O ensaio 2 começa ~R$ 350 acima e continua subindo. As regras fixas (tracejado) ainda estão à frente.</figcaption>
+  </figure>
+  <div class="tabela"><table>
+    <tr><th>Na geração 10</th><th>Ensaio 1 (viés 0)</th><th>Ensaio 2 (viés −2)</th></tr>
+    <tr><td>Melhor rede no clima da geração</td><td class="n">−R$ 499</td><td class="n">−R$ 110</td></tr>
+    <tr><td>Campeão nos 10 climas da prova</td><td class="n">−R$ 516</td><td class="n">−R$ 42</td></tr>
+    <tr><td>Campeão em 10 climas inéditos: nota</td><td class="n">−R$ 513</td><td class="n">−R$ 54</td></tr>
+    <tr><td>Campeão em 10 climas inéditos: energia</td><td class="n">1.206 kWh</td><td class="n">490 kWh</td></tr>
+    <tr><td>Campeão em 10 climas inéditos: fora da faixa</td><td class="n">65%</td><td class="n">90%</td></tr>
+    <tr><td>Regras fixas, mesmos climas inéditos</td><td class="n" colspan="2">R$ 360 · 164 kWh · 76% fora</td></tr>
+  </table></div>
+  <div class="erro">
+    <div class="rotulo">O que se aprendeu</div>
+    <p>O campeão do ensaio 2 economiza demais: liga pouco o exaustor e passa mais tempo fora da faixa (90%). O do ensaio 1 errava para o outro lado. A evolução precisa achar o meio-termo, e é isso que as horas da noite devem mostrar.</p>
+    <p>A mediana piorou (−R$ 1.788 contra −R$ 1.287): muitas redes novas deixam a estufa esquentar. A mediana mede a população inteira; quem importa para a próxima geração são as melhores.</p>
+  </div>
+
+  <h2>2. O envio para o celular de dentro do treino</h2>
+  <div class="decisao">
+    <div class="rotulo">Decisão do Gabriel · o treino chama o envio</div>
+    <p>O <code>treino/nuvem.py</code> olha uma pasta só, e cada semente grava numa pasta própria. Com <code>--nuvem</code>, o <code>treinar.py</code> roda o mesmo <code>Sincronizador</code> numa <strong>thread</strong> à parte: uma segunda linha de execução dentro do mesmo programa, a cada 15 s. Ela segue a semente atual sozinha, e internet lenta ou fora do ar nunca atrasa a evolução. No fim, ou no Ctrl+C, ela manda o estado final.</p>
+    <p>Alternativas descartadas: uma janela de envio por semente (falharia na troca, comigo dormindo); mandar só a primeira semente.</p>
+  </div>
+  <div class="aberto">
+    <div class="rotulo">Limite conhecido</div>
+    <p>Se o programa inteiro morrer (queda de energia), ninguém marca a execução como "parada" na nuvem: o celular fica na última geração enviada. Com o <code>nuvem.py</code> numa janela separada, isso era detectado depois de 15 min.</p>
+  </div>
+  <p>Teste: uma execução minúscula (6 redes, 3 gerações) chegou inteira ao Supabase: estado final com <code>rodando = false</code>, 3 gerações, o modelo e a gravação. Depois foi apagada.</p>
+
+  <h2>Outro detalhe</h2>
+  <p>O orçamento <code>--horas</code> agora é repartido pelo tempo que sobra: cada semente recebe (fim − agora) ÷ (sementes que faltam). Uma semente que atrase não rouba tempo das outras.</p>
+
+  <h2>Como reproduzir</h2>
+<pre><code>.venv\Scripts\python.exe -m treino.treinar --horas 0.17 --prova-cada 5 --saidas treino/saidas/ensaio2
+.venv\Scripts\python.exe -m treino.relatorio treino/saidas/ensaio2/fase1-semente7-20261124
+.venv\Scripts\python.exe -m treino.treinar --populacao 6 --dias 1 --geracoes 3 --prova-cada 3 --semente 99 --nuvem --saidas %TEMP%\teste</code></pre>
+
+  <h2>Em aberto</h2>
+  <div class="aberto"><p>A noite (passo 06): 3 sementes (7, 8 e 9) até as 5h, com <code>--nuvem</code>.</p></div>
+
+  <h2>Links</h2>
+  <ul>
+    <li>Commits <code>bdb9ae6</code> (viés), <code>c368fa1</code> (envio) · branch <code>treino-fase-d-neuroevolucao</code></li>
+    <li><code>treino/rede.py</code> (<code>pesos_iniciais</code>) · <code>treino/treinar.py</code> (<code>EnvioNuvem</code>)</li>
+  </ul>
+
+  <div class="navegacao"><a href="04-rede-e-ensaio.html">← 04 · A rede e o ensaio</a><a href="index.html">índice</a></div>
+</main>
+</body>
+</html>

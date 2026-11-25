@@ -86,3 +86,19 @@ a2.axhline(0, color="black", lw=0.8)
 a2.set_title("Nota (não fazer nada: R$ −8.379, fora da escala)")
 a2.set_ylabel("R$ por ciclo")
 salvar(fig, "04-ensaio1-energia.png")
+
+# --- Passo 05: ensaio 1 × ensaio 2 (mesma semente: o mesmo clima a cada geração) ---
+# Melhor nota por geração, dos treino.log de treino/saidas/ensaio e ensaio2.
+ens1 = [-887, -837, -865, -658, -714, -583, -536, -606, -421, -499, -419]
+ens2 = [-543, -448, -339, -301, -208, -199, -227, -104, -24, -110]
+regras = [357, 256, 311, 352, 301, 413, 355, 276, 393, 395, 417]
+fig, ax = plt.subplots(figsize=(9.5, 4.4))
+ax.plot(range(1, 12), ens1, "o-", color=LARANJA, label="ensaio 1: redes nascem com tudo a ~50%")
+ax.plot(range(1, 11), ens2, "o-", color=AZUL, lw=2.2, label="ensaio 2: redes nascem com tudo a ~12%")
+ax.plot(range(1, 12), regras, "--", color=CINZA, label="regras fixas (mesmo clima)")
+ax.set_xlabel("geração")
+ax.set_ylabel("melhor nota (R$ por ciclo)")
+ax.set_title("Começar com os atuadores quase desligados: ~R$ 400 melhor desde a 1ª geração")
+ax.legend(fontsize=9)
+ax.grid(alpha=0.3)
+salvar(fig, "05-ensaios-comparados.png")
