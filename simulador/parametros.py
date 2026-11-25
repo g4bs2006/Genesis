@@ -51,26 +51,32 @@ class VanHenten:
 
 @dataclass(frozen=True)
 class Adaptacao:
-    # Exaustor: ventilação máxima por m² de piso (m³/s/m² = m/s). Ver decisão 0004.
-    ventilacao_max: float = 0.04
-    # Nebulização: água borrifada no máximo (kg/m²/s). Ver decisão 0004.
-    nebulizacao_max: float = 6.0e-5
-    # Calor que 1 kg de água rouba ao evaporar (J/kg), a ~25 °C.
+    """Fontes completas (com links) na decisão 0004."""
+
+    # Exaustor: 1 troca de ar por minuto num pé-direito de ~2,4 m (m³/s por m² de piso).
+    # Watson et al., UF/IFAS AE030 (2019). O Van Henten original vai só até 0,0075.
+    ventilacao_max: float = 0.041
+    # Nebulização cíclica: 8,9 g de água por m² por minuto (Ishii et al. 2016, JARQ 50(2)).
+    nebulizacao_max: float = 8.9e-3 / 60
+    # Calor que 1 kg de água rouba ao evaporar (J/kg). FAO-56 (Allen et al. 1998).
     calor_latente: float = 2.45e6
-    # Tela de sombra: fração da radiação cortada com ela toda fechada.
+    # Tela de sombra: até 50% sem perda na alface (Cometti et al. 2020, Hortic. Bras.).
     sombra_max: float = 0.5
-    # LED: potência elétrica máxima por m² (W/m²) e eficácia (µmol de luz por J).
-    lampada_w: float = 60.0
+    # LED: 200 µmol/m²/s de luz suplementar (Both 2003) a 2,5 µmol/J (mínimo DLC Hort V4.0)
+    # pedem 80 W/m² de potência elétrica.
     lampada_eficacia: float = 2.5
-    # Conversões de luz: µmol/s de PAR por W de radiação global, e por W de PAR.
-    par_por_w_global: float = 2.1
-    par_por_w_par: float = 4.57
-    # Fração da radiação de fora que passa pela cobertura (só para o sensor de luz).
+    lampada_w: float = 200 / 2.5
+    # Luz: PPFD = radiação global × 0,5 (fração PAR) × 4,6 µmol/J (bigleaf, Rg.to.PPFD).
+    par_por_w_global: float = 0.5 * 4.6
+    par_por_w_par: float = 4.6
+    # Fração do sol que passa pela cobertura. SEM FONTE: estimativa, e só entra no
+    # sensor de luz (no Van Henten a cobertura já está embutida em c_rad_phot).
     transmissao: float = 0.7
-    # Alface: pés por m² e fração de matéria seca na massa fresca.
+    # Alface: espaçamento 25×25 cm em NFT (Santos et al. 2023, Irriga 28(2)) = 16 pés/m²;
+    # matéria seca = 4,5% da massa fresca (Both 2003; Santos 2023 dá o mesmo).
     pes_por_m2: float = 16.0
-    materia_seca: float = 0.05
-    # Massa seca no transplante (kg/m²): o estado inicial usado nas fontes.
+    materia_seca: float = 0.045
+    # Massa seca no transplante (kg/m²): o estado inicial de Morcego 2023 e Svensen 2024.
     massa_inicial: float = 0.0035
 
 
