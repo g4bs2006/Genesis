@@ -12,7 +12,7 @@ import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
-import { InfoTip } from '@astryxdesign/core/InfoTip'
+import { OQueEIsso } from '@/modules/glossario'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 import { Selector } from '@astryxdesign/core/Selector'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
@@ -45,19 +45,8 @@ import {
 import { DiagramaRede } from '@/shared/design-system/graficos/DiagramaRede'
 import { rotuloEixo } from '@/shared/design-system/graficos/estilo'
 import { useAtraso } from '@/shared/hooks/useAtraso'
+import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
 import { formatarHora, formatarNumero } from '@/shared/lib/formatar'
-
-/** Os termos técnicos, explicados em português simples (o InfoTip ao lado de cada um). */
-const TERMOS = {
-  ativacao:
-    'O número que sai de um neurônio depois da conta dele. Perto de zero: o neurônio está quieto. Longe de zero, para mais ou para menos: ele está influenciando a decisão.',
-  peso: 'Quanto uma ligação amplifica (ou inverte) o sinal que passa por ela. É isso que o treino ajusta: a rede inteira é só uma lista de uns 2 mil pesos.',
-  tanh: 'A função que "entorta" a soma de cada neurônio das camadas do meio e a deixa entre -1 e 1. Sem ela, a rede inteira seria uma conta linear e não aprenderia curvas.',
-  sigmoide:
-    'A função das saídas: espreme qualquer número entre 0 e 1. Vira "quanto ligar" cada atuador: 0 é desligado, 1 é no máximo.',
-  atribuicao:
-    'Para cada entrada, zeramos o valor dela e rodamos a rede de novo. A diferença na saída mostra quanto aquela entrada empurrou a decisão para cima (laranja) ou para baixo (azul).',
-} as const
 
 export function PaginaModelo() {
   const modelos = useModelos()
@@ -98,6 +87,7 @@ function campeoesPorFase(modelos: Modelo[]): Modelo[] {
 
 function Conteudo({ campeoes, estufas }: { campeoes: Modelo[]; estufas: Estufa[] }) {
   const [id, setId] = useState(campeoes.at(-1)!.id)
+  const largo = useTelaLarga()
   const modelo = campeoes.find((m) => m.id === id) ?? campeoes.at(-1)!
   // a estufa que roda este modelo; sem ela, a estufa principal do agente
   const agentes = estufas.filter((e) => e.controlador.tipo === 'agente')
@@ -118,11 +108,22 @@ function Conteudo({ campeoes, estufas }: { campeoes: Modelo[]; estufas: Estufa[]
             {!rodaEste && ' (que roda outro modelo)'}
           </Text>
         </VStack>
-        <SegmentedControl label="Campeão" value={modelo.id} onChange={setId}>
-          {campeoes.map((m) => (
-            <SegmentedControlItem key={m.id} value={m.id} label={`Fase ${m.fase} · g ${m.geracao}`} />
-          ))}
-        </SegmentedControl>
+        {largo ? (
+          <SegmentedControl label="Campeão" value={modelo.id} onChange={setId}>
+            {campeoes.map((m) => (
+              <SegmentedControlItem key={m.id} value={m.id} label={`Fase ${m.fase} · g ${m.geracao}`} />
+            ))}
+          </SegmentedControl>
+        ) : (
+          // estreito: as fases lado a lado cortariam a geração
+          <Selector
+            label="Campeão"
+            isLabelHidden
+            value={modelo.id}
+            onChange={(v) => v && setId(v)}
+            options={campeoes.map((m) => ({ value: m.id, label: `Fase ${m.fase} · g ${m.geracao}` }))}
+          />
+        )}
       </HStack>
 
       <RedePorDentro key={estufa.id} modelo={modelo} estufa={estufa} aoLado={<AcertosErros estufa={estufa} />} />
@@ -132,17 +133,6 @@ function Conteudo({ campeoes, estufas }: { campeoes: Modelo[]; estufas: Estufa[]
 }
 
 /** Um termo com o "i" do lado. */
-function Termo({ children, explicacao }: { children: ReactNode; explicacao: string }) {
-  return (
-    <HStack gap={1} align="center">
-      <Text type="supporting" color="secondary">
-        {children}
-      </Text>
-      <InfoTip content={explicacao} label={`O que é ${String(children)}`} size="xsm" />
-    </HStack>
-  )
-}
-
 type ChaveControle = Exclude<keyof Brutos, 'diaDoCiclo'>
 /** As entradas principais que dá para mexer à mão (o resto fica no valor seguido). */
 const CONTROLES: {
@@ -242,8 +232,8 @@ function RedePorDentro({ modelo, estufa, aoLado }: { modelo: Modelo; estufa: Est
           </HStack>
           <Text type="supporting" color="secondary">
             {manual
-              ? 'Mexa e veja a rede reagir. As outras entradas ficam paradas no último valor seguido.'
-              : `As leituras de ${estufa.nome} entram pela esquerda, passam por duas camadas e viram as 8 ações da direita, ao vivo.`}
+              ? 'Mexa e veja a rede reagir; o resto fica no último valor seguido.'
+              : `As leituras de ${estufa.nome} entram à esquerda e viram as 8 ações à direita, ao vivo.`}
           </Text>
           {manual && (
             <Grid columns={{ minWidth: 200 }} gap={3}>
@@ -274,10 +264,10 @@ function RedePorDentro({ modelo, estufa, aoLado }: { modelo: Modelo; estufa: Est
             <Skeleton height={520} radius={2} />
           ) : null}
           <HStack gap={4} wrap="wrap">
-            <Termo explicacao={TERMOS.ativacao}>ativação: cor da bolinha</Termo>
-            <Termo explicacao={TERMOS.peso}>peso: as linhas (só os 15% sinais mais fortes)</Termo>
-            <Termo explicacao={TERMOS.tanh}>tanh nas camadas do meio</Termo>
-            <Termo explicacao={TERMOS.sigmoide}>sigmoide nas saídas</Termo>
+            <OQueEIsso id="sinalNeuronio" rotulo="ativação: cor da bolinha" />
+            <OQueEIsso id="peso" rotulo="peso: as linhas (só os 15% sinais mais fortes)" />
+            <OQueEIsso id="tanh" rotulo="tanh nas camadas do meio" />
+            <OQueEIsso id="sigmoide" rotulo="sigmoide nas saídas" />
           </HStack>
         </VStack>
       </Card>
@@ -288,7 +278,7 @@ function RedePorDentro({ modelo, estufa, aoLado }: { modelo: Modelo; estufa: Est
             <HStack justify="between" align="center" wrap="wrap" gap={2}>
               <HStack gap={1} align="center">
                 <Heading level={2}>O que mais pesou nesta decisão</Heading>
-                <InfoTip content={TERMOS.atribuicao} label="O que é atribuição" />
+                <OQueEIsso id="atribuicaoEntrada" />
               </HStack>
               <Selector
                 label="Saída"
@@ -301,8 +291,8 @@ function RedePorDentro({ modelo, estufa, aoLado }: { modelo: Modelo; estufa: Est
             </HStack>
             {contribuicoes ? (
               <>
-                <Text color="secondary">
-                  {SAIDAS[saida]!.rotulo} em {Math.round((saidas[saida] ?? 0) * 100)}%. {frasePeso(contribuicoes)}
+                <Text color="secondary" maxLines={1}>
+                  {SAIDAS[saida]!.rotulo} em {Math.round((saidas[saida] ?? 0) * 100)}% · {frasePeso(contribuicoes)}
                 </Text>
                 <BarrasAtribuicao valores={contribuicoes} />
               </>
@@ -327,9 +317,9 @@ function frasePeso(valores: number[]): string {
   const sobe = ordem.reduce((a, b) => (b.v > a.v ? b : a))
   const desce = ordem.reduce((a, b) => (b.v < a.v ? b : a))
   const partes = []
-  if (sobe.v > 0.005) partes.push(`Quem mais empurrou para cima: ${nomeEntrada(sobe.i)}.`)
-  if (desce.v < -0.005) partes.push(`Quem mais segurou: ${nomeEntrada(desce.i)}.`)
-  return partes.join(' ') || 'Nenhuma entrada sozinha mudou muito esta saída.'
+  if (sobe.v > 0.005) partes.push(`↑ ${nomeEntrada(sobe.i)}`)
+  if (desce.v < -0.005) partes.push(`↓ ${nomeEntrada(desce.i)}`)
+  return partes.join(' · ') || 'nenhuma entrada sozinha mudou muito esta saída'
 }
 
 const LINHAS_BARRAS = 10
@@ -348,9 +338,12 @@ function BarrasAtribuicao({ valores }: { valores: number[] }) {
     <ParentSize debounceTime={50} style={{ width: '100%', height: altura }}>
       {({ width }) => {
         if (width <= 0) return null
-        const esquerda = 150
-        const meio = esquerda + (width - esquerda - 56) / 2
-        const metade = (width - esquerda - 56) / 2
+        // a coluna dos nomes cresce com o nome mais longo (Geist Mono 11px: ~6,7 px por letra), até 55% da largura
+        const esquerda = Math.min(width * 0.55, Math.max(...linhas.map((l) => nomeEntrada(l.i).length)) * 6.7 + 14)
+        // coluna fixa do valor: "+30,0 p.p." tem 10 letras
+        const valor = 76
+        const meio = esquerda + (width - esquerda - valor) / 2
+        const metade = (width - esquerda - valor) / 2
         return (
           <svg width={width} height={altura} role="img" aria-label={rotulo}>
             <line x1={meio} x2={meio} y1={0} y2={altura} stroke="var(--linha-2)" />

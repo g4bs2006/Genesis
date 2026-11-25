@@ -126,7 +126,8 @@ function Dinheiro({
           {prejuizo ? 'Prejuízo' : 'Lucro'} previsto · {NOME_CENARIO[cenario].toLowerCase()} (
           {formatarReais(precos.alfacePorPe[cenario])}/pé)
         </Text>
-        <Grid columns={3} gap={3}>
+        {/* largura mínima: no celular "por ano" desce para a linha de baixo em vez de sair do card */}
+        <Grid columns={{ minWidth: 140 }} gap={3}>
           {(
             [
               ['por ciclo', p.ciclo],
@@ -299,13 +300,13 @@ function Suposicoes() {
   return (
     <Card variant="muted">
       <VStack gap={1}>
-        <Text weight="medium">Como a conta é feita</Text>
+        <HStack gap={1} align="center">
+          <Text weight="medium">Como a conta é feita</Text>
+          <OQueEIsso id="suposicoesConta" />
+        </HStack>
         <Text type="supporting" color="secondary">
-          O preço por pé vale para uma cabeça de {MASSA_COMERCIAL_G} g; cabeças mais leves valem proporcionalmente menos
-          (abaixo de {MASSA_MINIMA_VENDA_G} g, não vendem) e o bônus por peso para em 10%. Todas as plantas chegam à
-          colheita e todas são vendidas. Mês e ano supõem ciclos seguidos, sem dias parados. O mínimo de plantas supõe
-          energia e água proporcionais ao número de pés (é otimista: o clima gasta quase o mesmo com menos plantas).
-          Preços de referência: alface CEAGESP / Conab Prohort; energia ANEEL. Edite com os seus.
+          Preço por pé de uma cabeça de {MASSA_COMERCIAL_G} g (bônus até 10%); abaixo de {MASSA_MINIMA_VENDA_G} g não
+          vende.
         </Text>
       </VStack>
     </Card>

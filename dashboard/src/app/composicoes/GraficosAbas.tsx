@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
 import { Tab, TabList } from '@astryxdesign/core/TabList'
 import { Text } from '@astryxdesign/core/Text'
+import { HStack } from '@astryxdesign/core/HStack'
 import { VStack } from '@astryxdesign/core/VStack'
 import type { Passo } from '@/modules/estufa'
 import { GraficoSerie } from '@/shared/design-system/graficos/GraficoSerie'
 import { formatarData, formatarHora } from '@/shared/lib/formatar'
 import { abasDoHistorico } from './series'
+import { OQueEIsso } from '@/modules/glossario'
 
 /** Os gráficos com abas (Temperatura · pH e EC · Água · Luz e CO₂). Usado no Agora e no Histórico. */
 export function GraficosAbas({ passos, altura = 200 }: { passos: Passo[]; altura?: number }) {
@@ -48,10 +50,10 @@ export function GraficosAbas({ passos, altura = 200 }: { passos: Passo[]; altura
           </VStack>
         ))}
       </VStack>
-      <Text type="supporting" color="secondary">
-        Faixa verde: onde a alface fica bem. Embaixo, as ações do controlador (mais escuro = mais forte; pontos =
-        doses).
-      </Text>
+      <HStack gap={4} wrap="wrap">
+        <OQueEIsso id="faixaBoa" rotulo="faixa verde: onde a alface fica bem" />
+        <OQueEIsso id="faixaAcoes" rotulo="embaixo: as ações do controlador" />
+      </HStack>
     </VStack>
   )
 }

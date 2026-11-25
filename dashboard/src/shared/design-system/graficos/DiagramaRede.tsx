@@ -12,10 +12,19 @@ type Props = {
   saidas?: string[]
   rotulo: string
   altura?: number
+  /**
+   * Versão pequena (ao lado de uma gravação): sem rótulos de entrada nem nome
+   * das camadas, bolinhas menores e só as ligações mais fortes. Os rótulos
+   * das saídas, se vierem, devem ser curtos.
+   */
+  compacto?: boolean
+  /** saídas a destacar com um anel vermelho (ex.: discordam da ação gravada) */
+  alertas?: number[]
 }
 
 /** fração das ligações desenhadas em cada camada: só as mais fortes, para a figura ficar calma */
 const FRACAO_LIGACOES = 0.15
+const FRACAO_LIGACOES_COMPACTO = 0.05
 /** abaixo disso a figura encolhe inteira (viewBox) em vez de espremer os rótulos */
 const LARGURA_MINIMA = 640
 
@@ -49,12 +58,27 @@ function Desenho({
   rotulo,
   altura,
   largura,
+  compacto: compactoPedido = false,
+  alertas = [],
 }: Props & { altura: number; largura: number }) {
-  const W = Math.max(largura, LARGURA_MINIMA)
+  // estreito demais para os rótulos (celular): em vez de encolher a figura
+  // inteira até a letra sumir, desenha a versão compacta na largura real
+  const compacto = compactoPedido || largura < LARGURA_MINIMA
+  // compacto: cabe na largura que tiver (sem o mínimo de 640 px)
+  const W = compacto ? largura : Math.max(largura, LARGURA_MINIMA)
   const H = altura
-  const comEntradas = entradas && entradas.length === ativacoes[0]?.length
+  const comEntradas = !compacto && entradas && entradas.length === ativacoes[0]?.length
   const comSaidas = saidas && saidas.length === ativacoes.at(-1)?.length
-  const m = { topo: 28, baixo: 10, esquerda: comEntradas ? 190 : 20, direita: comSaidas ? 170 : 20 }
+  const m = compacto
+    ? {
+        topo: 6,
+        baixo: 6,
+        esquerda: 8,
+        // o rótulo mais longo + " 100%" (Geist Mono 11px: ~6,7 px por letra)
+        direita: comSaidas ? Math.max(...saidas.map((t) => t.length)) * 6.7 + 56 : 8,
+      }
+    : { topo: 28, baixo: 10, esquerda: comEntradas ? 190 : 20, direita: comSaidas ? 170 : 20 }
+  const fracao = compacto ? FRACAO_LIGACOES_COMPACTO : FRACAO_LIGACOES
   const L = ativacoes.length
   const xDe = (l: number) => m.esquerda + (l * (W - m.esquerda - m.direita)) / Math.max(1, L - 1)
 
@@ -80,9 +104,7 @@ function Desenho({
       j: k % para,
       s: peso * (de[Math.floor(k / para)] ?? 0),
     }))
-    const fortes = todas
-      .sort((a, b) => Math.abs(b.s) - Math.abs(a.s))
-      .slice(0, Math.ceil(todas.length * FRACAO_LIGACOES))
+    const fortes = todas.sort((a, b) => Math.abs(b.s) - Math.abs(a.s)).slice(0, Math.ceil(todas.length * fracao))
     const maior = Math.abs(fortes[0]?.s ?? 0) || 1
     return fortes.map((f) => ({ ...f, forca: Math.abs(f.s) / maior }))
   })
@@ -92,11 +114,12 @@ function Desenho({
   return (
     <svg width={largura} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={rotulo}>
       <title>{rotulo}</title>
-      {ativacoes.map((_, l) => (
-        <text key={l} x={xDe(l)} y={12} textAnchor="middle" {...rotuloEixo}>
-          {nomeCamada(l)}
-        </text>
-      ))}
+      {!compacto &&
+        ativacoes.map((_, l) => (
+          <text key={l} x={xDe(l)} y={12} textAnchor="middle" {...rotuloEixo}>
+            {nomeCamada(l)}
+          </text>
+        ))}
       {ligacoes.map(({ l, i, j, s, forca }) => (
         <line
           key={`${l}-${i}-${j}`}
@@ -111,7 +134,7 @@ function Desenho({
       ))}
       {ativacoes.map((camada, l) => {
         const { y, passo } = ys[l]!
-        const r = Math.max(2.5, Math.min(7, passo * 0.36))
+        const r = compacto ? Math.max(1.6, Math.min(4, passo * 0.36)) : Math.max(2.5, Math.min(7, passo * 0.36))
         const saida = l === L - 1
         return camada.map((v, i) => (
           <g key={`${l}-${i}`}>
@@ -126,6 +149,9 @@ function Desenho({
               stroke="var(--texto-3)"
               strokeOpacity={0.35}
             />
+            {saida && alertas.includes(i) && (
+              <circle cx={xDe(l)} cy={y[i]} r={r + 2.5} fill="none" stroke="var(--risco)" strokeWidth={1.5} />
+            )}
             {l === 0 && comEntradas && (
               <>
                 {entradas[i]?.grupo && entradas[i]?.grupo !== entradas[i - 1]?.grupo && (

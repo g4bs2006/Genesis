@@ -31,9 +31,18 @@ import {
   type Grupo,
   type Passo,
 } from '@/modules/estufa'
-import { AvisoTreino, useGravacao, useGravacoes, type Gravacao, type ResumoGravacao } from '@/modules/treino'
+import {
+  AvisoTreino,
+  useGravacao,
+  useGravacoes,
+  useModelos,
+  type Gravacao,
+  type ResumoGravacao,
+} from '@/modules/treino'
 import { useAtraso } from '@/shared/hooks/useAtraso'
+import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
 import { formatarData, formatarHora, formatarNumero } from '@/shared/lib/formatar'
+import { MiniRede } from './MiniRede'
 import css from './PaginaGravacoes.module.css'
 import {
   alternar,
@@ -52,6 +61,7 @@ import {
   VELOCIDADES,
   type EventoGravacao,
 } from './reproducao'
+import { OQueEIsso } from '@/modules/glossario'
 
 export function PaginaGravacoes() {
   const lista = useGravacoes()
@@ -70,6 +80,7 @@ function rotuloDoPasso(passos: readonly Passo[], i: number): string {
 }
 
 function Reproducao({ resumos }: { resumos: ResumoGravacao[] }) {
+  const largo = useTelaLarga()
   const [busca] = useSearchParams()
   // os parâmetros só valem na chegada (link copiado ou pulo vindo da página Modelo)
   const [inicial] = useState(() => {
@@ -185,11 +196,11 @@ function Reproducao({ resumos }: { resumos: ResumoGravacao[] }) {
   return (
     <VStack gap={5} paddingBlock={6}>
       <VStack gap={1}>
-        <Heading level={1}>Gravações</Heading>
-        <Text color="secondary">
-          Ciclos gravados no treino, reproduzidos com as ações que a rede tomou. Escolha até {MAXIMO_LADO_A_LADO} para
-          ver lado a lado no mesmo relógio.
-        </Text>
+        <HStack gap={1} align="center">
+          <Heading level={1}>Gravações</Heading>
+          <OQueEIsso id="gravacao" />
+        </HStack>
+        <Text color="secondary">Escolha até {MAXIMO_LADO_A_LADO} ciclos gravados para ver no mesmo relógio.</Text>
       </VStack>
 
       <Card>
@@ -199,7 +210,8 @@ function Reproducao({ resumos }: { resumos: ResumoGravacao[] }) {
             return (
               <ListItem
                 key={r.id}
-                label={r.titulo}
+                // nó em vez de texto: o título quebra linha no celular em vez de perder a fase
+                label={<Text>{r.titulo}</Text>}
                 description={`modelo ${r.modeloId} · semente ${r.semente} · gravada em ${formatarData(r.criadaEm)}, ${formatarHora(r.criadaEm)}`}
                 endContent={
                   <Text type="supporting" color="secondary" hasTabularNumbers>
@@ -278,9 +290,8 @@ function Reproducao({ resumos }: { resumos: ResumoGravacao[] }) {
                   onClick={() => void copiarLink()}
                 />
               </HStack>
-              <Text type="supporting" color="secondary">
-                Teclado: espaço toca ou pausa; setas andam uma hora (com Shift, um dia).
-              </Text>
+              {/* atalhos de teclado não servem no celular */}
+              {largo && <OQueEIsso id="replay" rotulo="atalhos do teclado" />}
             </VStack>
           </Card>
 
@@ -311,6 +322,7 @@ const Painel = memo(function Painel({
 }) {
   // cada gravação tem ~0,5 MB e só é baixada quando aberta (import dinâmico)
   const { data: gravacao, error } = useGravacao(resumo.id)
+  const modelo = useModelos().data?.find((m) => m.id === resumo.modeloId)
   const esboco = useAtraso(!gravacao && !error)
   useEffect(() => {
     if (gravacao) aoCarregar(gravacao)
@@ -321,7 +333,10 @@ const Painel = memo(function Painel({
       <section aria-label={`Reprodução de ${resumo.titulo}`}>
         <VStack gap={3}>
           <VStack gap={0.5}>
-            <Text weight="medium">{resumo.titulo}</Text>
+            {/* uma linha: os painéis lado a lado ficam alinhados (o título inteiro aparece no hover) */}
+            <Text weight="medium" maxLines={1}>
+              {resumo.titulo}
+            </Text>
             <Text type="supporting" color="secondary">
               modelo {resumo.modeloId} · semente {resumo.semente}
             </Text>
@@ -329,7 +344,10 @@ const Painel = memo(function Painel({
           {error ? (
             <Text color="secondary">Não deu para carregar esta gravação.</Text>
           ) : gravacao ? (
-            <Instante passos={gravacao.passos} passo={Math.min(passo, gravacao.passos.length - 1)} />
+            <>
+              <Instante passos={gravacao.passos} passo={Math.min(passo, gravacao.passos.length - 1)} />
+              <MiniRede modelo={modelo} passos={gravacao.passos} passo={Math.min(passo, gravacao.passos.length - 1)} />
+            </>
           ) : (
             esboco && <Skeleton height={420} radius={2} />
           )}

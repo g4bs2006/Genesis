@@ -18,6 +18,7 @@ import { useAtraso } from '@/shared/hooks/useAtraso'
 import { formatarData, formatarHora, formatarNumero } from '@/shared/lib/formatar'
 import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
 import { PaginaEstufasLadoALado } from './PaginaEstufasLadoALado'
+import { OQueEIsso } from '@/modules/glossario'
 
 /** /dev: no desktop, as estufas lado a lado; no celular, o resumo. */
 export function PaginaDev() {
@@ -74,9 +75,7 @@ function PaginaResumoDev() {
           <Numero rotulo="melhor nota (última geração)" valor={ultima ? formatarReaisCurto(ultima.melhor) : '—'} />
           <Numero rotulo="melhor de todas" valor={melhorDeTodas === null ? '—' : formatarReaisCurto(melhorDeTodas)} />
         </HStack>
-        <Text type="supporting" color="secondary">
-          Nota = reais por ciclo (venda − gastos − punição por tempo fora da faixa).
-        </Text>
+        <OQueEIsso id="nota" rotulo="nota = reais por ciclo" />
       </Card>
       {origem === 'nuvem' ? (
         // Treino de verdade: a curva das últimas gerações. (Os eventos vêm da
@@ -95,9 +94,6 @@ function PaginaResumoDev() {
                 formatarNota={formatarReaisCurto}
                 altura={180}
               />
-              <Text type="supporting" color="secondary">
-                Verde: a melhor rede. Azul: a mediana. Tracejada: as regras fixas.
-              </Text>
             </VStack>
           </Card>
         )

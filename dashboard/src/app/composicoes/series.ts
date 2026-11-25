@@ -35,8 +35,8 @@ const acao = (
   cor,
   pontos: passos.map((p) => ({ t: t(p), v: ler(p) })),
 })
-const faixa = (v: Variavel): [number, number] => [valorExibido(v, FAIXAS[v].min), valorExibido(v, FAIXAS[v].max)]
-const formato = (v: Variavel) => {
+export const faixa = (v: Variavel): [number, number] => [valorExibido(v, FAIXAS[v].min), valorExibido(v, FAIXAS[v].max)]
+export const formato = (v: Variavel) => {
   const f = FAIXAS[v]
   const unidade = v === 'nivel' ? '%' : f.unidade ? ` ${f.unidade}` : ''
   return (x: number) => `${formatarNumero(x, f.casas)}${unidade}`

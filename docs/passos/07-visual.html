@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>07 · Correções visuais do dashboard · Genesis</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+  <div class="olho">Passo 07 · Dashboard · 25/11/2026</div>
+  <h1>Correções visuais do dashboard (rodada 1)</h1>
+  <p class="resumo">Sete mudanças pedidas pelo Gabriel: barra lateral que recolhe, tema claro/escuro num clique, o "?" funcionando, menos texto nas páginas, gráficos de linha no centro, um visual próprio (verde-estufa e ícones do Genesis) e uma rede pequena andando junto com cada gravação. Depois, uma revisão visual feita por um subagente e uma segunda rodada de correções.</p>
+
+  <h2>Antes e depois</h2>
+  <figure>
+    <img class="grafico" src="../revisao-visual/fase-4/desktop-claro-agente-x-regras.png" alt="Agente × regras antes: tabela e barras, sem gráfico no tempo">
+    <figcaption>Antes (fase 4): Agente × regras era tabela e barras. Barra lateral cinza, sem botão de recolher nem de tema.</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/fase-13/desktop-claro-agente-x-regras.png" alt="Agente × regras depois: gráfico de linha das 24 horas no topo">
+    <figcaption>Depois: a linha das últimas 24 horas (agente cheio, regras fixas tracejadas) vem primeiro. Olhe o item ativo da barra, agora num véu verde-pinho, e os ícones novos.</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/fase-4/desktop-claro-historico.png" alt="Histórico antes">
+    <figcaption>Antes: Histórico com a leitura do ponteiro como texto solto no topo do gráfico.</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/fase-13/desktop-claro-historico.png" alt="Histórico depois">
+    <figcaption>Depois: legenda embaixo (só porque há duas linhas), "faixa boa" escrita no gráfico e as explicações viraram "?".</figcaption>
+  </figure>
+  <p>Todas as capturas novas (todas as rotas, desktop e celular, claro e escuro, barra aberta e recolhida) estão em <code>docs/revisao-visual/fase-13/</code>.</p>
+
+  <h2>O que foi feito, item por item</h2>
+
+  <h3>1. Barra lateral que recolhe</h3>
+  <p>O <code>SideNav</code> do Astryx já sabia recolher (<code>collapsible</code>), com o nome de cada ícone num <em>tooltip</em> (o balãozinho que aparece ao passar o mouse) e o <code>aria-label</code> para leitor de tela. Não precisou escrever do zero.</p>
+  <div class="decisao">
+    <div class="rotulo">Decisão · botão no topo, não no rodapé</div>
+    <p>O botão embutido do Astryx fica no rodapé. O pedido era "visível no topo da barra": desliguei o embutido (<code>hasButton: false</code>) e pus o <code>SideNavCollapseButton</code> no topo. A escolha fica salva em <code>usePreferencias.barraRecolhida</code>, junto do modo e do tema.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · o que some quando recolhe</div>
+    <p>A lista de estufas, o card "Treino rodando" e o seletor Produtor/Desenvolvedor são largos; numa faixa de ícones só quebrariam o layout. Somem com a barra recolhida e voltam ao abrir. O modo continua em Ajustes. Alternativa descartada: versões em ícone de cada bloco, mais código para pouco ganho.</p>
+  </div>
+
+  <h3>2. Tema claro/escuro num clique</h3>
+  <p>Um botão sol/lua (<code>molecules/BotaoTema.tsx</code>): no rodapé da barra no desktop (fica à vista mesmo recolhida) e no topo de cada página no celular. Ele lê <code>useTheme().mode</code>, que já resolve "sistema" para claro ou escuro, então com "sistema" o primeiro clique vai para o oposto do que está na tela. "Sistema" continua em Ajustes. A transição suave (<code>trocarComTransicao</code>) saiu de Ajustes para <code>shared/lib</code> e é usada pelos dois.</p>
+  <div class="erro">
+    <p><strong>Alarme falso no caminho:</strong> no navegador de testes do Claude o clique parecia não pegar. Medindo, a janela estava em segundo plano e desenhava 1 quadro por segundo; a transição de tema espera um quadro. No Playwright normal (e no navegador de verdade) os quadros correm a 60 por segundo e o clique troca na hora. O teste e2e cobre isso.</p>
+  </div>
+
+  <h3>3. O "?" funcionando</h3>
+  <p><strong>O defeito exato:</strong> a dica abria e fechava certo com mouse, teclado e toque, mas o texto era ilegível: <strong>preto sobre fundo preto</strong> no tema claro (contraste medido 1,12:1; o mínimo é 4,5:1) e claro sobre claro no escuro.</p>
+  <p><strong>A causa:</strong> o balão do Astryx tem fundo invertido (<code>--color-background-inverted</code>) e já põe a cor de letra certa. O nosso <code>OQueEIsso</code> montava o conteúdo com <code>&lt;Text&gt;</code>, que força a cor de texto da página (feita para fundo claro). A dica do Modelo (<code>Termo</code>) passava texto puro e por isso funcionava.</p>
+  <p><strong>A correção:</strong> uma vez só, no componente compartilhado: <code>color="inherit"</code> nos textos da dica. E o <code>Termo</code> do Modelo deixou de existir: agora há um jeito só de mostrar dica, o <code>OQueEIsso</code> (com um <code>rotulo</code> opcional para as legendas). Os dois textos que só existiam no Modelo foram para o glossário (<code>sinalNeuronio</code>, <code>atribuicaoEntrada</code>).</p>
+  <p>Teste: <code>dashboard/e2e/dica.spec.ts</code> abre e fecha uma dica com mouse, teclado e toque e mede o contraste da letra contra o balão nos dois temas. Com o código antigo ele falha (1,12:1); com o novo passa.</p>
+
+  <h3>4. Menos texto nas páginas</h3>
+  <p>Regra: a página mostra dado e gráfico; a explicação mora no "?" e no glossário. No máximo um subtítulo de uma linha por página ou card. Nada didático foi apagado:</p>
+  <div class="tabela"><table>
+    <tr><th>Página</th><th>Texto que saiu</th><th>Para onde foi</th></tr>
+    <tr><td>Agente × regras</td><td>"Os dados de exemplo têm um ciclo; com o backend, cada ciclo novo entra aqui."</td><td>Saiu (aviso de fonte; o selo "dados de exemplo" já diz isso). Ficou a primeira frase como subtítulo.</td></tr>
+    <tr><td>Agente × regras (tabela)</td><td>"Resultado = venda − energia, nutrientes, ácido, água, mudas e custos fixos."</td><td>Glossário <code>margem</code> (exemplo), pelo "?" ao lado da linha "Estufa 1 contra Regras fixas · 1000 pés".</td></tr>
+    <tr><td>Agora e Histórico (gráficos 24 h)</td><td>"Faixa verde: onde a alface fica bem. Embaixo, as ações do controlador (mais escuro = mais forte; pontos = doses)."</td><td>Dois "?": <code>faixaBoa</code> (já existia) e o termo novo <code>faixaAcoes</code>.</td></tr>
+    <tr><td>Dinheiro</td><td>O parágrafo "Como a conta é feita" (5 frases).</td><td>Termo novo <code>suposicoesConta</code> (hipóteses e fontes de preço). Ficou uma linha com os números do código: peso da cabeça e mínimo para vender.</td></tr>
+    <tr><td>Estufas lado a lado</td><td>"Passe o ponteiro (ou arraste o dedo) no gráfico..." (2 linhas)</td><td>Encurtado para uma linha.</td></tr>
+    <tr><td>Estufas lado a lado</td><td>"Acontece em todas as estufas no mesmo instante e vira um evento. Bom para ver quem aguenta."</td><td>"?" do termo <code>perturbacao</code> (já dizia isso) ao lado do título.</td></tr>
+    <tr><td>Gravações</td><td>"Ciclos gravados no treino, reproduzidos com as ações que a rede tomou..."</td><td>"?" do termo <code>gravacao</code> no título; subtítulo de uma linha.</td></tr>
+    <tr><td>Gravações</td><td>"Teclado: espaço toca ou pausa; setas andam uma hora (com Shift, um dia)."</td><td>Glossário <code>replay</code> (exemplo), pelo "?" "atalhos do teclado".</td></tr>
+    <tr><td>Modelo</td><td>"As leituras ... entram pela esquerda, passam por duas camadas e viram as 8 ações da direita, ao vivo."</td><td>Encurtado para uma linha (as camadas estão no próprio desenho e no "?" de cada termo).</td></tr>
+    <tr><td>Resumo (Dev)</td><td>"Nota = reais por ciclo (venda − gastos − punição por tempo fora da faixa)."</td><td>"?" do termo <code>nota</code> (já explicava), rotulado "nota = reais por ciclo".</td></tr>
+    <tr><td>Resumo (Dev)</td><td>"Verde: a melhor rede. Azul: a mediana. Tracejada: as regras fixas."</td><td>Legenda desenhada pelo próprio gráfico (item 5).</td></tr>
+    <tr><td>Treino</td><td>"A queda ao entrar numa fase é esperada... O que importa é ela voltar a subir e passar das regras fixas."</td><td>Termo novo <code>quedaDeFase</code>, pelo "?" "por que a curva cai ao mudar de fase?".</td></tr>
+    <tr><td>Treino</td><td>"O campeão atual (g812, fase 4) refaz a prova de cada fase. Abaixo de 90%, ele esqueceu."</td><td>Encurtado para uma linha; a explicação já estava em <code>esquecimentoCatastrofico</code>.</td></tr>
+  </table></div>
+  <p>Ficaram como estavam: Ajustes (são instruções de uso), estados vazios e mensagens de erro.</p>
+
+  <h3>5. Gráficos de linha no centro</h3>
+  <p>O objetivo é acompanhar o projeto olhando tendências no tempo. Sem biblioteca nova: os gráficos que já existiam (<code>GraficoSerie</code>, <code>CurvaAprendizado</code>, <code>CurvaCrescimento</code>) ganharam o que faltava, seguindo a skill de visualização e a <a href="../decisoes/0001-graficos.md">decisão 0001</a>:</p>
+  <ul>
+    <li><strong>Valor exato ao passar o mouse</strong> nos três: um balão (<code>BalaoGrafico</code>) dentro do próprio SVG, que vira para a esquerda perto da borda, então nunca é cortado pelo card. A letra usa as cores de texto; a cor da série vai só no tracinho ao lado.</li>
+    <li><strong>Legenda só com duas linhas ou mais</strong> (<code>LegendaGrafico</code>), com o tracinho cheio ou tracejado igual ao da linha: a identidade não depende só da cor. As legendas feitas à mão nas páginas saíram.</li>
+    <li><strong>Linha de referência com nome:</strong> a faixa boa ganhou o rótulo "faixa boa"; as regras fixas são sempre a linha tracejada; a curva de crescimento marca "hoje".</li>
+    <li><strong>Maiores:</strong> Estufas lado a lado 260 → 340 px; Ciclo 220 → 300 px.</li>
+    <li><strong>Agente × regras</strong> ganhou, no topo, "No tempo: as últimas 24 horas": agente e regras fixas na mesma variável, com a faixa boa. A comparação por variável ("Onde cada um erra") continua em barras, porque compara categorias, não tempo.</li>
+  </ul>
+
+  <h3>6. Visual próprio e ícones</h3>
+  <p>Três direções foram mostradas ao Gabriel; <strong>ele escolheu o "verde-estufa"</strong> e <strong>ícones em SVG próprio</strong>. Detalhes, tabela de tokens e o que da decisão 0002 continua: <a href="../decisoes/0006-visual-proprio.md">decisão 0006</a>.</p>
+  <ul>
+    <li>Destaque verde-pinho (<code>#1F6B57</code> claro, <code>#7CCFAF</code> escuro) no lugar do preto, também no item selecionado e no anel de foco; cinzas com tom de papel; cantos 6/10/14 px.</li>
+    <li>12 ícones no traço do broto da marca, cada um dizendo o que a página é (estufa, alface crescendo, nota com folha, balança, rede, curva subindo, play...), com versão cheia para a aba ativa no celular.</li>
+  </ul>
+  <div class="tabela"><table>
+    <tr><th>Par de cores</th><th>Contraste</th><th>Mínimo</th></tr>
+    <tr><td>destaque × página (claro)</td><td>5,73:1</td><td>3:1 (borda, foco) / 4,5:1 (texto)</td></tr>
+    <tr><td>branco sobre o destaque (botão)</td><td>6,37:1</td><td>4,5:1</td></tr>
+    <tr><td>destaque × página (escuro)</td><td>9,98:1</td><td>4,5:1</td></tr>
+    <tr><td>texto sobre o destaque (escuro)</td><td>9,68:1</td><td>4,5:1</td></tr>
+    <tr><td>dica (claro / escuro)</td><td>15,6:1 / 14,9:1</td><td>4,5:1</td></tr>
+    <tr><td><code>--ok-texto</code> × página nova</td><td>4,58:1</td><td>4,5:1 (passa no limite)</td></tr>
+  </table></div>
+  <p>Fonte dos números: fórmula de luminância relativa da WCAG 2.1, calculada sobre os hex do tema.</p>
+  <div class="decisao">
+    <div class="rotulo">Decisão · o tema mudou no genesisTheme.ts, não no editor do Astryx</div>
+    <p>O <code>AGENTS.md</code> prefere o editor de tema experimental. Ele guarda o tema numa estrutura própria e, nesta versão, recusa até perguntas sem o pacote <code>@astryxdesign/theme-neutral</code>. O <code>genesisTheme.ts</code> já é um tema do Astryx compilado pelo CLI dele (<code>npm run tema</code>), sem sobrescrita em <code>:root</code>. Migrar a estrutura ficou fora do passo.</p>
+  </div>
+
+  <h3>7. A rede pequena ao lado da gravação</h3>
+  <p>Cada gravação em reprodução ganhou um diagrama pequeno da rede (<code>MiniRede.tsx</code>): as entradas acesas à esquerda, os caminhos mais fortes, as camadas do meio e as 8 saídas (atuadores) com a porcentagem, andando junto com o relógio. É a variante <code>compacto</code> do mesmo <code>DiagramaRede</code> da página Modelo: sem os rótulos longos, bolinhas menores, só os 5% de ligações mais fortes (o Modelo mostra 15%) e rótulos curtos nas saídas.</p>
+  <div class="decisao">
+    <div class="rotulo">Decisão · GPU × navegador: o diagrama é ilustração</div>
+    <p>O contrato de dados diz que o dashboard não recalcula a rede: o treino conta na placa de vídeo em <em>float32</em> (números com ~7 casas de precisão) e o navegador em <em>float64</em> (~16 casas); os arredondamentos diferem e, passo a passo, uma estufa recalculada se afastaria da real. Por isso:</p>
+    <p>(a) as ações mostradas na reprodução continuam sendo as <strong>gravadas</strong>; (b) o diagrama é recalculado só para mostrar por onde o sinal passou, com a marca discreta "rede · ilustração" e um "?" que explica (termo <code>redeRecalculada</code>); (c) se a saída recalculada se afasta da ação gravada mais de <strong>5 pontos</strong> (0,05), a saída ganha um anel vermelho e uma linha "≠ gravado" diz quanto. Diferença de arredondamento fica na 6ª ou 7ª casa; 5 pontos só aparecem se algo é diferente de verdade (modelo trocado, entrada diferente).</p>
+    <p>Só os 4 atuadores do ar (exaustor, sombreamento, nebulização, luz) são comparados: neles a saída da rede, de 0 a 1, é a própria ação gravada. Dosagens (ml), reposição e bomba (liga/desliga) ainda não têm a conversão definida no simulador (a fase 1 só controla o ar). Ação barrada pela camada de segurança não conta como divergência.</p>
+  </div>
+  <div class="erro">
+    <p><strong>Nos dados de exemplo, tudo diverge.</strong> As gravações de exemplo foram inventadas para a tela, não saíram desses pesos; o anel vermelho aparece em quase todo passo. Isso é o aviso funcionando. Com gravações reais do treino, ele deve sumir. Se não sumir, é sinal de que a normalização ou a ordem das saídas do dashboard não bate com a do treino, e vale investigar.</p>
+  </div>
+  <p><strong>A medição.</strong> Na velocidade máxima (360×) o relógio anda 60 passos por segundo, um passo novo a cada quadro. Medido no build de produção, com 3 gravações tocando, contando os quadros de <code>requestAnimationFrame</code> por 4 s, duas vezes cada:</p>
+  <div class="tabela"><table>
+    <tr><th>Versão</th><th>Quadros/s</th><th>Mediana do quadro</th><th>p95</th><th>Quadros &gt; 50 ms</th></tr>
+    <tr><td>sem o diagrama (referência)</td><td>59,8 / 60,5</td><td>16,7 ms</td><td>16,7–16,8 ms</td><td>0</td></tr>
+    <tr><td>diagrama atualizado 10× por segundo</td><td>56,0 / 55,5</td><td>16,7 ms</td><td>33,3 ms</td><td>0</td></tr>
+    <tr><td>diagrama atualizado a cada quadro</td><td>38,0 / 36,8</td><td>33,3 ms</td><td>33,4–49,9 ms</td><td>0 / 2</td></tr>
+  </table></div>
+  <p>Atualizar a cada quadro derrubava o relógio para ~37 quadros por segundo. Com o diagrama limitado a 10 atualizações por segundo (<code>ATUALIZACOES_POR_SEGUNDO</code>), o relógio fica em ~56 e o fluxo continua visível andando; a última posição (pausa, fim) sempre aparece. No servidor de desenvolvimento (React em modo dev) os números são piores (26 quadros/s), por isso a medição que vale é a do build.</p>
+
+  <h2>Revisão visual (subagente) e segunda rodada</h2>
+  <p>Com os 7 itens prontos, um subagente (outra instância do Claude, só com a tarefa de olhar) subiu o app, tirou capturas de todas as rotas (desktop 1440×900 e celular 375×812, claro e escuro, barra aberta e recolhida) e testou barra, tema, dicas e reprodução. Ele não editou código. Achou <strong>7 problemas altos, 11 médios e 10 baixos</strong>. Quase todos os altos eram o mesmo defeito: páginas pensadas para desktop (Treino, Modelo, Agente × regras) que também abrem no celular por link e lá se espremiam.</p>
+  <div class="decisao">
+    <div class="rotulo">Causa comum · grades de colunas fixas</div>
+    <p><code>&lt;Grid columns={4}&gt;</code> divide a tela em 4 seja ela de 1400 ou de 375 px: no celular os números quebravam no meio ("81 / 2"). A correção foi pedir uma <em>largura mínima por coluna</em> (<code>columns={{ minWidth: 160 }}</code>), o mesmo padrão que o Modelo já usava: com espaço, cabem 4; sem espaço, elas descem.</p>
+  </div>
+  <div class="tabela"><table>
+    <tr><th>Grav.</th><th>Onde</th><th>Problema</th><th>O que foi feito</th></tr>
+    <tr><td>alta</td><td>Treino · celular</td><td>Os 4 números quebravam no meio; os dois cards lado a lado esmagavam a tabela</td><td>Grades por largura mínima; colunas da tabela com piso de largura (a tabela rola de lado dentro do card em vez de partir palavras)</td></tr>
+    <tr><td>alta</td><td>Treino · celular</td><td>Eixo da curva de aprendizado encavalado ("g100g200…") e nomes de fase sobrepostos</td><td>Um rótulo a cada ~80 px; o nome da fase só aparece se a faixa dela tiver largura</td></tr>
+    <tr><td>alta</td><td>Agente × regras · celular</td><td>Seletor de variável cortando os nomes ("p…")</td><td>Em tela estreita vira lista suspensa</td></tr>
+    <tr><td>alta</td><td>Dinheiro · celular</td><td>"R$ 13.821 por ano" saía cortado do card</td><td>Grade por largura mínima: "por ano" desce</td></tr>
+    <tr><td>alta</td><td>Modelo · os dois</td><td>"O que mais pesou": nomes cortados à esquerda e barra por cima do valor</td><td>A coluna dos nomes cresce com o nome mais longo (até 55%); coluna do valor de 76 px</td></tr>
+    <tr><td>alta</td><td>Modelo · celular</td><td>"A rede por dentro" encolhia inteira até a letra ter ~5 px</td><td>Abaixo de 640 px o diagrama usa a mesma variante compacta da Gravação, na largura real</td></tr>
+    <tr><td>média</td><td>Modelo · celular</td><td>Seletor de fase cortava a geração</td><td>Lista suspensa em tela estreita</td></tr>
+    <tr><td>média</td><td>Agente × regras</td><td>Tabela partindo palavras; legenda "Regras fix" cortada; rótulos das barras empilhados ("0,0%" duas vezes encostado)</td><td>Pisos de largura nas colunas; legenda em HTML que quebra linha; 16 px por barra</td></tr>
+    <tr><td>média</td><td>Gravações</td><td>Título da lista perdia a fase no celular; título do 3º painel em 2 linhas desalinhava; "mS/cm" quebrava</td><td>Título da lista quebra linha; título do painel em uma linha (inteiro no hover); valor do medidor sem quebra</td></tr>
+    <tr><td>média</td><td>Ciclo · celular</td><td>"d18-30" quebrando; "Fechamentod30-35" colado</td><td>Intervalo sem quebra; a linha nome/intervalo passa para baixo quando falta espaço</td></tr>
+    <tr><td>média</td><td>Estufas lado a lado</td><td>9 botões apagados sem explicação</td><td>Uma linha diz que precisam do simulador (a dica não abre em botão desabilitado)</td></tr>
+    <tr><td>média</td><td>Modelo</td><td>Frase do "O que mais pesou" em 2–3 linhas</td><td>Uma linha: "exaustor em 47% · ↑ hora (seno) · ↓ nível"</td></tr>
+    <tr><td>média</td><td>Histórico · celular</td><td>Eixo do tempo com só 2 rótulos</td><td>Pelo menos 3, um a cada ~90 px</td></tr>
+    <tr><td>baixa</td><td>gráficos 24 h</td><td>"faixa boa" riscado pelas linhas</td><td>Desenhado depois das linhas, com contorno da cor do cartão</td></tr>
+    <tr><td>baixa</td><td>barra e abas</td><td>Ícone do Ciclo baixo e achatado</td><td>Alface 25% maior, ancorada no chão</td></tr>
+    <tr><td>baixa</td><td>Gravações · celular</td><td>"atalhos do teclado" no celular</td><td>Só aparece em tela larga</td></tr>
+  </table></div>
+  <p>Capturas da segunda rodada: <code>docs/revisao-visual/fase-13/*-rodada2.png</code>. Medição automática depois das correções: nenhum elemento passa da borda da tela nas páginas corrigidas (as tabelas rolam dentro do próprio card).</p>
+  <div class="erro">
+    <p><strong>Duas medições de fluidez diferentes, e por quê.</strong> O revisor mediu ~26 quadros/s tocando 3 gravações, contra ~56 na minha medição. Ele mediu no servidor de desenvolvimento (React em modo dev, bem mais lento) e viu que esconder os mini-diagramas não mudava nada (27 quadros/s): o custo ali é redesenhar a página inteira a cada passo, não a rede pequena. No build de produção, que é o que vai para o celular, a página sem diagrama roda a 60 e com o diagrama limitado a 10/s roda a ~56. Fica em aberto olhar o custo da página de Gravações em si.</p>
+  </div>
+  <figure>
+    <img class="grafico" src="../revisao-visual/fase-13/celular-claro-dev-modelo-rede-rodada2.png" alt="Modelo no celular: a rede compacta legível">
+    <figcaption>Modelo no celular depois da segunda rodada: a rede usa a variante compacta e os rótulos das saídas ficam legíveis. Antes, a figura de 640 px encolhia para caber em 311.</figcaption>
+  </figure>
+
+  <h2>Como reproduzir</h2>
+<pre><code>cd dashboard
+npm run demo                 # app com dados de exemplo em http://localhost:5173
+npm run typecheck; npm run lint; npm test; npm run e2e
+npm run build; npx astryx doctor --built dist
+npm run tema                 # recompila o tema depois de mexer em genesisTheme.ts
+CAPTURAS=fase-13 ROTAS=/,/historico npx playwright test capturas   # capturas da revisão</code></pre>
+  <p>Medição da reprodução: build de produção (<code>npx vite build --mode demo</code> + <code>npx vite preview --mode demo</code>), página <code>/dev/gravacoes</code> com 3 gravações, 360×, contando os intervalos de <code>requestAnimationFrame</code> por 4 s.</p>
+
+  <h2>Em aberto</h2>
+  <div class="aberto">
+    <p>Os ícones do PWA (<code>scripts/gerar-icones.mjs</code>) ainda usam o fundo cinza do Lightfield.</p>
+    <p>Conferir o anel "≠ gravado" com gravações reais do treino (deve sumir).</p>
+    <p>Dosagens, reposição e bomba entram na comparação quando o simulador definir a conversão da saída (fase 2 em diante).</p>
+    <p>Página de Gravações a ~26 quadros/s no modo de desenvolvimento: ver se dá para redesenhar menos a cada passo (a medição de produção está boa).</p>
+    <p>Da revisão, ficaram (média): a aba "Luz e CO₂" do Histórico cortada no celular (é o padrão de abas que rolam do Astryx, com degradê na borda); as etiquetas "ainda não…" na tabela de perturbações do Modelo no celular.</p>
+    <p>Da revisão, ficaram (baixa): com a barra recolhida, os cards de /dev não usam o espaço ganho; alinhamento serrilhado na lista de alertas; Ajustes "Instalar o app" com dois parágrafos; "Ver a comparação" pouco com cara de link; card "Luz" sem linha de faixa; o relógio do Visor mostra a hora real e não a dos dados de exemplo; o botão "Expandir a barra lateral" (do Astryx) sem tooltip.</p>
+  </div>
+
+  <h2>Links</h2>
+  <ul>
+    <li>Decisões: <a href="../decisoes/0006-visual-proprio.md">0006 · visual próprio</a> (substitui em parte a <a href="../decisoes/0002-tema.md">0002</a>), <a href="../decisoes/0001-graficos.md">0001 · gráficos</a>.</li>
+    <li>Código: <code>dashboard/src/shared/design-system/templates/CascaDesktop.tsx</code>, <code>molecules/BotaoTema.tsx</code>, <code>modules/glossario/presentation/OQueEIsso.tsx</code>, <code>graficos/BalaoGrafico.tsx</code>, <code>graficos/LegendaGrafico.tsx</code>, <code>atoms/Icones.tsx</code>, <code>tema/genesisTheme.ts</code>, <code>app/composicoes/MiniRede.tsx</code>, <code>app/composicoes/reproducao.ts</code> (<code>fluxoNoPasso</code>).</li>
+    <li>Testes: <code>e2e/dica.spec.ts</code>, <code>e2e/moldura.spec.ts</code> (barra e tema), <code>e2e/gravacoes.spec.ts</code> (mini-diagrama), <code>reproducao.test.ts</code> (<code>fluxoNoPasso</code>).</li>
+    <li>Branch: <code>dashboard-correcoes-visuais</code> (commit e PR quando o Gabriel pedir).</li>
+  </ul>
+
+  <div class="navegacao"><a href="06-a-noite.html">← 06 · A noite de treino</a><a href="index.html">índice</a></div>
+</main>
+</body>
+</html>

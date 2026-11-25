@@ -23,6 +23,8 @@
   color: var(--texto-3);
 }
 .medidorValor {
+  /* "1,8 mS/cm" numa linha só */
+  white-space: nowrap;
   font-family: var(--font-family-code);
   font-variant-numeric: tabular-nums;
   color: var(--texto);

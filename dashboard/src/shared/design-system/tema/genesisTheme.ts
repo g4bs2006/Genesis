@@ -1,5 +1,8 @@
 /**
- * Tema Genesis: a linguagem Lightfield do Tesserato aplicada ao Astryx.
+ * Tema Genesis: nasceu da linguagem Lightfield do Tesserato (decisão 0002) e,
+ * no passo 07, ganhou identidade própria, o "verde-estufa" (decisão 0006):
+ * destaque verde-pinho no lugar do preto, cinzas com um leve tom de papel e
+ * cantos um pouco mais macios. Legibilidade, contraste e calma continuam.
  *
  * Um tema do Astryx é um conjunto de variáveis CSS (tokens). Cada componente do
  * Astryx lê essas variáveis, então trocar o valor aqui muda o app inteiro sem
@@ -19,10 +22,15 @@ const texto2 = ['rgb(0 0 0 / 0.72)', 'rgb(255 255 255 / 0.76)'] as const
 const texto3 = ['rgb(0 0 0 / 0.56)', 'rgb(255 255 255 / 0.58)'] as const
 const texto4 = ['rgb(0 0 0 / 0.42)', 'rgb(255 255 255 / 0.42)'] as const
 
-// Superfícies: três degraus (página, painel, cartão)
-const pagina = ['#F5F5F5', '#151515'] as const
-const painel = ['#F9F9F9', '#1A1A1A'] as const
-const cartao = ['#FFFFFF', '#202020'] as const
+// Superfícies: três degraus (página, painel, cartão). Verde-estufa: o claro
+// puxa para papel (um quase nada de amarelo), o escuro para folha à noite.
+const pagina = ['#F4F3EF', '#121513'] as const
+const painel = ['#F8F7F4', '#171A18'] as const
+const cartao = ['#FFFFFF', '#1B1F1C'] as const
+// Destaque: verde-pinho. Mais escuro e mais azulado que o verde "ok" do
+// semáforo (#45B866), para ninguém confundir botão com "está tudo bem".
+// Contraste (WCAG): 5,7:1 sobre a página clara; 10:1 sobre a escura.
+const destaque = ['#1F6B57', '#7CCFAF'] as const
 const linha = ['rgb(0 0 0 / 0.06)', 'rgb(255 255 255 / 0.07)'] as const
 const linha2 = ['rgb(0 0 0 / 0.12)', 'rgb(255 255 255 / 0.12)'] as const
 
@@ -63,7 +71,8 @@ export const genesisTheme = defineTheme({
     '--color-background-muted': ['rgb(0 0 0 / 0.045)', 'rgb(255 255 255 / 0.07)'],
     // Os neutros do Astryx são cinza-azulados; no Lightfield o cinza é puro
     // (preto ou branco com opacidade). Seleção, hover, trilhos e sombras.
-    '--color-neutral': ['rgb(0 0 0 / 0.06)', 'rgb(255 255 255 / 0.1)'],
+    // seleção (item ativo da barra, opção marcada): um véu do verde-pinho, não cinza (decisão 0006)
+    '--color-neutral': ['rgb(31 107 87 / 0.11)', 'rgb(124 207 175 / 0.14)'],
     '--color-overlay-hover': ['rgb(0 0 0 / 0.03)', 'rgb(255 255 255 / 0.04)'],
     '--color-overlay-pressed': ['rgb(0 0 0 / 0.06)', 'rgb(255 255 255 / 0.08)'],
     '--color-overlay': ['rgb(0 0 0 / 0.4)', 'rgb(0 0 0 / 0.6)'],
@@ -82,13 +91,15 @@ export const genesisTheme = defineTheme({
     '--color-icon-secondary': m(texto3),
     '--color-icon-disabled': m(texto4),
 
-    // ação: preto no claro, quase branco no escuro (sem azul de marca)
-    '--color-accent': ['#0E0E0E', '#F2F2F2'],
-    '--color-on-accent': ['#FFFFFF', '#111111'],
-    '--color-accent-muted': ['rgb(0 0 0 / 0.05)', 'rgb(255 255 255 / 0.08)'],
-    '--color-icon-accent': m(texto),
-    // anel de foco opaco: passa 3:1 contra a página nos dois temas (WCAG 1.4.11)
-    '--focus-outline-color': ['#2F6FC4', '#6AAEF5'],
+    // ação: o verde-pinho (decisão 0006); letra sobre ele passa 6:1 nos dois temas
+    '--color-accent': m(destaque),
+    '--color-on-accent': ['#FFFFFF', '#0E1A15'],
+    '--color-accent-muted': ['rgb(31 107 87 / 0.09)', 'rgb(124 207 175 / 0.12)'],
+    '--color-icon-accent': m(destaque),
+    // anel de foco no próprio destaque: passa 3:1 contra a página nos dois temas (WCAG 1.4.11)
+    '--focus-outline-color': m(destaque),
+    // fundo das dicas (tooltip): quase preto esverdeado no claro, quase branco no escuro
+    '--color-background-inverted': ['#16201B', '#E9EEEA'],
 
     // semáforo
     '--color-success': ok,
@@ -120,10 +131,10 @@ export const genesisTheme = defineTheme({
     '--ease-entrance': 'cubic-bezier(0.32, 0.72, 0, 1)',
     '--ease-move': 'cubic-bezier(0.32, 0.72, 0, 1)',
 
-    // raios do Lightfield: 5, 8 e 12px
-    '--radius-inner': '5px',
-    '--radius-element': '8px',
-    '--radius-container': '12px',
+    // raios: 6, 10 e 14px (o Lightfield usava 5, 8 e 12; um pouco mais macio, decisão 0006)
+    '--radius-inner': '6px',
+    '--radius-element': '10px',
+    '--radius-container': '14px',
 
     '--shadow-low': [
       '0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.05)',
@@ -152,7 +163,8 @@ export const genesisTheme = defineTheme({
     '--linha': m(linha),
     '--linha-2': m(linha2),
     '--hover': ['rgb(0 0 0 / 0.03)', 'rgb(255 255 255 / 0.04)'],
-    '--selecao': ['rgb(0 0 0 / 0.045)', 'rgb(255 255 255 / 0.07)'],
+    '--selecao': ['rgb(31 107 87 / 0.09)', 'rgb(124 207 175 / 0.12)'],
+    '--destaque': m(destaque),
 
     '--ok': ok,
     '--atencao': atencao,

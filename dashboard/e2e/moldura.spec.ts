@@ -85,3 +85,25 @@ test('tour do desenvolvedor aparece uma vez', async ({ page, isMobile }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Estufas lado a lado' })).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
+
+test('desktop: barra lateral recolhe, mostra o nome no hover e lembra a escolha', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'no celular a navegação é a barra de abas')
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Recolher a barra lateral' }).click()
+  // recolhida: a lista de estufas some, os ícones ficam e dizem o nome no hover
+  await expect(page.getByText('Campeão fase 3')).toHaveCount(0)
+  await page.getByRole('link', { name: 'Histórico' }).hover()
+  await expect(page.getByRole('tooltip', { name: 'Histórico' })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Expandir a barra lateral' })).toBeVisible()
+})
+
+test('sol/lua alterna claro e escuro com um clique', async ({ page }) => {
+  // "sistema" num aparelho claro: o primeiro clique vai para o escuro
+  await page.emulateMedia({ colorScheme: 'light' })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Usar tema escuro' }).click()
+  await expect(page.getByRole('button', { name: 'Usar tema claro' })).toBeVisible()
+  await page.getByRole('button', { name: 'Usar tema claro' }).click()
+  await expect(page.getByRole('button', { name: 'Usar tema escuro' })).toBeVisible()
+})

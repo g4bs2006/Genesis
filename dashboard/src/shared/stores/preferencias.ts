@@ -20,10 +20,13 @@ type Preferencias = {
   estufaId: string | null
   /** o tour do modo Desenvolvedor já foi visto (aparece uma vez só) */
   tourDevVisto: boolean
+  /** barra lateral do desktop recolhida numa faixa só de ícones */
+  barraRecolhida: boolean
   trocarModo: (modo: Modo) => void
   trocarTema: (tema: Tema) => void
   escolherEstufa: (estufaId: string) => void
   marcarTourDev: () => void
+  recolherBarra: (recolhida: boolean) => void
 }
 
 export const usePreferencias = create<Preferencias>()(
@@ -33,10 +36,12 @@ export const usePreferencias = create<Preferencias>()(
       tema: 'sistema',
       estufaId: null,
       tourDevVisto: false,
+      barraRecolhida: false,
       trocarModo: (modo) => set({ modo }),
       trocarTema: (tema) => set({ tema }),
       escolherEstufa: (estufaId) => set({ estufaId }),
       marcarTourDev: () => set({ tourDevVisto: true }),
+      recolherBarra: (barraRecolhida) => set({ barraRecolhida }),
     }),
     { name: 'genesis:preferencias' },
   ),
