@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import threading
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
@@ -226,6 +227,61 @@ class Execucao:
         log.info("fim da execução %s na geração %d", self.pasta.name, self.geracao)
 
 
+class EnvioNuvem:
+    """
+    Manda a execução atual para o Supabase a cada 15 s, numa THREAD à parte (uma
+    segunda linha de execução dentro do mesmo programa): internet lenta ou fora
+    do ar nunca atrasa a evolução. Usa o mesmo Sincronizador do treino/nuvem.py
+    e, ao trocar de semente, segue a pasta nova sozinho.
+
+    Limite: se o programa inteiro morrer (queda de energia), ninguém marca a
+    execução como "parada" na nuvem; o celular fica com a última geração enviada.
+    """
+
+    def __init__(self, raiz: Path):
+        from treino.nuvem import Config as ConfigNuvem, ErroNuvem, Supabase
+
+        self.nuvem = Supabase(ConfigNuvem.carregar(raiz))
+        try:
+            self.nuvem.entrar()
+            log.info("nuvem: conectado como %s", self.nuvem.cfg.email)
+        except (ErroNuvem, OSError) as e:  # sem internet agora: tenta de novo a cada volta
+            log.warning("nuvem: não conectou (%s); o treino segue e o envio tenta de novo", e)
+        self.sinc = None
+        self.trava = threading.Lock()  # uma volta de cada vez
+        self.parar = threading.Event()
+        self.thread = threading.Thread(target=self._laco, daemon=True)
+        self.thread.start()
+
+    def _volta(self) -> None:
+        with self.trava:
+            if self.sinc is None:
+                return
+            try:
+                feito = self.sinc.uma_volta()
+                if feito:
+                    log.info("nuvem: %s", "; ".join(feito))
+            except Exception as e:  # rede, Supabase fora do ar: a próxima volta tenta de novo
+                log.warning("nuvem: envio falhou (%s); tento de novo em 15 s", e)
+
+    def _laco(self) -> None:
+        while not self.parar.wait(15):
+            self._volta()
+
+    def acompanhar(self, pasta: Path) -> None:
+        """Termina de mandar a execução anterior e passa a olhar `pasta`."""
+        from treino.nuvem import Sincronizador
+
+        self._volta()
+        with self.trava:
+            self.sinc = Sincronizador(pasta, self.nuvem)
+
+    def fechar(self) -> None:
+        self.parar.set()
+        self.thread.join(timeout=60)
+        self._volta()  # a última: o estado final ("rodando": false) e o último campeão
+
+
 def configurar_log(pasta: Path) -> None:
     for h in list(log.handlers):
         log.removeHandler(h)
@@ -249,24 +305,41 @@ def main(argv=None) -> None:
     ap.add_argument("--onde", default=Config.onde, help="a máquina, para o celular mostrar")
     ap.add_argument("--saidas", type=Path, default=Path("treino/saidas"))
     ap.add_argument("--retomar", type=Path, default=None, help="pasta de uma execução com checkpoint.pt")
+    ap.add_argument("--nuvem", action="store_true", help="manda cada geração para o Supabase (precisa do .env)")
     a = ap.parse_args(argv)
 
-    if a.retomar:
-        configurar_log(a.retomar)
-        ex = Execucao.retomar(a.retomar)
-        log.info("retomando %s da geração %d", a.retomar.name, ex.geracao)
-        ex.rodar(time.time() + a.horas * 3600, a.geracoes)
-        return
+    envio = None
+    try:
+        if a.retomar:
+            configurar_log(a.retomar)
+            envio = EnvioNuvem(Path.cwd()) if a.nuvem else None
+            ex = Execucao.retomar(a.retomar)
+            log.info("retomando %s da geração %d", a.retomar.name, ex.geracao)
+            if envio:
+                envio.acompanhar(a.retomar)
+            ex.rodar(time.time() + a.horas * 3600, a.geracoes)
+            return
 
-    hoje = datetime.now(FUSO_SP).strftime("%Y%m%d")
-    por_semente = a.horas * 3600 / a.sementes
-    for s in range(a.semente, a.semente + a.sementes):
-        pasta = a.saidas / f"fase{FASE}-semente{s}-{hoje}"
-        pasta.mkdir(parents=True, exist_ok=True)
-        configurar_log(pasta)
-        cfg = Config(semente=s, populacao=a.populacao, mutacao=a.mutacao, dias=a.dias,
-                     prova_cada=a.prova_cada, onde=a.onde)
-        Execucao(pasta, cfg).rodar(time.time() + por_semente, a.geracoes)
+        hoje = datetime.now(FUSO_SP).strftime("%Y%m%d")
+        fim_total = time.time() + a.horas * 3600
+        for k, s in enumerate(range(a.semente, a.semente + a.sementes)):
+            pasta = a.saidas / f"fase{FASE}-semente{s}-{hoje}"
+            pasta.mkdir(parents=True, exist_ok=True)
+            configurar_log(pasta)
+            if a.nuvem and envio is None:
+                envio = EnvioNuvem(Path.cwd())
+            cfg = Config(semente=s, populacao=a.populacao, mutacao=a.mutacao, dias=a.dias,
+                         prova_cada=a.prova_cada, onde=a.onde)
+            ex = Execucao(pasta, cfg)
+            ex.salvar_estado(rodando=True)  # o envio já encontra a execução
+            if envio:
+                envio.acompanhar(pasta)
+            # o tempo que sobra, dividido pelas sementes que faltam: uma semente
+            # que acabe mais cedo (ou atrase) não rouba nem dá tempo às outras
+            ex.rodar(time.time() + (fim_total - time.time()) / (a.sementes - k), a.geracoes)
+    finally:
+        if envio:
+            envio.fechar()
 
 
 if __name__ == "__main__":
