@@ -12,6 +12,7 @@
  * React percebe a mudança (objeto novo = render novo).
  */
 import { estadoDaVariavel, FAIXAS, VARIAVEIS_COM_ESTADO, type Passo } from '@/modules/estufa/dominio'
+import { normalizarEntradas, propagar, SAIDAS, type Modelo } from '@/modules/treino/dominio'
 
 export const VELOCIDADES = [1, 10, 60, 360] as const
 export type Velocidade = (typeof VELOCIDADES)[number]
@@ -160,3 +161,48 @@ export function lerParametros(busca: URLSearchParams): { ids: string[]; t: numbe
 /** O contrário de lerParametros: a parte "?..." do link deste instante. */
 export const montarBusca = (ids: readonly string[], passo: number) =>
   `?gravacoes=${ids.map(encodeURIComponent).join(',')}&t=${passo}`
+
+/**
+ * A rede no passo `i` de uma gravação, recalculada no navegador, e onde ela
+ * discorda da ação que foi gravada.
+ *
+ * Por que só ilustração: o treino roda na placa de vídeo em float32 e o
+ * navegador conta em float64; os arredondamentos diferem (docs/contrato-dados.md).
+ * As ações mostradas na reprodução continuam sendo as gravadas. O diagrama só
+ * mostra por onde o sinal passou; se a saída recalculada se afasta da gravada
+ * mais que a tolerância, a diferença não é arredondamento (modelo trocado,
+ * entrada diferente) e a tela avisa.
+ *
+ * Só os 4 atuadores do ar são comparados: neles a saída da rede (0 a 1) É a
+ * ação gravada. Dosagens (ml), reposição e bomba (liga/desliga) ainda não têm
+ * a conversão definida no simulador (a fase 1 só controla o ar).
+ */
+export const TOLERANCIA_REDE = 0.05
+const COMPARAVEIS = ['exaustor', 'sombreamento', 'nebulizacao', 'luz'] as const
+// a tendência olha uma hora para trás: 10 passos de 10 min bastam (com folga)
+const JANELA_TENDENCIA = 10
+
+export type Divergencia = { saida: number; gravado: number; recalculado: number }
+
+export function fluxoNoPasso(
+  modelo: Pick<Modelo, 'arquitetura' | 'pesos'>,
+  passos: readonly Passo[],
+  i: number,
+): { ativacoes: number[][]; divergencias: Divergencia[] } {
+  const janela = passos.slice(Math.max(0, i - JANELA_TENDENCIA), i + 1)
+  const ativacoes = propagar(modelo, normalizarEntradas(janela, diaDoPasso(passos, i)))
+  const saidas = ativacoes.at(-1) ?? []
+  const passo = passos[i]
+  const divergencias: Divergencia[] = []
+  if (passo) {
+    for (const atuador of COMPARAVEIS) {
+      // a camada de segurança pode ter mudado a ação: aí a diferença é esperada
+      if (passo.barradas.some((b) => b.atuador === atuador)) continue
+      const saida = SAIDAS.findIndex((s) => s.id === atuador)
+      const recalculado = saidas[saida] ?? 0
+      const gravado = passo.acoes[atuador]
+      if (Math.abs(recalculado - gravado) > TOLERANCIA_REDE) divergencias.push({ saida, gravado, recalculado })
+    }
+  }
+  return { ativacoes, divergencias }
+}

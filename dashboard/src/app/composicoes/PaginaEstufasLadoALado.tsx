@@ -40,6 +40,7 @@ import { useAtraso } from '@/shared/hooks/useAtraso'
 import { formatarData, formatarHora, formatarNumero } from '@/shared/lib/formatar'
 import { origemDosDados } from '../dependencias'
 import css from './PaginaEstufasLadoALado.module.css'
+import { OQueEIsso } from '@/modules/glossario'
 
 const NOME_CONTROLADOR: Record<Controlador['tipo'], string> = {
   agente: 'agente',
@@ -122,6 +123,12 @@ function LadoALado({ estufas }: { estufas: Estufa[] }) {
           />
         </HStack>
       </HStack>
+      {/* botão apagado sem motivo parece defeito: uma linha diz por quê (a dica não abre em botão desabilitado) */}
+      {!controle && (
+        <Text type="supporting" color="secondary">
+          Botões apagados: o clima, as estufas e as perturbações precisam do simulador (npm run dev).
+        </Text>
+      )}
 
       <section className={css.cartoes}>
         {ordem.map(({ e, i }, posicao) => (
@@ -158,7 +165,7 @@ function LadoALado({ estufas }: { estufas: Estufa[] }) {
               })),
             }))}
             faixa={[valorExibido(variavel, FAIXAS[variavel].min), valorExibido(variavel, FAIXAS[variavel].max)]}
-            altura={260}
+            altura={340}
             rotulo={`${FAIXAS[variavel].nome} nas estufas, nas últimas 24 horas`}
             formatarValor={(v) => `${formatarNumero(v, FAIXAS[variavel].casas)} ${FAIXAS[variavel].unidade}`}
             formatarTempo={(t) => formatarHora(new Date(t).toISOString())}
@@ -166,8 +173,7 @@ function LadoALado({ estufas }: { estufas: Estufa[] }) {
             aoMoverInstante={setInstante}
           />
           <Text type="supporting" color="secondary">
-            Passe o ponteiro (ou arraste o dedo) no gráfico: o instante muda e as alfaces de todas as estufas mostram
-            aquele momento.
+            Passe o ponteiro no gráfico: as alfaces mostram aquele instante.
           </Text>
         </VStack>
       </Card>
@@ -184,10 +190,10 @@ function LadoALado({ estufas }: { estufas: Estufa[] }) {
         </Card>
         <Card>
           <VStack gap={2}>
-            <Heading level={2}>Injetar perturbação</Heading>
-            <Text type="supporting" color="secondary">
-              Acontece em todas as estufas no mesmo instante e vira um evento. Bom para ver quem aguenta.
-            </Text>
+            <HStack gap={1} align="center">
+              <Heading level={2}>Injetar perturbação</Heading>
+              <OQueEIsso id="perturbacao" />
+            </HStack>
             <Grid columns={2} gap={2}>
               {PERTURBACOES.map((p) => (
                 <Button

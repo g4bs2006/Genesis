@@ -19,8 +19,3 @@
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 16px;
 }
-.ponto {
-  width: 14px;
-  height: 3px;
-  border-radius: 2px;
-}

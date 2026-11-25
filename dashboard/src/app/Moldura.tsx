@@ -3,6 +3,7 @@ import { Outlet, ScrollRestoration, useLocation, useNavigate, useNavigation } fr
 import { CascaCelular } from '@/shared/design-system/templates/CascaCelular'
 import { CascaDesktop } from '@/shared/design-system/templates/CascaDesktop'
 import { SeletorModo } from '@/shared/design-system/molecules/SeletorModo'
+import { BotaoTema } from '@/shared/design-system/molecules/BotaoTema'
 import { BarraProgresso } from '@/shared/design-system/atoms/BarraProgresso'
 import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
 import { usePreferencias, type Modo } from '@/shared/stores/preferencias'
@@ -24,7 +25,7 @@ function modoDaRota(caminho: string, guardado: Modo): Modo {
  */
 export function Moldura() {
   const largo = useTelaLarga()
-  const { modo: guardado, trocarModo } = usePreferencias()
+  const { modo: guardado, trocarModo, barraRecolhida, recolherBarra } = usePreferencias()
   const navegar = useNavigate()
   const { pathname } = useLocation()
   // O modo sai da rota já na renderização: abrir /dev/treino nunca pisca a
@@ -73,6 +74,9 @@ export function Moldura() {
       itens={navegacao[modo].desktop}
       extras={modo === 'produtor' ? <ListaEstufasLateral /> : <CardTreinoLateral />}
       rodape={<SeletorModo valor={modo} aoTrocar={aoTrocarModo} tamanho="sm" />}
+      icones={<BotaoTema tamanho="sm" />}
+      recolhida={barraRecolhida}
+      aoRecolher={recolherBarra}
     >
       {conteudo}
       {modo === 'desenvolvedor' && <TourDev />}

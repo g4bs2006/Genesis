@@ -17,3 +17,6 @@ Por isso:
   código de uma vez.
 - Comente o código explicando o porquê, não só o quê.
 - Converse em português.
+- **Documente cada passo em HTML** em `docs/passos/`, com as decisões e o
+  porquê de cada uma. Regra completa em
+  [.claude/rules/documentar-cada-passo.md](.claude/rules/documentar-cada-passo.md).

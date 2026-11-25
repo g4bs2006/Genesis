@@ -95,6 +95,26 @@ O que foi feito, em ordem, e onde está cada coisa. As decisões ficam no
   - **Correção:** a placa do PC é uma **RX 7600** (não a XT), e o PC não é o
     notebook.
 
+## 2026-11-24: Fases A e B do treino, no notebook
+
+- **Fase A (ambiente):** venv com PyTorch 2.15 para CPU (`requirements.txt`).
+  O estudo leva 15 s aqui, contra ~10 s na nuvem, com as mesmas notas. O cano
+  até o celular foi testado com a demo do `treino/nuvem.py`: chegou ao Supabase
+  e foi lido sem login, como faz o celular.
+- **Fase B (simulador do ar):** `simulador/`, com o Van Henten (1994) vetorizado
+  em PyTorch. Os 34 coeficientes foram conferidos em duas fontes. A adaptação
+  ganhou fonte para cada número: exaustor, névoa, sombra, LED, matéria seca e
+  pés por m². Detalhes na [decisão 0004](decisoes/0004-simulador-van-henten.md).
+  - **Lição:** o modelo puro cultivava ~1,8 vez a alface brasileira, e a
+    receita do dashboard satura em 242 g por pé. A rede não teria motivo para
+    cuidar do crescimento. Um coeficiente foi calibrado (`c_alfa_beta` 0,544 →
+    0,307) contra Santos et al. (2023): ~230 g no dia 30.
+- **Fase C (controle):** `controle/`, com Nada, Regras fixas, PID (split range
+  exaustor → névoa), a camada de segurança, o `ResumoCiclo` e a nota em R$.
+  A punição começa no meio da faixa (lição do estudo). Em 35 dias: regras fixas
+  ~R$ 380, PID ~R$ 700, não fazer nada ~R$ −8.000. Ver a
+  [decisão 0005](decisoes/0005-controle-e-nota.md).
+
 ## Onde está cada coisa
 
 | O quê | Onde |

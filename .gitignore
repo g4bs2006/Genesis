@@ -1,5 +1,7 @@
 estudo/saidas/
 __pycache__/
+# o ambiente virtual do Python: cada PC cria o seu com requirements.txt
+.venv/
 
 # segredos (a senha da conta do treino; ver docs/nuvem.md)
 .env

@@ -8,6 +8,7 @@ import {
   diaDoPasso,
   eventoMaisProximo,
   eventosDaGravacao,
+  fluxoNoPasso,
   lerParametros,
   montarBusca,
   mudarVelocidade,
@@ -137,5 +138,36 @@ describe('o que se tira da gravação', () => {
       t: null,
       evento: null,
     })
+  })
+})
+
+describe('fluxo da rede numa gravação', () => {
+  // rede mínima 20 → 8 só com vieses: a saída não depende da entrada, dá para prever
+  const vies = (v: number) => ({ arquitetura: [20, 8], pesos: [...Array(160).fill(0), ...Array(8).fill(v)] })
+  const comAcoes = (exaustor: number) => [passo(0, (p) => (p.acoes.exaustor = exaustor))]
+
+  it('devolve as ativações de cada camada', () => {
+    const { ativacoes } = fluxoNoPasso(vies(0), comAcoes(0.5), 0)
+    expect(ativacoes.map((a) => a.length)).toEqual([20, 8])
+    expect(ativacoes[1]![0]).toBeCloseTo(0.5) // sigmoide(0)
+  })
+
+  it('não avisa quando a saída bate com a ação gravada (dentro da tolerância)', () => {
+    // sombreamento, nebulização e luz gravados em 0; a saída é 0,5: divergem
+    const g = comAcoes(0.53)
+    g[0]!.acoes.sombreamento = 0.5
+    g[0]!.acoes.nebulizacao = 0.5
+    g[0]!.acoes.luz = 0.5
+    expect(fluxoNoPasso(vies(0), g, 0).divergencias).toEqual([])
+  })
+
+  it('avisa quando a saída se afasta da gravada, menos se a segurança barrou', () => {
+    const g = comAcoes(0.9)
+    g[0]!.acoes.sombreamento = 0.5
+    g[0]!.acoes.nebulizacao = 0.5
+    g[0]!.acoes.luz = 0.5
+    expect(fluxoNoPasso(vies(0), g, 0).divergencias).toEqual([{ saida: 0, gravado: 0.9, recalculado: 0.5 }])
+    g[0]!.barradas = [{ atuador: 'exaustor', pedido: 0.5, motivo: 'teste' }]
+    expect(fluxoNoPasso(vies(0), g, 0).divergencias).toEqual([])
   })
 })

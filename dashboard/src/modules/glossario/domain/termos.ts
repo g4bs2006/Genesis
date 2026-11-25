@@ -47,6 +47,8 @@ export type IdTermo =
   | 'peso'
   | 'vies'
   | 'ativacao'
+  | 'sinalNeuronio'
+  | 'atribuicaoEntrada'
   | 'tanh'
   | 'sigmoide'
   | 'mlp'
@@ -63,6 +65,7 @@ export type IdTermo =
   | 'mutacao'
   | 'nota'
   | 'curriculo'
+  | 'quedaDeFase'
   | 'fase'
   | 'misturaFases'
   | 'esquecimentoCatastrofico'
@@ -70,10 +73,12 @@ export type IdTermo =
   | 'semente'
   | 'gravacao'
   | 'replay'
+  | 'redeRecalculada'
   // mundo real e segurança
   | 'camadaSeguranca'
   | 'acaoBarrada'
   | 'perturbacao'
+  | 'faixaAcoes'
   | 'randomizacaoDominio'
   | 'gemeoDigital'
   // dinheiro
@@ -81,6 +86,7 @@ export type IdTermo =
   | 'margem'
   | 'tarifaKwh'
   | 'cenarioPreco'
+  | 'suposicoesConta'
   | 'atribuicao'
 
 // Regra de escrita: nada de "ex." nem milhar com ponto ("1.024"): o ponto
@@ -276,6 +282,24 @@ export const TERMOS: Record<IdTermo, Termo> = {
       'Transforma a soma do neurônio numa curva. Sem ela, a rede inteira seria uma conta linear e não daria conta de decisões do tipo "depende".',
     relacionados: ['tanh', 'sigmoide', 'neuronio'],
   },
+  // o valor que sai do neurônio (a "ativação" que o diagrama pinta), não a função
+  sinalNeuronio: {
+    id: 'sinalNeuronio',
+    nome: 'Ativação (o valor)',
+    curto: 'o número que sai de um neurônio',
+    explicacao:
+      'O número que sai de um neurônio depois da conta dele. Perto de zero, o neurônio está quieto; longe de zero, para mais ou para menos, ele está influenciando a decisão.',
+    exemplo: 'No diagrama da rede, é a cor de cada bolinha.',
+    relacionados: ['ativacao', 'neuronio', 'peso'],
+  },
+  atribuicaoEntrada: {
+    id: 'atribuicaoEntrada',
+    nome: 'Atribuição por entrada',
+    curto: 'quanto cada leitura empurrou a decisão',
+    explicacao:
+      'Para cada entrada, zeramos o valor dela e rodamos a rede de novo. A diferença na saída mostra quanto aquela entrada empurrou a decisão para cima (laranja) ou para baixo (azul).',
+    relacionados: ['entrada', 'saida', 'sinalNeuronio'],
+  },
   tanh: {
     id: 'tanh',
     nome: 'tanh',
@@ -468,6 +492,7 @@ export const TERMOS: Record<IdTermo, Termo> = {
     curto: 'rever o ciclo acelerado',
     explicacao:
       'O dashboard toca a gravação: a alface crescendo, os medidores mexendo e os atuadores ligando. Dá para pôr campeões de gerações diferentes lado a lado.',
+    exemplo: 'Teclado: espaço toca ou pausa; setas andam uma hora (com Shift, um dia).',
     relacionados: ['gravacao'],
   },
 
@@ -533,6 +558,7 @@ export const TERMOS: Record<IdTermo, Termo> = {
     curto: 'o que sobra depois dos custos',
     explicacao:
       'Receita menos custos variáveis e fixos, por ciclo. Mostra se a estufa se paga e quanto sobra para o produtor.',
+    exemplo: 'Resultado = venda − energia, nutrientes, ácido, água, mudas e custos fixos.',
     relacionados: ['pontoEquilibrio', 'tarifaKwh'],
   },
   tarifaKwh: {
@@ -560,6 +586,41 @@ export const TERMOS: Record<IdTermo, Termo> = {
     explicacao:
       'Separa a vantagem do agente sobre as regras fixas em partes: colheita a mais, energia, nutriente e água a menos. Mostra o porquê do ganho, não só o total.',
     relacionados: ['regrasFixas', 'nota', 'margem'],
+  },
+  // termos que saíram do texto das páginas no passo 07 (a página mostra dado; a explicação mora aqui)
+  faixaAcoes: {
+    id: 'faixaAcoes',
+    nome: 'Faixa de ações',
+    curto: 'o que o controlador ligou, embaixo do gráfico',
+    explicacao:
+      'Embaixo de cada gráfico de 24 horas, uma linha por atuador mostra o que o controlador fez. Mais escuro é mais forte; os pontos são doses (ácido, adubo).',
+    relacionados: ['faixaBoa', 'saida'],
+  },
+  suposicoesConta: {
+    id: 'suposicoesConta',
+    nome: 'O que a conta supõe',
+    curto: 'as hipóteses por trás da projeção',
+    explicacao:
+      'Todas as plantas chegam à colheita e todas são vendidas; mês e ano supõem ciclos seguidos, sem dias parados. O mínimo de plantas supõe energia e água proporcionais ao número de pés. É otimista: o clima gasta quase o mesmo com menos plantas.',
+    exemplo: 'Preços de referência: alface CEAGESP e Conab Prohort; energia ANEEL. Edite com os seus.',
+    relacionados: ['margem', 'pontoEquilibrio', 'cenarioPreco'],
+  },
+  redeRecalculada: {
+    id: 'redeRecalculada',
+    nome: 'Rede recalculada',
+    curto: 'o fluxo refeito no navegador, só ilustração',
+    explicacao:
+      'O diagrama ao lado da gravação refaz a conta da rede no navegador, para mostrar por onde o sinal passou. A placa de vídeo do treino arredonda diferente, então as ações da reprodução continuam sendo as gravadas.',
+    exemplo: 'Anel vermelho numa saída: ali a conta refeita se afastou mais de 5 pontos da ação gravada.',
+    relacionados: ['gravacao', 'replay', 'sinalNeuronio'],
+  },
+  quedaDeFase: {
+    id: 'quedaDeFase',
+    nome: 'Queda ao mudar de fase',
+    curto: 'esperada: o problema ficou mais difícil',
+    explicacao:
+      'Ao entrar numa fase, a nota cai porque o problema ficou mais difícil (entrou a solução, o clima real, o ruído). O que importa é ela voltar a subir e passar das regras fixas.',
+    relacionados: ['fase', 'curriculo', 'nota'],
   },
 }
 

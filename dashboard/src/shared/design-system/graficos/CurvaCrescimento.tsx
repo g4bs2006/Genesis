@@ -1,9 +1,11 @@
+import { useState, type PointerEvent } from 'react'
 import { AxisBottom, AxisLeft } from '@visx/axis'
 import { curveMonotoneX } from '@visx/curve'
 import { Group } from '@visx/group'
 import { ParentSize } from '@visx/responsive'
 import { scaleLinear } from '@visx/scale'
 import { LinePath } from '@visx/shape'
+import { BalaoGrafico } from './BalaoGrafico'
 import { COR, rotuloEixo } from './estilo'
 
 type Ponto = { dia: number; massa: number }
@@ -18,7 +20,8 @@ type Props = {
 
 /**
  * Curva de crescimento: cheia até hoje (o que já aconteceu), tracejada até a
- * colheita (o que se espera). O ponto é a massa estimada agora.
+ * colheita (o que se espera). O ponto é a massa estimada agora. Ponteiro em
+ * cima: balão com a massa daquele dia.
  */
 export function CurvaCrescimento(props: Props) {
   return (
@@ -30,7 +33,8 @@ export function CurvaCrescimento(props: Props) {
 }
 
 function Desenho({ curva, hoje, massaHoje, altura = 160, largura }: Props & { largura: number }) {
-  const m = { topo: 8, direita: 12, baixo: 22, esquerda: 48 }
+  const [sobre, setSobre] = useState<{ dia: number; massa: number } | null>(null)
+  const m = { topo: 16, direita: 12, baixo: 22, esquerda: 48 }
   const w = largura - m.esquerda - m.direita
   const h = altura - m.topo - m.baixo
   const ultimo = curva.at(-1)?.dia ?? 35
@@ -42,6 +46,11 @@ function Desenho({ curva, hoje, massaHoje, altura = 160, largura }: Props & { la
   })
   const feito = curva.filter((p) => p.dia <= hoje)
   const falta = curva.filter((p) => p.dia >= Math.floor(hoje))
+  const mover = (e: PointerEvent<SVGRectElement>) => {
+    const caixa = e.currentTarget.getBoundingClientRect()
+    const dia = x.invert(Math.min(w, Math.max(0, e.clientX - caixa.left)))
+    setSobre(curva.reduce((a, b) => (Math.abs(b.dia - dia) < Math.abs(a.dia - dia) ? b : a), curva[0]!))
+  }
   return (
     <svg
       width={largura}
@@ -69,6 +78,9 @@ function Desenho({ curva, hoje, massaHoje, altura = 160, largura }: Props & { la
           strokeWidth={2}
         />
         <line x1={x(hoje)} x2={x(hoje)} y1={0} y2={h} stroke={COR.grade} />
+        <text x={x(hoje)} y={-5} textAnchor="middle" {...rotuloEixo}>
+          hoje
+        </text>
         <circle cx={x(hoje)} cy={y(massaHoje)} r={4} fill={COR.ok} stroke="var(--cartao)" strokeWidth={2} />
         <AxisLeft
           scale={y}
@@ -86,6 +98,34 @@ function Desenho({ curva, hoje, massaHoje, altura = 160, largura }: Props & { la
           stroke={COR.grade}
           tickFormat={(v) => `d${v}`}
           tickLabelProps={{ ...rotuloEixo, textAnchor: 'middle' }}
+        />
+        {sobre && (
+          <>
+            <circle
+              cx={x(sobre.dia)}
+              cy={y(sobre.massa)}
+              r={3.5}
+              fill={COR.linha}
+              stroke="var(--cartao)"
+              strokeWidth={1.5}
+            />
+            <BalaoGrafico
+              x={x(sobre.dia)}
+              y={y(sobre.massa)}
+              largura={w}
+              altura={h}
+              titulo={`dia ${sobre.dia}${sobre.dia > hoje ? ' (esperado)' : ''}`}
+              linhas={[{ texto: `${Math.round(sobre.massa)} g por pé` }]}
+            />
+          </>
+        )}
+        <rect
+          width={w}
+          height={h}
+          fill="transparent"
+          onPointerMove={mover}
+          onPointerLeave={() => setSobre(null)}
+          style={{ touchAction: 'pan-y' }}
         />
       </Group>
     </svg>

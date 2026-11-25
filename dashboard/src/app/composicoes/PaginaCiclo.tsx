@@ -69,9 +69,9 @@ function Ciclo({ estufa }: { estufa: Estufa }) {
                     parametros={{ massa: massaEsperada(diaDoDesenho), turgor: 1, clorose: 0, necrose: 0 }}
                     rotulo={`${e.nome}: cerca de ${Math.round(massaEsperada(diaDoDesenho))} g`}
                   />
-                  <HStack justify="between" align="center">
+                  <HStack justify="between" align="center" wrap="wrap" gap={1}>
                     <Text weight="medium">{e.nome}</Text>
-                    <Text type="code" color="secondary">
+                    <Text type="code" color="secondary" textWrap="nowrap">
                       d{e.inicio}–{e.fim}
                     </Text>
                   </HStack>
@@ -97,7 +97,7 @@ function Ciclo({ estufa }: { estufa: Estufa }) {
             curva={curvaDeCrescimento(estufa.diasDoCiclo)}
             hoje={estufa.diaDoCiclo}
             massaHoje={estufa.massaPorPe}
-            altura={largo ? 220 : 170}
+            altura={largo ? 300 : 200}
           />
         </VStack>
       </Card>

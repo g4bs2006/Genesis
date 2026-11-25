@@ -12,7 +12,7 @@ import { Link } from '@astryxdesign/core/Link'
 import { NumberInput } from '@astryxdesign/core/NumberInput'
 import { ProgressBar } from '@astryxdesign/core/ProgressBar'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
-import { Table } from '@astryxdesign/core/Table'
+import { proportional, Table } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import { OQueEIsso, type IdTermo } from '@/modules/glossario'
@@ -82,7 +82,8 @@ function Treino({
         </Text>
       </VStack>
 
-      <Grid columns={4} gap={3}>
+      {/* colunas pela largura mínima: no celular os números descem, não quebram no meio */}
+      <Grid columns={{ minWidth: 160 }} gap={3}>
         <Numero rotulo="geração" valor={formatarNumero(ultima.numero)} termo="geracao" />
         <Numero rotulo="segundos por geração" valor={formatarNumero(mediaSegundos, 1)} termo="geracao" />
         <Numero rotulo="tempo rodando" valor={duracao(rodandoHa)} termo="geracao" />
@@ -129,19 +130,11 @@ function Treino({
             formatarNota={nota}
             marcas={[a, b]}
           />
-          <HStack gap={4} wrap="wrap">
-            <Legenda cor="var(--serie-verde)" texto="melhor rede" />
-            <Legenda cor="var(--serie-azul)" texto="rede mediana" />
-            <Legenda cor="var(--serie-cinza)" texto="regras fixas (tracejada)" />
-          </HStack>
-          <Text type="supporting" color="secondary">
-            A queda ao entrar numa fase é esperada: o problema ficou mais difícil (entrou a solução, o clima real, o
-            ruído…). O que importa é ela voltar a subir e passar das regras fixas.
-          </Text>
+          <OQueEIsso id="quedaDeFase" rotulo="por que a curva cai ao mudar de fase?" />
         </VStack>
       </Card>
 
-      <Grid columns={2} gap={4}>
+      <Grid columns={{ minWidth: 360 }} gap={4}>
         {campeao && <Esqueceu campeao={campeao} />}
         <Comparar geracoes={geracoes} a={a} b={b} setA={setA} setB={setB} />
       </Grid>
@@ -162,8 +155,7 @@ function Esqueceu({ campeao }: { campeao: Modelo }) {
           <OQueEIsso id="esquecimentoCatastrofico" />
         </HStack>
         <Text type="supporting" color="secondary">
-          O campeão atual ({campeao.id}, fase {campeao.fase}) refaz a prova de cada fase. Abaixo de{' '}
-          {LIMIAR_ESQUECEU * 100}%, ele esqueceu.
+          O campeão {campeao.id} refaz a prova de cada fase; abaixo de {LIMIAR_ESQUECEU * 100}%, esqueceu.
         </Text>
         {p.map((x) => (
           <VStack key={x.fase} gap={0.5}>
@@ -238,9 +230,10 @@ function Comparar({
           idKey="id"
           density="compact"
           columns={[
-            { key: 'metrica', header: 'Métrica' },
-            { key: 'a', header: `g${a}`, align: 'end' },
-            { key: 'b', header: `g${b}`, align: 'end' },
+            // a métrica tem piso de largura: no celular a tabela rola de lado em vez de partir palavras
+            { key: 'metrica', header: 'Métrica', width: proportional(2, { minWidth: 150 }) },
+            { key: 'a', width: proportional(1, { minWidth: 88 }), header: `g${a}`, align: 'end' },
+            { key: 'b', width: proportional(1, { minWidth: 88 }), header: `g${b}`, align: 'end' },
           ]}
         />
         <Link href="/dev">Ver os campeões nas estufas lado a lado</Link>
@@ -331,17 +324,6 @@ function Numero({ rotulo, valor, termo }: { rotulo: string; valor: string; termo
         </HStack>
       </VStack>
     </Card>
-  )
-}
-
-function Legenda({ cor, texto }: { cor: string; texto: string }) {
-  return (
-    <HStack gap={1.5} align="center">
-      <span className={css.ponto} style={{ background: cor }} aria-hidden />
-      <Text type="supporting" color="secondary">
-        {texto}
-      </Text>
-    </HStack>
   )
 }
 

@@ -1,0 +1,10 @@
+# Bibliotecas do treino. Instale dentro do venv:
+#   .venv\Scripts\python.exe -m pip install -r requirements.txt
+# O índice extra traz o PyTorch só para processador (sem CUDA): bem menor, e a
+# fase 1 treina no processador (docs/plano.md, "Onde o treino roda").
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+numpy
+matplotlib
+pandas
+pytest

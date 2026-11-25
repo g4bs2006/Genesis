@@ -321,8 +321,12 @@ Levantado em 2026-11-24:
 | Processador | Intel Core Ultra 5 125H, 14 núcleos, 18 linhas de execução |
 | Vídeo | Intel Arc integrado (sem NVIDIA) |
 | Memória e disco | 15 GB de RAM, 77 GB livres |
-| Python / Git | 3.13.2 / 2.55 |
-| PyTorch | não instalado ainda |
+| Python / Git / Node | 3.13.2 / 2.55 / 24.19 |
+| PyTorch | 2.15 para CPU, no `.venv` (`requirements.txt`); usa 14 threads, ~320 GFLOP/s numa matriz 1000×1000 |
+| Régua | `estudo/evolucao.py` leva 15 s (na nuvem, ~10 s), com as mesmas notas |
+
+O Windows bloqueia scripts `.ps1` neste notebook (política padrão), então os
+comandos chamam `.venv\Scripts\python.exe` direto em vez de ativar o venv.
 
 **A fase 1 treina no processador (PyTorch para CPU).** A rede é pequena (~2 mil
 pesos) e cada estufa é uma conta simples: com mil estufas, o processador dá

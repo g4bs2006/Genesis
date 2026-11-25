@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>04 · Rede e ensaio · Genesis</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+  <div class="olho">Passo 04 · Fase D · 24/11/2026</div>
+  <h1>A rede, a neuroevolução e o primeiro ensaio</h1>
+  <p class="resumo">A MLP 20 → 32 → 32 → 8 controlando mil estufas de uma vez, a evolução escolhendo as melhores, e um ensaio de 11 gerações. O ensaio mostrou que a rede aprende, e também por que o primeiro campeão gastou 7× mais energia.</p>
+
+  <h2>O que foi feito</h2>
+  <ul>
+    <li><code>treino/rede.py</code>: a MLP, igual à do dashboard (<code>rede.ts</code>): mesmas 20 entradas na mesma ordem, mesma normalização, mesmas 8 saídas, mesma ordem dos 1.992 pesos. Um teste confere a conta neurônio a neurônio.</li>
+    <li>A rede da <strong>população inteira</strong> é calculada de uma vez: os pesos são um tensor [P, 1992], e cada estufa é controlada pela sua linha.</li>
+    <li><code>treino/evolucao.py</code>, com os quatro passos da evolução, aplicados à população inteira:
+      <ul>
+        <li><strong>elitismo:</strong> as 5% melhores passam intactas;</li>
+        <li><strong>torneio:</strong> para escolher cada pai, sorteia 3 e fica com a melhor;</li>
+        <li><strong>cruzamento uniforme:</strong> cada peso do filho vem de um dos dois pais;</li>
+        <li><strong>mutação:</strong> soma um ruído normal de desvio 0,03.</li>
+      </ul>
+    </li>
+    <li><code>treino/treinar.py</code>, o laço da noite. Tem prova em 10 climas nunca vistos, modelos e gravações no formato do contrato, checkpoint, <code>--retomar</code>, <code>--horas</code>, Ctrl+C que salva antes de sair, e log.</li>
+    <li><code>treino/relatorio.py</code>: a curva e a tabela da manhã. <code>dashboard/scripts/validar-treino.mjs</code> confere os JSON contra os esquemas Zod do dashboard; os 6 tipos de arquivo passaram.</li>
+  </ul>
+
+  <h2>Por quê</h2>
+  <div class="decisao">
+    <div class="rotulo">Decisão · população de 1024</div>
+    <p>O roteiro manda escolher a maior população em que uma geração leve até ~60 s. A medição mostrou que o custo quase não depende de P, porque é quase todo sobrecarga do Python a cada passo: P = 256 e P = 1024 levaram ~40 s por geração de 35 dias. A rede inteira custa só 0,07 s por dia simulado. Mais redes saem quase de graça, então ficou P = 1024.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · redes e regras fixas na mesma simulação</div>
+    <p>O <code>Combinado</code> põe as 1024 redes e as regras fixas lado a lado, no mesmo clima. A régua de cada geração sai quase de graça, sem uma simulação extra de ~16 s.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · um clima por estufa na prova</div>
+    <p>A prova roda o campeão, as regras e "não fazer nada" em 10 climas numa simulação só (30 estufas, cada uma com o seu clima), em vez de 30 simulações.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · pesos iniciais com desvio 1/√(entradas)</div>
+    <p>A soma de cada neurônio começa do tamanho de uma entrada: nem morta em zero, nem saturada em ±1.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · checkpoint seguro</div>
+    <p>O <code>checkpoint.pt</code> é lido com <code>weights_only=True</code>: um arquivo adulterado não consegue rodar código.</p>
+  </div>
+
+  <h2>O ensaio 1 (11 gerações, ~11 min)</h2>
+  <figure>
+    <img class="grafico" src="imagens/04-ensaio1-curva.png" alt="Curva de aprendizado do ensaio 1">
+    <figcaption>A melhor rede sobe de −R$ 887 para −R$ 419 em 11 gerações, e a mediana também melhora. As regras fixas (tracejado) seguem bem acima. A curva balança porque cada geração tem um clima novo.</figcaption>
+  </figure>
+  <div class="tabela"><table>
+    <tr><th>Em 10 climas inéditos</th><th>Nota (R$)</th><th>Massa por pé</th><th>Energia</th><th>Fora da faixa</th></tr>
+    <tr><td>Campeão (geração 10)</td><td class="n">−513</td><td class="n">256 g</td><td class="n"><strong>1.206 kWh</strong></td><td class="n">65%</td></tr>
+    <tr><td>Regras fixas</td><td class="n">360</td><td class="n">256 g</td><td class="n">164 kWh</td><td class="n">76%</td></tr>
+    <tr><td>PID</td><td class="n">679</td><td class="n">273 g</td><td class="n">169 kWh</td><td class="n">54%</td></tr>
+    <tr><td>Não fazer nada</td><td class="n">−8.379</td><td class="n">8 g</td><td class="n">0</td><td class="n">100%</td></tr>
+  </table></div>
+  <figure>
+    <img class="grafico" src="imagens/04-ensaio1-energia.png" alt="Energia e nota do campeão comparadas às regras e ao PID">
+    <figcaption>O campeão já cultiva tão bem quanto as regras e fica menos tempo fora da faixa. Ele perde só pela energia: 7× mais, cerca de R$ 1.000 a mais na conta.</figcaption>
+  </figure>
+
+  <h2>O que surpreendeu: toda rede nasce com tudo meio ligado</h2>
+  <div class="erro">
+    <div class="rotulo">Diagnóstico</div>
+    <p>A saída passa por uma sigmoide, e uma rede sorteada começa com as saídas perto de 0,5. Então toda rede nasce com todos os atuadores ligados pela metade, inclusive o LED de 80 W/m², dia e noite. A evolução está aprendendo a desligá-lo, e por isso a curva sobe, mas sai de muito longe.</p>
+  </div>
+  <div class="aberto">
+    <div class="rotulo">Proposta, aguardando o Gabriel</div>
+    <p>Começar o viés das 8 saídas em −2 em vez de 0. A sigmoide de −2 é ~0,12, então cada atuador nasce ligado a ~12%. A arquitetura e o contrato não mudam; é só o valor inicial de 8 dos 1.992 pesos. Depois, um segundo ensaio de 10 min para comparar as curvas.</p>
+  </div>
+
+  <h2>Outros números</h2>
+  <ul>
+    <li>Tempo por geração: 36 a 56 s. Ficou mais lento quando o envio para a nuvem e outras sessões rodavam junto.</li>
+    <li>Uma gravação de 35 dias (5.040 passos) tem ~3 MB, mais que os ~0,5 MB previstos no <code>nuvem.md</code>, mas cabe no plano grátis.</li>
+    <li>Uma medição inicial com P = 1024 travou por mais de 9 min. Repetida, levou o mesmo que P = 256. A causa provável foi falta de memória livre naquele momento (2,2 GB de 15,4).</li>
+  </ul>
+
+  <h2>Como reproduzir</h2>
+<pre><code>.venv\Scripts\python.exe -m pytest treino simulador controle
+.venv\Scripts\python.exe -m treino.treinar --horas 0.17 --prova-cada 5 --saidas treino/saidas/ensaio
+.venv\Scripts\python.exe -m treino.relatorio treino/saidas/ensaio/fase1-semente7-20261124
+cd dashboard; node scripts/validar-treino.mjs ../treino/saidas/ensaio/fase1-semente7-20261124</code></pre>
+
+  <h2>Em aberto</h2>
+  <div class="aberto">
+    <p>Aplicar (ou não) o viés −2 nas saídas e rodar o ensaio 2.</p>
+    <p>Depois: a noite (Fase E), com 3 sementes, e o envio para o celular numa janela própria.</p>
+  </div>
+
+  <h2>Links</h2>
+  <ul>
+    <li>Commits <code>7dbccc0</code>, <code>7085b2f</code> · branch <code>treino-fase-d-neuroevolucao</code></li>
+    <li><code>treino/rede.py</code> · <code>treino/evolucao.py</code> · <code>treino/treinar.py</code> · <code>treino/relatorio.py</code></li>
+  </ul>
+
+  <div class="navegacao"><a href="03-controle-e-nota.html">← 03 · Controle e nota</a><a href="05-vies-e-envio.html">05 · Viés e envio →</a></div>
+</main>
+</body>
+</html>

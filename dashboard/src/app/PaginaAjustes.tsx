@@ -1,4 +1,3 @@
-import { flushSync } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@astryxdesign/core/Button'
 import { Card } from '@astryxdesign/core/Card'
@@ -13,6 +12,7 @@ import { FormularioPrecos } from '@/modules/dinheiro'
 import { useEstufaAtual, useEstufas } from '@/modules/estufa'
 import { SeletorModo } from '@/shared/design-system/molecules/SeletorModo'
 import { useInstalarApp } from '@/shared/hooks/useInstalarApp'
+import { trocarComTransicao } from '@/shared/lib/trocarComTransicao'
 import { usePreferencias, type Modo, type Tema } from '@/shared/stores/preferencias'
 
 /** Ajustes: estufa, tema, modo e instalar o app. (Preços entram com o Dinheiro, Fase 5.) */
@@ -116,14 +116,4 @@ function Secao({ titulo, apoio, children }: { titulo: string; apoio?: string; ch
       {children}
     </VStack>
   )
-}
-
-/**
- * Troca de tema sem "meio-termo": o navegador fotografa a tela, aplica o tema
- * novo de uma vez (flushSync) e cruza as duas imagens em 200ms. Sem a API
- * (navegadores antigos), troca direto.
- */
-function trocarComTransicao(trocar: () => void) {
-  if (!document.startViewTransition) return trocar()
-  document.startViewTransition(() => flushSync(trocar))
 }

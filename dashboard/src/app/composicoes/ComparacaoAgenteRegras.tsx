@@ -1,11 +1,12 @@
 import { Skeleton } from '@astryxdesign/core/Skeleton'
-import { Table } from '@astryxdesign/core/Table'
+import { proportional, Table } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import { formatarReaisCurto, resultadoDoCiclo, usePrecos, vantagemDoAgente } from '@/modules/dinheiro'
 import { useEstufaAtual, useEstufas, useResumoCiclo, type ResumoCiclo } from '@/modules/estufa'
 import { useAtraso } from '@/shared/hooks/useAtraso'
 import { formatarNumero } from '@/shared/lib/formatar'
+import { OQueEIsso } from '@/modules/glossario'
 
 type Linha = { id: string; metrica: string; agente: string; regras: string; diferenca: string; melhor: boolean }
 
@@ -86,21 +87,31 @@ export function ComparacaoAgenteRegras() {
         idKey="id"
         density="compact"
         columns={[
-          { key: 'metrica', header: 'No mesmo clima' },
+          { key: 'metrica', header: 'No mesmo clima', width: proportional(2, { minWidth: 150 }) },
           {
             key: 'agente',
+            width: proportional(1, { minWidth: 88 }),
             header: 'Agente',
             align: 'end',
             renderCell: (l) => <Num destaque={l.melhor}>{l.agente}</Num>,
           },
-          { key: 'regras', header: 'Regras fixas', align: 'end', renderCell: (l) => <Num>{l.regras}</Num> },
-          { key: 'diferenca', header: 'Diferença', align: 'end', renderCell: (l) => <Num>{l.diferenca}</Num> },
+          {
+            key: 'regras',
+            width: proportional(1, { minWidth: 88 }),
+            header: 'Regras fixas',
+            align: 'end',
+            renderCell: (l) => <Num>{l.regras}</Num>,
+          },
+          {
+            key: 'diferenca',
+            width: proportional(1, { minWidth: 88 }),
+            header: 'Diferença',
+            align: 'end',
+            renderCell: (l) => <Num>{l.diferenca}</Num>,
+          },
         ]}
       />
-      <Text type="supporting" color="secondary">
-        {agente.nome} contra {regras.nome}, com {plantas} pés e preço médio da alface. Resultado = venda − energia,
-        nutrientes, ácido, água, mudas e custos fixos.
-      </Text>
+      <OQueEIsso id="margem" rotulo={`${agente.nome} contra ${regras.nome} · ${plantas} pés · preço médio da alface`} />
     </VStack>
   )
 }

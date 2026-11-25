@@ -14,6 +14,8 @@ test('gravações: escolhe duas, toca e o dia do ciclo avança', async ({ page }
   await page.getByRole('button', { name: /Geração 140/ }).click()
   await page.getByRole('button', { name: /Geração 812/ }).click()
   await expect(page.getByRole('region', { name: /^Reprodução de / })).toHaveCount(2)
+  // cada gravação tem a sua rede pequena, recalculada no navegador (ilustração)
+  await expect(page.getByRole('img', { name: /^Rede do modelo .* recalculada neste passo/ })).toHaveCount(2)
 
   // o relógio compartilhado: "Dia 1 de 35 · 00:00" quando a gravação chega
   const relogio = page.getByText(/^Dia \d+ de \d+ ·/)
