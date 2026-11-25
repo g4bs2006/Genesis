@@ -21,7 +21,8 @@ if (!pasta || !existsSync(pasta)) {
   process.exit(2)
 }
 const ler = (arq) => JSON.parse(readFileSync(join(pasta, arq), 'utf8'))
-const json = (dir) => (existsSync(join(pasta, dir)) ? readdirSync(join(pasta, dir)).filter((a) => a.endsWith('.json')) : [])
+const json = (dir) =>
+  existsSync(join(pasta, dir)) ? readdirSync(join(pasta, dir)).filter((a) => a.endsWith('.json')) : []
 
 const conferir = [
   ['estado.json', EstadoTreino],
