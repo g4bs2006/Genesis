@@ -19,7 +19,11 @@ PASSOS_POR_DIA = 24 * 60 // MINUTOS_POR_PASSO  # 144
 
 @dataclass
 class Clima:
-    """Uma série por variável, um valor por passo de 10 minutos (tensores [passos])."""
+    """
+    Uma série por variável, um valor por passo de 10 minutos: tensores [passos]
+    (o mesmo clima para todas as estufas) ou [passos, N] (um clima por estufa,
+    ver empilhar).
+    """
 
     temperatura: torch.Tensor  # °C
     umidade: torch.Tensor  # umidade relativa, %
@@ -29,6 +33,13 @@ class Clima:
 
     def __len__(self) -> int:
         return self.temperatura.shape[0]
+
+
+def empilhar(climas: list[Clima]) -> Clima:
+    """Junta climas de mesmo tamanho num só, com um clima por estufa ([passos, N])."""
+    def junta(nome: str) -> torch.Tensor:
+        return torch.stack([getattr(c, nome) for c in climas], dim=1)
+    return Clima(*(junta(n) for n in ("temperatura", "umidade", "radiacao", "co2", "hora")))
 
 
 def clima_ameno(dias: int, semente: int, device: str = "cpu") -> Clima:

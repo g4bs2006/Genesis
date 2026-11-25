@@ -92,6 +92,16 @@ def test_ciclo_de_30_dias_da_massa_comercial():
     assert float(nada.massa_por_pe[0]) < 50
 
 
+def test_um_clima_por_estufa_igual_a_rodar_separado():
+    from simulador.clima import empilhar
+    a, b = clima_ameno(1, semente=1), clima_ameno(1, semente=2)
+    juntas = rodar(empilhar([a, b]), {"exaustor": 0.5}, n=2)
+    so_b = rodar(b, {"exaustor": 0.5})
+    assert torch.allclose(juntas.temperatura[1], so_b.temperatura[0], rtol=1e-5)
+    assert torch.allclose(juntas.massa[1], so_b.massa[0], rtol=1e-5)
+    assert juntas.ler_sensores()["tempo"]["hora"].shape == (2,)
+
+
 def test_conversoes_vao_e_voltam():
     t = torch.tensor([10.0, 25.0, 35.0])
     assert torch.allclose(co2_ppm(co2_kg(torch.tensor(420.0), t), t), torch.tensor(420.0))

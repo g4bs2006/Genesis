@@ -29,7 +29,7 @@ from datetime import datetime, timedelta, timezone
 
 import torch
 
-from simulador.clima import MINUTOS_POR_PASSO, Clima
+from simulador.clima import MINUTOS_POR_PASSO, PASSOS_POR_DIA, Clima
 from simulador.parametros import CALIBRADO, M_CO2, PRESSAO, R, Adaptacao, VanHenten
 
 ATUADORES = (
@@ -110,6 +110,8 @@ class Estufa:
         device = clima.temperatura.device
         zero = torch.zeros(n, device=device)
         t0 = clima.temperatura[0]
+        if t0.dim() == 1 and t0.shape[0] != n:
+            raise ValueError(f"O clima tem {t0.shape[0]} estufas; pediram {n}.")
         # Começa como o ar de fora, com as mudas recém-transplantadas.
         self.massa = zero + ad.massa_inicial
         self.co2 = zero + co2_kg(clima.co2[0], t0)
@@ -223,6 +225,7 @@ class Estufa:
         """
         ad, a = self.ad, self._acoes
         t_fora, ur_fora, rad_fora, _ = self._fora()
+        hora = self.clima.hora[min(self.passo, len(self.clima) - 1)]
         ur = umidade_relativa(self.umidade, self.temperatura)
         um = torch.ones(self.n, device=self.massa.device)
         luz = rad_fora * ad.transmissao * (1 - a["sombreamento"] * ad.sombra_max) * ad.par_por_w_global
@@ -238,6 +241,8 @@ class Estufa:
             "solucao": {k: um * v for k, v in SOLUCAO_FIXA.items()},
             "fora": {"temperatura": um * t_fora, "umidade": um * ur_fora, "radiacao": um * rad_fora},
             "tarifaKwh": um * TARIFA_KWH,
+            # fora do contrato (a Leitura tem o instante): o relógio que a rede precisa
+            "tempo": {"hora": um * hora, "diaDoCiclo": um * (self.passo / PASSOS_POR_DIA)},
         }
 
     def leitura(self, i: int, estufa_id: str) -> dict:
