@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>01 · Ambiente e nuvem · Genesis</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+  <div class="olho">Passo 01 · Fase A · 24/11/2026</div>
+  <h1>O ambiente do treino e o cano até o celular</h1>
+  <p class="resumo">Antes de qualquer rede neural, a bancada: o Python com o PyTorch, uma régua de velocidade e o caminho que leva os números do treino até o celular.</p>
+
+  <h2>O que foi feito</h2>
+  <ul>
+    <li>Diagnóstico da máquina (o notebook, não o PC da RX 7600).</li>
+    <li>Ambiente virtual <code>.venv</code> e <code>requirements.txt</code> com o PyTorch para processador.</li>
+    <li>Medição de velocidade com o estudo (<code>estudo/evolucao.py</code>).</li>
+    <li>Dashboard: <code>npm install</code>, 299 testes passando, <code>npm run dev</code> abrindo.</li>
+    <li>O <code>.env</code> com a conta do treino no Supabase e o teste do cano com a demo do <code>treino/nuvem.py</code>.</li>
+  </ul>
+
+  <h2>A máquina</h2>
+  <div class="tabela"><table>
+    <tr><th>Item</th><th>Valor</th></tr>
+    <tr><td>Sistema</td><td>Windows 11 Pro</td></tr>
+    <tr><td>Processador</td><td>Intel Core Ultra 5 125H, 14 núcleos, 18 linhas de execução</td></tr>
+    <tr><td>Vídeo</td><td>Intel Arc integrado (sem placa dedicada)</td></tr>
+    <tr><td>Memória e disco</td><td>15,4 GB de RAM, 72,7 GB livres</td></tr>
+    <tr><td>Python / Git / Node</td><td>3.13.2 / 2.55 / 24.19</td></tr>
+    <tr><td>PyTorch</td><td>2.15 para CPU, 14 threads, ~320 bilhões de contas por segundo numa matriz 1000×1000</td></tr>
+  </table></div>
+
+  <h2>Por quê</h2>
+  <div class="decisao">
+    <div class="rotulo">Decisão · treinar no processador</div>
+    <p>A rede tem 1.992 pesos e cada estufa é uma conta pequena. Mandar trabalho tão miúdo para uma placa de vídeo custa mais do que ela economiza. O plano já previa isso; a placa Intel (XPU) fica para um teste futuro.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · PyTorch "só CPU"</div>
+    <p>A versão padrão vem com CUDA (para placas NVIDIA) e baixa ~2 GB. A versão para processador baixa ~200 MB e faz a mesma conta aqui.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · chamar o Python do venv direto, sem "ativar"</div>
+    <p>O Windows deste notebook bloqueia scripts <code>.ps1</code> (política padrão), e o <code>Activate.ps1</code> é um deles. Em vez de mudar a configuração do Windows, os comandos chamam <code>.venv\Scripts\python.exe</code>, que tem o mesmo efeito.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · a senha da conta do treino</div>
+    <p>O Gabriel autorizou definir uma senha nova. Ela foi gerada aleatória direto no <code>.env</code>, sem aparecer na tela, e o Supabase recebeu só o <em>hash</em> bcrypt (o embaralhamento de mão única que o banco guarda), pelo SQL Editor. O <code>.env</code> não vai para o Git.</p>
+  </div>
+
+  <h2>Números</h2>
+  <div class="tabela"><table>
+    <tr><th>Medição</th><th>Resultado</th></tr>
+    <tr><td><code>estudo/evolucao.py</code> (150 gerações de 200 redes)</td><td class="n">15,2 s (na nuvem: ~10 s)</td></tr>
+    <tr><td>Notas do estudo em 30 climas inéditos</td><td>nada −1.200,7 · regras −49,1 · campeão −8,9 (iguais às da nuvem: mesma semente, mesmo resultado)</td></tr>
+    <tr><td>Demo da nuvem</td><td>login ok; 6 gerações lidas pela API pública, sem login, como o celular lê</td></tr>
+    <tr><td>Testes do envio (<code>treino.test_nuvem</code>)</td><td>4 de 4 passando</td></tr>
+  </table></div>
+
+  <h2>O que surpreendeu</h2>
+  <div class="erro">
+    <div class="rotulo">Memória apertada</div>
+    <p>Com outras sessões abertas, o notebook ficou com ~2 GB livres e o Claude Code parou os processos em segundo plano (o servidor do dashboard e a demo). Antes de treinar à noite, fechar o que não for preciso.</p>
+  </div>
+  <div class="erro">
+    <div class="rotulo">A demo é um treino de mentira</div>
+    <p>O <code>--demo</code> só inventa números para testar o cano. Ele não tem simulador nem rede neural. O primeiro treino real é o do passo 04.</p>
+  </div>
+
+  <h2>Como reproduzir</h2>
+<pre><code>python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe estudo/evolucao.py
+.venv\Scripts\python.exe -m treino.nuvem --demo        # Ctrl+C para parar
+.venv\Scripts\python.exe -m treino.nuvem --apagar demo-...
+.venv\Scripts\python.exe -m unittest treino.test_nuvem</code></pre>
+
+  <h2>Links</h2>
+  <ul>
+    <li>Commit <code>a07d5c9</code> · PR <a href="https://github.com/g4bs2006/Genesis/pull/29">#29</a></li>
+    <li><a href="../nuvem.md">docs/nuvem.md</a> · <a href="../plano.md">docs/plano.md</a> ("Onde o treino roda")</li>
+  </ul>
+
+  <div class="navegacao"><a href="index.html">← índice</a><a href="02-simulador.html">02 · O simulador →</a></div>
+</main>
+</body>
+</html>
