@@ -13,6 +13,7 @@ from simulador.clima import clima_ameno
 from simulador.estufa import Estufa
 from treino.evolucao import Combinado, fatiar, proxima_geracao
 from treino.rede import ARQUITETURA, ENTRADAS, SAIDAS, ControladorRede, n_pesos, normalizacao, pesos_iniciais, propagar
+from treino.reavaliar import reavaliar
 from treino.treinar import Execucao, main
 
 
@@ -76,13 +77,34 @@ def test_treino_curto_escreve_os_arquivos_do_contrato(tmp_path):
     assert estado["rodando"] is False and estado["geracaoAtual"] == 2
     assert [g["numero"] for g in geracoes] == [1, 2]
     assert set(ler("config.json")) == {"populacao", "elite", "torneio", "mutacao", "misturaFases", "arquitetura", "passoMinutos"}
-    [modelo] = list((pasta / "modelos").glob("*.json"))
-    m = json.loads(modelo.read_text(encoding="utf-8"))
+    modelos = sorted((pasta / "modelos").glob("*.json"))
+    assert [p.stem.rsplit("-", 1)[1] for p in modelos] == ["g1", "g2"]
+    m = json.loads(modelos[0].read_text(encoding="utf-8"))
     assert len(m["pesos"]) == 1992 and 0 <= m["provaPorFase"]["1"] <= 1
-    [resumo] = ler("gravacoes/indice.json")
-    grav = ler(f"gravacoes/{resumo['id']}.json")
-    assert resumo["passos"] == len(grav["passos"]) == 144
-    passo = grav["passos"][0]
+    indice = ler("gravacoes/indice.json")
+    # geração 1: o campeão dela, as regras fixas e "sem controle"; geração 2: a prova salvou outro campeão
+    assert [(r["controlador"], r["geracao"]) for r in indice] == [
+        ("agente", 1), ("regras", None), ("nada", None), ("agente", 2)]
+    for resumo in indice:
+        grav = ler(f"gravacoes/{resumo['id']}.json")
+        assert resumo["passos"] == len(grav["passos"]) == 144
+        assert len(grav["massaPorDia"]) == 2  # o transplante e o fim do dia 1
+        assert grav["resumo"] == resumo["resumo"] and set(grav["resumo"]) >= {"massaPorPe", "energiaKwh", "nota"}
+    passo = ler(f"gravacoes/{indice[0]['id']}.json")["passos"][0]
     assert set(passo) == {"leitura", "acoes", "barradas"} and isinstance(passo["acoes"]["bomba"], bool)
+    # sem controle não liga nada (a bomba do NFT fica sempre ligada)
+    nada = ler(f"gravacoes/{indice[2]['id']}.json")
+    assert all(p["acoes"]["exaustor"] == p["acoes"]["luz"] == 0 for p in nada["passos"])
     # retomar continua da geração 2
     assert Execucao.retomar(pasta).geracao == 2
+    return pasta
+
+
+def test_reavaliar_refaz_o_g1_e_confere_os_passos(tmp_path):
+    """Sem retreinar: o g1 refeito bate com geracoes.json e cada gravação refeita, com a original."""
+    pasta = test_treino_curto_escreve_os_arquivos_do_contrato(tmp_path / "treino")
+    r = reavaliar(pasta, tmp_path / "reavaliacao")
+    assert r["conferidas"] == 2  # g1 e g2 tinham gravação original para comparar
+    assert r["maior_diferenca"] <= 0.05
+    assert [x["controlador"] for x in r["indice"]] == ["agente", "agente", "regras", "nada"]
+    assert (tmp_path / "reavaliacao" / "modelos" / f"{pasta.name}-g1.json").exists()

@@ -50,6 +50,41 @@ const LinhaGravacao = z.object({
   arquivo: z.string(),
 })
 
+/**
+ * Os campos do passo 09 (quem controlou, a geração e o resumo do ciclo) não
+ * têm coluna na tabela: o treino/nuvem.py manda o índice inteiro da pasta para
+ * o Storage. "indice.json" vem da pasta do treino; "indice-reavaliacao.json",
+ * da reavaliação (treino/reavaliar.py). A reavaliação é lida por último e vale.
+ */
+const INDICES_NA_NUVEM = ['indice.json', 'indice-reavaliacao.json'] as const
+
+/** Baixa um JSON público; null se não existe (execução antiga, sem índice). */
+async function baixarJsonPadrao(url: string): Promise<unknown> {
+  const resposta = await fetch(url, { cache: 'no-cache' })
+  return resposta.ok ? resposta.json() : null
+}
+
+/**
+ * A lista em ordem de leitura: os campeões da geração mais antiga à mais nova,
+ * depois as regras fixas e "sem controle". (A data de criação não serve: a
+ * reavaliação do passo 09 mandou tudo de uma vez.)
+ */
+const PESO_CONTROLADOR = { agente: 0, regras: 1, nada: 2 } as const
+export function ordemDasGravacoes(a: ResumoGravacao, b: ResumoGravacao): number {
+  const porTipo = PESO_CONTROLADOR[a.controlador ?? 'agente'] - PESO_CONTROLADOR[b.controlador ?? 'agente']
+  return porTipo || (a.geracao ?? 0) - (b.geracao ?? 0) || a.criadaEm.localeCompare(b.criadaEm)
+}
+
+/** Só os campos do passo 09 de um resumo do índice (os outros vêm da tabela). */
+function campos09(r: ResumoGravacao | undefined) {
+  if (!r) return {}
+  return {
+    ...(r.controlador && { controlador: r.controlador }),
+    ...(r.geracao !== undefined && { geracao: r.geracao }),
+    ...(r.resumo && { resumo: r.resumo }),
+  }
+}
+
 /** Erro de "ainda não tem nada": a tela mostra um aviso amigável, não uma falha. */
 export class SemExecucaoAinda extends Error {
   constructor() {
@@ -67,8 +102,23 @@ function paraSaoPaulo(instante: string): string {
 }
 
 // SupabaseClient<any, 'genesis'>: o cliente apontado para o schema do Gênesis (sem tipos gerados: quem confere é o Zod)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function criarFonteTreinoSupabase(cliente: SupabaseClient<any, 'genesis'>): FonteTreino & FonteGravacoes {
+export function criarFonteTreinoSupabase(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  cliente: SupabaseClient<any, 'genesis'>,
+  baixarJson: (url: string) => Promise<unknown> = baixarJsonPadrao,
+): FonteTreino & FonteGravacoes {
+  const urlPublica = (caminho: string) => cliente.storage.from(BUCKET_GRAVACOES).getPublicUrl(caminho).data.publicUrl
+
+  /** Os campos do passo 09 de cada gravação, por id (vazio se a execução não mandou índice). */
+  async function extrasDosIndices(execucaoId: string): Promise<Map<string, ResumoGravacao>> {
+    const extras = new Map<string, ResumoGravacao>()
+    for (const nome of INDICES_NA_NUVEM) {
+      const lido = z.array(ResumoGravacao).safeParse(await baixarJson(urlPublica(`${execucaoId}/${nome}`)))
+      if (lido.success) for (const g of lido.data) extras.set(g.id, g)
+    }
+    return extras
+  }
+
   // A execução atual muda pouco; guardamos o id para os outros pedidos.
   async function execucaoAtual() {
     const { data, error } = await cliente
@@ -129,6 +179,7 @@ export function criarFonteTreinoSupabase(cliente: SupabaseClient<any, 'genesis'>
         .eq('execucao_id', id)
         .order('criada_em')
       if (error) throw new Error(`Supabase (gravacoes): ${error.message}`)
+      const extras = await extrasDosIndices(id)
       return z
         .array(LinhaGravacao)
         .parse(data)
@@ -140,8 +191,10 @@ export function criarFonteTreinoSupabase(cliente: SupabaseClient<any, 'genesis'>
             titulo: g.titulo,
             criadaEm: paraSaoPaulo(g.criada_em),
             passos: g.passos,
+            ...campos09(extras.get(g.id)),
           }),
         )
+        .sort(ordemDasGravacoes)
     },
 
     async obter(idGravacao) {
@@ -155,8 +208,7 @@ export function criarFonteTreinoSupabase(cliente: SupabaseClient<any, 'genesis'>
       if (error) throw new Error(`Supabase (gravacoes): ${error.message}`)
       if (!data) throw new Error(`Gravação não encontrada: ${idGravacao}`)
       // O bucket é público: o arquivo baixa por um link direto, sem login.
-      const { publicUrl } = cliente.storage.from(BUCKET_GRAVACOES).getPublicUrl(data.arquivo as string).data
-      const resposta = await fetch(publicUrl)
+      const resposta = await fetch(urlPublica(data.arquivo as string))
       if (!resposta.ok) throw new Error(`Gravação ${idGravacao}: HTTP ${resposta.status}`)
       return Gravacao.parse(await resposta.json())
     },

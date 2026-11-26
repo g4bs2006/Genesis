@@ -15,6 +15,7 @@ type Linha = Record<string, unknown>
 function clienteFalso(tabelas: Record<string, Linha[]>) {
   const pedidos: string[] = []
   const cliente = {
+    storage: { from: () => ({ getPublicUrl: (caminho: string) => ({ data: { publicUrl: `nuvem/${caminho}` } }) }) },
     from(tabela: string) {
       let linhas = [...(tabelas[tabela] ?? [])]
       const consulta = {
@@ -79,6 +80,27 @@ describe('fonte de treino no Supabase', () => {
     expect(pedidos.filter((p) => p === 'geracoes')).toHaveLength(4) // só um pedido a mais
   })
 
+  const resumo = {
+    estufaId: 'regras',
+    massaPorPe: 210,
+    energiaKwh: 300,
+    aguaL: 50,
+    nutrienteG: 0,
+    acidoMl: 0,
+    foraDaFaixa: 0.2,
+    foraPorVariavel: { temperatura: 0.1 },
+    barradas: 0,
+  }
+
+  const linhaIndice = (id: string) => ({
+    id,
+    semente: 7,
+    modeloId: 'm',
+    titulo: 't',
+    criadaEm: '2026-11-24T20:00:00-03:00',
+    passos: 840,
+  })
+
   it('converte o resumo das gravações para o contrato (camelCase e fuso de São Paulo)', async () => {
     const { cliente } = clienteFalso({
       execucoes: [execucao],
@@ -93,9 +115,27 @@ describe('fonte de treino no Supabase', () => {
           passos: 840,
           arquivo: 'e1/g10.json',
         },
+        {
+          execucao_id: 'e1',
+          id: 'regras',
+          semente: 7,
+          modelo_id: 'regras-fixas',
+          titulo: 'Regras fixas',
+          criada_em: '2026-11-25T01:00:00+00:00',
+          passos: 840,
+          arquivo: 'e1/regras.json',
+        },
       ],
     })
-    expect(await criarFonteTreinoSupabase(cliente).listar()).toEqual([
+    // o índice do treino diz só da g10; o da reavaliação (que vale mais) traz as regras
+    const indices: Record<string, unknown> = {
+      'nuvem/e1/indice.json': [{ ...linhaIndice('g10'), controlador: 'agente', geracao: 10 }],
+      'nuvem/e1/indice-reavaliacao.json': [
+        { ...linhaIndice('regras'), controlador: 'regras', geracao: null, resumo: { ...resumo, nota: 120.5 } },
+      ],
+    }
+    const fonte = criarFonteTreinoSupabase(cliente, async (url) => indices[url] ?? null)
+    expect(await fonte.listar()).toEqual([
       {
         id: 'g10',
         semente: 7,
@@ -103,6 +143,20 @@ describe('fonte de treino no Supabase', () => {
         titulo: 'Campeão da geração 10',
         criadaEm: '2026-11-24T23:00:00-03:00',
         passos: 840,
+        controlador: 'agente',
+        geracao: 10,
+      },
+      // as réguas vêm depois dos campeões, mesmo criadas antes
+      {
+        id: 'regras',
+        semente: 7,
+        modeloId: 'regras-fixas',
+        titulo: 'Regras fixas',
+        criadaEm: '2026-11-24T22:00:00-03:00',
+        passos: 840,
+        controlador: 'regras',
+        geracao: null,
+        resumo: { ...resumo, nota: 120.5 },
       },
     ])
   })

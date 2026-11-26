@@ -30,7 +30,9 @@ frente. Usamos três coisas dele:
   | `gravacoes` | gravação (só o resumo) | `gravacoes/indice.json` |
 
 - **Storage** (o bucket `genesis-gravacoes`): os arquivos das gravações
-  (~0,5 MB cada), que são grandes demais para uma linha de tabela.
+  (~3 MB cada), que são grandes demais para uma linha de tabela, e o índice de
+  cada pasta (`indice.json` e `indice-reavaliacao.json`, poucos KB), que leva
+  quem controlou cada gravação, a geração e o resumo do ciclo (passo 09).
 - **Realtime**: o Supabase avisa o celular por WebSocket (uma conexão que fica
   aberta) quando chega geração nova. O celular não precisa ficar perguntando.
 
@@ -136,6 +138,19 @@ python -m treino.nuvem treino/saidas/<execucao>
 
 Para o treino não pegar um JSON pela metade, a Fase D deve escrever cada
 arquivo num `.tmp` e renomear (`escrever_json` em `treino/nuvem.py` faz assim).
+
+## Reavaliar uma execução antiga (passo 09)
+
+Sem retreinar, grava o campeão da geração 1, as regras fixas e "sem controle"
+no clima da gravação e regrava os campeões com a massa por dia e o resumo:
+
+```powershell
+.venv\Scripts\python.exe -m treino.reavaliar treino/saidas/<execucao>
+.venv\Scripts\python.exe -m treino.nuvem --uma-vez treino/reavaliacoes/<execucao>
+```
+
+A pasta da reavaliação não tem `estado.json`: o envio pula a tabela
+`execucoes` (a execução já existe) e manda o índice como `indice-reavaliacao.json`.
 
 ## Para o artigo
 

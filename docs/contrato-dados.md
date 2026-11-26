@@ -138,9 +138,14 @@ type Modelo = {
 type Gravacao = {
   id: string;
   semente: number;
-  modeloId: string;
+  modeloId: string; // nas réguas: "regras-fixas" e "sem-controle"
   passos: Passo[];
+  // passo 09 (opcionais: as gravações de antes não têm)
+  controlador?: "agente" | "regras" | "nada"; // ausente = "agente"
+  massaPorDia?: number[]; // g/pé: [0] no transplante, [d] no fim do dia d
+  resumo?: ResumoDaGravacao;
 };
+type ResumoDaGravacao = ResumoCiclo & { nota: number }; // o ciclo gravado, medido no treino (controle/metricas.py)
 ```
 
 **Novos** (confirmar):
@@ -153,6 +158,10 @@ type ResumoGravacao = {
   titulo: string;
   criadaEm: string;
   passos: number;
+  // passo 09 (opcionais)
+  controlador?: "agente" | "regras" | "nada";
+  geracao?: number | null; // a geração do campeão; null nas réguas
+  resumo?: ResumoDaGravacao;
 }; // a lista, sem os passos
 type EstadoTreino = {
   rodando: boolean;
@@ -173,6 +182,18 @@ type ConfigTreino = {
   passoMinutos: number;
 };
 ```
+
+**Passo 09 (25/11/2026).** Toda gravação usa o mesmo clima (`SEMENTE_GRAVACAO`
+em `treino/treinar.py`), então campeões de gerações diferentes, as regras fixas
+e "sem controle" são comparáveis lado a lado. Na geração 1 o treino grava o
+campeão dela e as duas réguas; as execuções de antes ganharam essas gravações
+pelo `treino/reavaliar.py` (sem retreinar), em `treino/reavaliacoes/<execucao>/`.
+
+Na nuvem, `controlador`, `geracao` e `resumo` não têm coluna na tabela
+`genesis.gravacoes`: vão no índice da pasta, que o `treino/nuvem.py` manda ao
+Storage como `<execucao>/indice.json` (pasta do treino) e
+`<execucao>/indice-reavaliacao.json` (pasta da reavaliação). O dashboard junta
+os dois às linhas da tabela, valendo a reavaliação.
 
 A gravação traz as **ações** de cada passo: o dashboard reproduz o que
 aconteceu, não recalcula a rede (GPU em float32 e navegador arredondam
