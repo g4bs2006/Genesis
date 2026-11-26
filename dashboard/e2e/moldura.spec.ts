@@ -81,17 +81,31 @@ test('histórico: período, alertas e CSV', async ({ page, isMobile }) => {
   expect((await download).suggestedFilename()).toMatch(/^genesis-.*\.csv$/)
 })
 
-test('dinheiro: lucro previsto e editar preço com vírgula', async ({ page }) => {
+test('dinheiro: a conta do ciclo, o equilíbrio e editar preço com vírgula', async ({ page }) => {
   await page.goto('/dinheiro')
   await expect(page.getByRole('heading', { level: 1, name: 'Dinheiro' })).toBeVisible()
-  await expect(page.getByText('Para onde vai o dinheiro da venda')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'A conta do ciclo' })).toBeVisible()
+  await expect(page.getByText(/^Abaixo de R\$\s?[\d,]+ o pé, você perde dinheiro\.$/)).toBeVisible()
   await page.getByRole('button', { name: 'Editar preços' }).click()
-  const medio = page.getByLabel('Preço médio')
-  await medio.fill('2,5')
-  await medio.press('Enter')
+  const alface = page.getByLabel('Alface')
+  await alface.fill('2,5')
+  await alface.press('Enter')
   await page.getByRole('button', { name: 'Salvar preços' }).click()
-  // o cenário médio passa a mostrar o preço novo
-  await expect(page.getByText(/R\$\s?2,50\/pé/)).toBeVisible()
+  // a linha do preço passa a mostrar o preço novo
+  await expect(page.getByText(/^R\$\s?2,50 o pé de 220 g/)).toBeVisible()
+})
+
+test('dinheiro: um lançamento sobrevive a recarregar a página', async ({ page }) => {
+  await page.goto('/dinheiro')
+  await page.getByLabel('Detalhe').fill('feira de sábado')
+  await page.getByLabel('Valor').fill('320,50')
+  await page.getByLabel('Valor').press('Tab')
+  await page.getByRole('button', { name: 'Lançar' }).click()
+  await expect(page.getByRole('cell', { name: 'feira de sábado' })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('cell', { name: 'feira de sábado' })).toBeVisible()
+  // e entra no "real" do previsto × real
+  await expect(page.getByRole('cell', { name: /^R\$\s?320,50$/ }).first()).toBeVisible()
 })
 
 test('treino: curva de aprendizado, sem currículo nem "esqueceu"', async ({ page, isMobile }) => {

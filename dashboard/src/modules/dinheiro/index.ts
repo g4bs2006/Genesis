@@ -1,5 +1,5 @@
 /**
- * Módulo dinheiro: Preços, custos, receita e lucro projetado (Dinheiro, Agente × regras).
+ * Módulo dinheiro: preços, a conta do ciclo e os lançamentos reais (Dinheiro).
  *
  * API pública do módulo: o resto do app só importa daqui (ou de ./dominio).
  * Camadas (docs/decisoes/0001-arquitetura.md do Tesserato):
@@ -10,9 +10,13 @@
  * As pastas nascem quando a primeira peça delas chega.
  */
 export * from './dominio'
-export type { RepositorioPrecos } from './application/portas'
+export type { RepositorioLancamentos, RepositorioPrecos } from './application/portas'
 export * from './presentation/dados'
 export { LucroPrevisto } from './presentation/LucroPrevisto'
 export { FormularioPrecos } from './presentation/FormularioPrecos'
 // Adaptadores (só app/dependencias.ts deve usar)
-export { criarRepositorioPrecosLocal, PRECOS_PADRAO } from './infrastructure/precosLocal'
+export {
+  criarRepositorioLancamentosLocal,
+  criarRepositorioPrecosLocal,
+  PRECOS_PADRAO,
+} from './infrastructure/precosLocal'

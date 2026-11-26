@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>11 · Dinheiro como planilha · Genesis</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+  <div class="olho">Passo 11 · Dashboard · 25/11/2026</div>
+  <h1>Dinheiro: a planilha do pequeno produtor</h1>
+  <p class="resumo">A página Dinheiro foi refeita a partir de uma pergunta do Gabriel: o que o pequeno produtor de alface hidropônica faz hoje em planilha que o app pode fazer por ele? Pesquisei, e a resposta guiou a tela: a conta do ciclo em linguagem simples, cada gasto numa linha dizendo de onde veio, o ponto de equilíbrio numa frase, os preços editáveis ali mesmo, e o caderno de vendas e gastos de verdade, comparado com o previsto.</p>
+
+  <h2>Antes e depois</h2>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-08/desktop-claro-dinheiro.png" alt="Dinheiro antes: cenários, lucro por ciclo, mês e ano, barra empilhada">
+    <figcaption>Antes: três cenários de preço, lucro por ciclo, por mês e por ano, margem e uma barra empilhada. Nenhum número dizia de onde vinha.</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-11/desktop-claro-dinheiro.png" alt="Dinheiro depois: sobra, ponto de equilíbrio e a conta do ciclo em tabela">
+    <figcaption>Depois: a sobra e o ponto de equilíbrio no topo; embaixo, a conta linha a linha com a coluna "De onde veio". Olhe a energia: "453 kWh × R$ 0,85", com os kWh medidos no ciclo gravado e a tarifa digitada pelo produtor. (Captura do modo de teste: o "ciclo de 3 dias" é o recorte; o consumo e a massa são do ciclo inteiro.)</figcaption>
+  </figure>
+  <p>As capturas do celular e das outras partes da página: <code>docs/revisao-visual/passo-11/</code>.</p>
+
+  <h2>A pesquisa: o que o pequeno produtor controla</h2>
+  <ul>
+    <li><strong>Entradas e saídas.</strong> O Sebrae recomenda ao produtor rural dois registros: o de saídas (compras, despesas, investimentos) e o de entradas (vendas, recebimentos). O Senar orienta o fluxo de caixa: "o controle de todas as despesas e receitas". O e-book da Capes para agricultores familiares lista o caderno de anotações, a planilha de custos e o controle de receitas e despesas.</li>
+    <li><strong>A conta do ciclo e o custo por planta.</strong> O estudo da Embrapa (Matioli e colegas, 1997) calculou o custo por planta (R$ 0,28, contra R$ 0,45 de venda, em valores daquele ano) com a solução nutritiva, a energia, as mudas e a mão de obra como itens. Um estudo de pequenos produtores em Lavras (MG) achou custo variável de R$ 0,28 a R$ 0,64 por planta, com a <strong>mão de obra da família</strong> como maior item.</li>
+    <li><strong>O ponto de equilíbrio.</strong> O mesmo estudo de Lavras usa o "ponto de nivelamento": a produção mensal em que a receita iguala o custo.</li>
+    <li><strong>Planilhas reais.</strong> Um TCC da UTFPR sobre alface e rúcula hidropônicas mostra as planilhas de gastos mensais e de controle de entregas de um produtor.</li>
+  </ul>
+  <p>Os valores desses estudos são antigos e regionais: entram aqui como forma (quais linhas a conta tem), não como número. Os números da tela são o consumo medido no ciclo gravado e os preços do próprio produtor.</p>
+
+  <h2>Por quê</h2>
+  <p>A decisão completa: <a href="../decisoes/0008-dinheiro-como-planilha.md">docs/decisoes/0008</a>. Foram <strong>decisões do Gabriel</strong>: repaginar, a conta de cima para baixo com cada número dizendo de onde veio, o ponto de equilíbrio numa frase, os preços saírem de Ajustes e os lançamentos salvos no navegador com CSV. As minhas:</p>
+  <div class="decisao">
+    <div class="rotulo">Decisão · um preço só</div>
+    <p>Três cenários (baixo, médio, alto) multiplicavam cada número por três. O produtor sabe por quanto vende; se o preço muda, ele edita e a conta muda na hora. O preço é o do pé de 220 g; pé maior vale até 10% a mais e abaixo de 120 g não vende, a mesma régua da nota do treino (<code>controle/metricas.py</code>), para o Dinheiro e o treino falarem a mesma língua.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · as linhas de gasto</div>
+    <p>Energia (kWh medidos × tarifa), água (litros da névoa × tarifa por m³), adubo (por ciclo), mudas (pés × preço), embalagem (por pé) e "mão de obra e outros" (por ciclo). São as linhas que aparecem nos estudos e no pedido do Gabriel. As mesmas seis servem aos lançamentos, então o previsto × real compara linha a linha. Ácido e "nutriente por kg" saíram: a fase 1 do treino não dosa, e a linha ficaria sempre zerada.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · adubo e embalagem começam em zero</div>
+    <p>A simulação ainda não dosa adubo, então não há consumo medido. Pôr um valor de referência seria um número sem origem. A linha mostra R$ 0,00 e diz "informe em Editar preços (a simulação ainda não dosa adubo)". A conta fica otimista até o produtor informar, e isso está escrito na tela.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · não perder os preços antigos</div>
+    <p>Quem já tinha editado preços no formato antigo não perde: o preço médio vira o preço da alface, e os "custos fixos" viram "mão de obra e outros" (teste em <code>repositorioPrecosLocal.test.ts</code>).</p>
+  </div>
+
+  <h2>Números</h2>
+  <table>
+    <tr><th>Linha (campeão final da semente 9, preços de referência)</th><th>Conta</th><th>Valor</th></tr>
+    <tr><td>Entra</td><td>1.000 pés × R$ 2,20 (247 g → fator 1,10)</td><td>R$ 2.200,00</td></tr>
+    <tr><td>Energia</td><td>453 kWh × R$ 0,85</td><td>R$ 384,65</td></tr>
+    <tr><td>Água</td><td>4.902 L × R$ 8 por m³</td><td>R$ 39,21</td></tr>
+    <tr><td>Mudas</td><td>1.000 × R$ 0,15</td><td>R$ 150,00</td></tr>
+    <tr><td>Mão de obra e outros</td><td>por ciclo</td><td>R$ 180,00</td></tr>
+    <tr><td>Sai</td><td>a soma</td><td>R$ 753,86</td></tr>
+    <tr><td>Sobra</td><td>entra − sai</td><td>R$ 1.446,14</td></tr>
+    <tr><td>Ponto de equilíbrio</td><td>R$ 753,86 ÷ 1.000 ÷ 1,10</td><td>R$ 0,69 o pé</td></tr>
+  </table>
+  <p>Fonte: o resumo da gravação <code>fase1-semente9-20261124-g158</code> (passo 09) e os preços de referência de <code>repositorioPrecosLocal.ts</code>. A sobra alta vem de dois zeros que o produtor ainda não informou (adubo e embalagem) e do custo de mão de obra de referência; com os números dele, a conta muda.</p>
+  <table>
+    <tr><th>Testes</th><th>Resultado</th></tr>
+    <tr><td>Contas (<code>contas.test.ts</code>): fator de peso, cada linha, equilíbrio, lançamentos, CSV</td><td>passam</td></tr>
+    <tr><td>Repositórios no navegador: ida e volta, formato antigo, lançamento estragado, valor negativo</td><td>passam</td></tr>
+    <tr><td>e2e: editar o preço com vírgula; um lançamento sobrevive a recarregar e entra no "real"</td><td>passam no desktop e no celular</td></tr>
+  </table>
+
+  <h2>O que deu errado ou surpreendeu</h2>
+  <div class="erro">
+    <p><strong>O ponto de equilíbrio é baixo: R$ 0,69 o pé.</strong> Com os preços de referência, mudas e mão de obra pesam mais que a energia. Os estudos de campo mostram a mão de obra da família como o maior custo; o valor de referência (R$ 180 por ciclo) é pequeno para isso. Por isso a linha diz "seu trabalho e a estrutura divididos por ciclo" e convida a editar.</p>
+  </div>
+  <div class="erro">
+    <p><strong>O "real" e o "previsto" não falam do mesmo período.</strong> Os lançamentos não têm ciclo (sem login, não há "meu ciclo atual" guardado). O previsto × real soma todos os lançamentos. Fica em aberto.</p>
+  </div>
+
+  <h2>Como reproduzir</h2>
+  <pre><code>cd dashboard
+npm test -- dinheiro
+npx playwright test moldura -g dinheiro
+MSYS_NO_PATHCONV=1 CAPTURAS=passo-11 ROTAS="/dinheiro" npx playwright test capturas</code></pre>
+
+  <h2>Em aberto</h2>
+  <ul>
+    <li>Lançamentos por ciclo (começar um ciclo novo e comparar ciclo a ciclo).</li>
+    <li>Levar preços e lançamentos para o banco quando houver login.</li>
+    <li>Revisar com o Gabriel os valores de referência (mão de obra, embalagem, adubo) com números de produtor de verdade.</li>
+  </ul>
+
+  <h2>Fontes da pesquisa</h2>
+  <ul>
+    <li>Sebrae, cartilha do produtor rural (entradas e saídas), via <a href="https://www.canalrural.com.br/empreendedorismo/saiba-organizar-custos-da-sua-propriedade-e-evite-prejuizos/">Canal Rural: saiba organizar custos da sua propriedade</a>.</li>
+    <li>CNA/Senar, <a href="https://cnabrasil.org.br/noticias/senar-orienta-produtores-rurais-na-gestao-financeira">Senar orienta produtores rurais na gestão financeira</a> (fluxo de caixa).</li>
+    <li>Capes/Educapes, <a href="https://educapes.capes.gov.br/bitstream/capes/1180285/2/EBOOK%20Gest%c3%a3o%20da%20Propriedade%20Rural%20para%20Agricultores%20Familiares.pdf">Gestão da propriedade rural para agricultores familiares</a> (caderno, planilha de custos, receitas e despesas).</li>
+    <li>Embrapa, <a href="https://ainfo.cnptia.embrapa.br/digital/bitstream/CPATSA/7542/1/OPB697.pdf">Produção de alface hidropônica: um estudo de viabilidade econômica</a> (custo por planta).</li>
+    <li>UFGD/Agrarian, <a href="https://ojs.ufgd.edu.br/agrarian/article/download/931/566/2141">estudo de Lavras sobre o custo da alface hidropônica</a> (custo variável por planta, mão de obra familiar, ponto de nivelamento).</li>
+    <li>UTFPR, <a href="https://repositorio.utfpr.edu.br/jspui/bitstream/1/12805/2/MD_COENP_TCC_2014_1_09.pdf">TCC sobre alface e rúcula hidropônicas</a> (planilhas de gastos mensais e de entregas).</li>
+  </ul>
+
+  <h2>Links</h2>
+  <ul>
+    <li>Decisão: <a href="../decisoes/0008-dinheiro-como-planilha.md">0008</a>.</li>
+    <li>Código: <code>dashboard/src/modules/dinheiro/domain/contas.ts</code> (<code>contaDoCiclo</code>), <code>lancamentos.ts</code>, <code>infrastructure/precosLocal/repositorioPrecosLocal.ts</code>, <code>dashboard/src/app/composicoes/PaginaDinheiro.tsx</code>, <code>Lancamentos.tsx</code>.</li>
+  </ul>
+</main>
+</body>
+</html>

@@ -18,7 +18,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { criarFonteEstufaReproducao, VELOCIDADE_PADRAO } from '@/modules/estufa'
 import { criarFonteGravacoesExemplo, criarFonteTreinoExemplo, criarFonteTreinoSupabase } from '@/modules/treino'
-import { criarRepositorioPrecosLocal } from '@/modules/dinheiro'
+import { criarRepositorioLancamentosLocal, criarRepositorioPrecosLocal } from '@/modules/dinheiro'
 import { usePreferencias } from '@/shared/stores/preferencias'
 
 const demo = import.meta.env.MODE === 'demo'
@@ -59,4 +59,6 @@ export const dependencias = {
   fonteGravacoes,
   origemTreino,
   repositorioPrecos: criarRepositorioPrecosLocal(),
+  // vendas e gastos de verdade: no navegador até existir login (passo 11)
+  repositorioLancamentos: criarRepositorioLancamentosLocal(),
 }

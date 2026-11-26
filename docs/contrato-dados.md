@@ -202,25 +202,35 @@ primeiro a matriz `entradas × saídas` (linha por entrada), depois os vieses.
 
 ```ts
 type Precos = {
-  alfacePorPe: { baixo: number; medio: number; alto: number };
+  alfacePorPe: number; // R$ por pé de 220 g (pé maior vale até +10%)
   tarifaKwh: number;
-  nutrientePorKg: number;
-  acidoPorL: number;
   aguaPorM3: number;
   mudaPorUnidade: number;
-  fixosPorCiclo: number;
+  aduboPorCiclo: number;
+  embalagemPorPe: number;
+  outrosPorCiclo: number; // mão de obra e estrutura por ciclo
+}; // passo 11: um preço só e um gasto por linha
+type Lancamento = {
+  id: string;
+  data: string; // AAAA-MM-DD
+  categoria:
+    "venda" | "energia" | "agua" | "adubo" | "mudas" | "embalagem" | "outros";
+  descricao: string;
+  valor: number; // R$ (> 0)
 };
 ```
 
-Os preços são do produtor (editáveis na tela). Hoje ficam no navegador; o
-backend só precisa guardá-los quando houver conta de usuário.
+Os preços e os lançamentos são do produtor (editáveis na página Dinheiro).
+Hoje ficam no navegador; o backend só precisa guardá-los quando houver conta de
+usuário.
 
 ## Portas (o que o dashboard pede)
 
-| Porta               | Métodos                                                                                                         | Quem implementa hoje                                                          | Depois              |
-| ------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------- |
-| `FonteEstufa`       | `listarEstufas`, `assinarEstufas`, `assinarPassos` (tempo real), `historico(de, ate)`, `eventos`, `resumoCiclo` | `reproducao`: uma gravação do treino tocada em ciclo (passo 10, decisão 0007) | MQTT (estufa real)  |
-| `ControleSimulacao` | relógio da reprodução (pausar, continuar, acelerar)                                                             | `reproducao`                                                                  | null na estufa real |
-| `FonteTreino`       | `estado`, `geracoes`, `modelos`, `configuracao`                                                                 | Supabase (produção); `dadosExemplo`, recorte real (demo e testes)             |                     |
-| `FonteGravacoes`    | `listar`, `obter(id)`                                                                                           | Supabase (produção); `dadosExemplo`, recorte real (demo e testes)             |                     |
-| `RepositorioPrecos` | `obter`, `salvar`                                                                                               | `precosLocal` (navegador)                                                     | banco               |
+| Porta                    | Métodos                                                                                                         | Quem implementa hoje                                                          | Depois              |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------- |
+| `FonteEstufa`            | `listarEstufas`, `assinarEstufas`, `assinarPassos` (tempo real), `historico(de, ate)`, `eventos`, `resumoCiclo` | `reproducao`: uma gravação do treino tocada em ciclo (passo 10, decisão 0007) | MQTT (estufa real)  |
+| `ControleSimulacao`      | relógio da reprodução (pausar, continuar, acelerar)                                                             | `reproducao`                                                                  | null na estufa real |
+| `FonteTreino`            | `estado`, `geracoes`, `modelos`, `configuracao`                                                                 | Supabase (produção); `dadosExemplo`, recorte real (demo e testes)             |                     |
+| `FonteGravacoes`         | `listar`, `obter(id)`                                                                                           | Supabase (produção); `dadosExemplo`, recorte real (demo e testes)             |                     |
+| `RepositorioPrecos`      | `obter`, `salvar`                                                                                               | `precosLocal` (navegador)                                                     | banco               |
+| `RepositorioLancamentos` | `listar`, `adicionar`, `remover`                                                                                | `precosLocal` (navegador)                                                     | banco               |

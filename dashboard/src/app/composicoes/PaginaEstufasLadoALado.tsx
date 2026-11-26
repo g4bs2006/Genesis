@@ -13,7 +13,7 @@ import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import { AlfaceImagem, aparenciaMedia, descreverPlanta } from '@/modules/alface'
-import { formatarReaisCurto, resultadoDoCiclo, usePrecos } from '@/modules/dinheiro'
+import { contaDoCiclo, formatarReaisCurto, usePrecos } from '@/modules/dinheiro'
 import {
   FAIXAS,
   useEstufas,
@@ -60,7 +60,7 @@ function LadoALado({ estufas }: { estufas: Estufa[] }) {
   // ranking pelo resultado em R$ (preço médio); sem preços ainda, a ordem original
   const lucro = (i: number) => {
     const r = resumos[i]?.data
-    return r && precos.data ? resultadoDoCiclo(r, estufas[i]!.plantas, precos.data, 'medio').lucro : null
+    return r && precos.data ? contaDoCiclo(r, estufas[i]!.plantas, precos.data).sobra : null
   }
   const ordem = estufas
     .map((e, i) => ({ e, i, lucro: lucro(i) }))
