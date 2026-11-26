@@ -1,1 +1,1 @@
-export { criarRepositorioPrecosLocal, PRECOS_PADRAO } from './repositorioPrecosLocal'
+export { criarRepositorioLancamentosLocal, criarRepositorioPrecosLocal, PRECOS_PADRAO } from './repositorioPrecosLocal'

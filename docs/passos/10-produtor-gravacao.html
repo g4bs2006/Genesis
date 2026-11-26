@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10 · O Produtor alimentado por uma gravação · Genesis</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+  <div class="olho">Passo 10 · Dashboard · 25/11/2026</div>
+  <h1>O Produtor alimentado por uma gravação real</h1>
+  <p class="resumo">O "ao vivo" do modo Produtor deixou de ser inventado. Agora o Agora, o Histórico, o Ciclo, o Dinheiro e o Visor mostram a reprodução de uma gravação real do treino: um campeão cultivando 35 dias no simulador, tocado acelerado e em ciclo. Qual gravação, e em que velocidade, o Desenvolvedor escolhe numa página nova, a <strong>Vitrine do produtor</strong>. Junto vieram as mudanças do Agora, do Histórico e do Ciclo pedidas pelo Gabriel.</p>
+
+  <h2>Antes e depois</h2>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-08/desktop-claro-agora.png" alt="Agora antes: Estufa 1 com dados de exemplo e o selo estufa simulada · dados de exemplo">
+    <figcaption>Antes: "Estufa 1", o selo "dados de exemplo", a massa contra uma "meta de hoje" inventada e a lista de estufas com o rótulo "agente" na barra.</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-10/desktop-claro-agora.png" alt="Agora depois: selo ciclo gravado no simulador, botão pausar, data da gravação">
+    <figcaption>Depois: o selo "ciclo gravado no simulador · 1 h por segundo", o botão Pausar e a data do ciclo gravado. Repare no alerta: ele diz o que estava ligado de verdade naquele passo ("o exaustor em 61%, a névoa em 80%, a sombra em 95%"). Esta captura é do modo de teste (um recorte de 3 dias); em produção o ciclo tem 35.</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-10/desktop-claro-historico.png" alt="Histórico com filtro de período e marcas de liga e desliga">
+    <figcaption>Histórico: o ciclo inteiro com filtro (Hoje, Esta semana, Dias, Ciclo todo). Olhe os triângulos no topo do gráfico: cada um é um equipamento que ligou (▲) ou desligou (▼), na cor da faixa de baixo. Às 07h o exaustor liga quando o ar começa a esquentar.</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-10/desktop-claro-dev-vitrine.png" alt="Vitrine do produtor: lista das gravações com massa, tempo fora da faixa, energia e nota, e a velocidade">
+    <figcaption>A Vitrine do produtor: cada gravação com os números do ciclo inteiro (todas no mesmo clima) e as quatro velocidades.</figcaption>
+  </figure>
+  <p>Todas as capturas: <code>docs/revisao-visual/passo-10/</code>.</p>
+
+  <h2>O que foi feito</h2>
+  <ul>
+    <li><strong>Adaptador novo</strong> <code>estufa/infrastructure/reproducao/</code>: implementa as portas <code>FonteEstufa</code> e <code>ControleSimulacao</code> tocando as gravações num relógio só. Ligado em <code>app/dependencias.ts</code>. Saíram o <code>estufas.json</code> inventado e o script que o gerava.</li>
+    <li><strong>Vitrine do produtor</strong> (<code>/dev/vitrine</code>): escolhe a gravação e a velocidade; fica em <code>usePreferencias</code>.</li>
+    <li><strong>Agora</strong>: o bloco "Agente × regras fixas" virou <strong>Colheita</strong> (em quantos dias, a data, a massa por pé e o total em kg nos 1.000 pés). Os gráficos das 24 h ficaram mais altos (300 px por gráfico; pH e EC, cada um com a altura inteira) e ganharam as marcas de liga/desliga.</li>
+    <li><strong>Histórico</strong>: o ciclo inteiro com filtro de período, o histórico de alertas (que estava no Ciclo) e o CSV do período escolhido.</li>
+    <li><strong>Ciclo</strong>: só a alface dia a dia e a curva, agora a massa real da gravação.</li>
+    <li><strong>Visor</strong>: o relógio da reprodução e "na colheita X g" no lugar da meta inventada.</li>
+    <li><strong>Linguagem</strong>: "o agente" virou "o controle automático"; os alertas contam só o que está gravado (antes inventavam intenção: "espera a leitura se confirmar"); o selo "exemplo" virou "valor fixo na simulação".</li>
+    <li><strong>Dados de exemplo</strong> (<code>npm run demo</code> e testes): um recorte real de 3 dias da execução fase1-semente9-20261124 (g1, g75, g158, regras fixas e sem controle), gerado por <code>scripts/gerar-dados-exemplo.mjs</code>.</li>
+  </ul>
+
+  <h2>Por quê</h2>
+  <p>A decisão grande está em <a href="../decisoes/0007-produtor-alimentado-por-gravacao.md">docs/decisoes/0007</a>. Ser alimentado por uma gravação, a Vitrine, a escolha guardada no navegador e não no banco, e "nenhum número inventado" foram <strong>decisões do Gabriel</strong>. As de implementação:</p>
+  <div class="decisao">
+    <div class="rotulo">Decisão · no lugar do Agente × regras: a colheita</div>
+    <p>O Gabriel propôs duas opções: "quantos dias faltam para colher e o peso esperado por pé" ou "o gasto de energia e água do dia". Escolhi a colheita: é a primeira pergunta de quem cultiva (quando colho e quanto vou ter para vender), e o gasto já tem lugar no Dinheiro. O card mostra também o total em kg (massa × 1.000 pés), uma conta direta que o produtor faz de cabeça. A massa é a que a gravação mediu no dia 35.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · o que é "ligar" e "desligar"</div>
+    <p>A rede decide de 0 a 1, não liga/desliga. "Ligou" é passar de 10%; "desligou" é cair abaixo de 5%. A folga entre os dois (histerese) evita marcar ruído. Medi antes de escolher: no dia 20 do campeão g158 isso dá ~2 trocas por equipamento; nas regras fixas, que são liga/desliga de verdade, 16 a 34.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · velocidade padrão de 1 hora por segundo</div>
+    <p>O ciclo de 35 dias passa em 14 minutos: o bastante para uma apresentação ver a alface crescer e o gráfico de 24 h andar sem virar borrão. As outras: 10 min/s (dá para acompanhar ação por ação), 6 h/s (2,3 min por ciclo) e 1 dia/s (35 s).</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · a lista de estufas saiu da barra do Produtor</div>
+    <p>Ela mostrava "Estufa 1 · agente", "PID", "Regras fixas". Agora o Produtor tem uma estufa só, a da Vitrine, e o jargão some.</p>
+  </div>
+
+  <h2>Números</h2>
+  <table>
+    <tr><th>O que</th><th>Valor</th><th>Fonte</th></tr>
+    <tr><td>Gravação inteira (5.040 passos)</td><td>~3 MB; 272 KB pela rede</td><td>medido com <code>curl --compressed</code>: o Storage do Supabase entrega em brotli</td></tr>
+    <tr><td>Recorte de exemplo (5 gravações × 432 passos + treino.json)</td><td>1,22 MB</td><td><code>ls</code> da pasta <code>dadosExemplo</code> (os dados inventados de antes somavam 2,2 MB)</td></tr>
+    <tr><td>Testes unitários</td><td>76 passando</td><td><code>npm test</code> (o adaptador novo tem 5)</td></tr>
+    <tr><td>Testes e2e</td><td>28 passando</td><td><code>npm run e2e</code>, inclui a Vitrine mudando o Produtor e a escolha sobrevivendo a recarregar</td></tr>
+    <tr><td>Produção (Supabase)</td><td>Agora no dia 0 de 35, 5 g agora, 247 g na colheita</td><td>build com o <code>.env.local</code> e o navegador de teste</td></tr>
+  </table>
+
+  <h2>O que deu errado ou surpreendeu</h2>
+  <div class="erro">
+    <p><strong>143,999 passos não são 144.</strong> O relógio soma 0,6 passo a cada 100 ms; somado 240 vezes, o ponto flutuante dá 143,9999 e o dia 1 virava 0,993. O teste pegou; a posição agora é arredondada em 6 casas a cada quadro.</p>
+  </div>
+  <div class="erro">
+    <p><strong>Erros 400 no console em produção.</strong> O app pedia <code>indice.json</code>, que as execuções antigas não têm (só a reavaliação mandou índice). Agora ele lista o que existe no bucket antes de pedir.</p>
+  </div>
+  <div class="erro">
+    <p><strong>Um risco escondido no envio.</strong> Reenviar a pasta antiga do treino (<code>treino/saidas/&lt;execucao&gt;</code>) trocaria as gravações completas da reavaliação pelas antigas, sem massa. O <code>treino/nuvem.py</code> agora pula as gravações que a reavaliação já mandou (com teste).</p>
+  </div>
+  <div class="erro">
+    <p><strong>O selo "exemplo" era cortado</strong> no card estreito de Nutrientes e Água. Virou uma linha embaixo: "valor fixo na simulação".</p>
+  </div>
+
+  <h2>Como reproduzir</h2>
+  <pre><code>cd dashboard
+node scripts/gerar-dados-exemplo.mjs          # o recorte real (precisa de treino/saidas e treino/reavaliacoes)
+npm run typecheck &amp;&amp; npm run lint &amp;&amp; npm run format:check
+npm test
+npm run e2e
+npm run demo                                  # o app com o recorte, sem internet
+MSYS_NO_PATHCONV=1 CAPTURAS=passo-10 ROTAS="/,/historico,/ciclo,/dev/vitrine,/visor" npx playwright test capturas -g light</code></pre>
+
+  <h2>Em aberto</h2>
+  <ul>
+    <li>Passo 11: o Dinheiro repaginado (a conta em linguagem simples e os lançamentos reais).</li>
+    <li>Passo 12: Estufas lado a lado com escolha de quais aparecem (hoje carrega todas as gravações).</li>
+    <li>O cabeçalho do Agora no celular quebra em três linhas (selo, pausar, data): fica para a revisão visual (passo 13).</li>
+    <li>O Supabase mostra só a execução mais recente (semente 9). Escolher a execução na Vitrine é um passo futuro.</li>
+  </ul>
+
+  <h2>Links</h2>
+  <ul>
+    <li>Decisão: <a href="../decisoes/0007-produtor-alimentado-por-gravacao.md">0007</a>. Contrato: <a href="../contrato-dados.md">docs/contrato-dados.md</a> (<code>Estufa.massaPorDia</code>, eventos sem "perturbação", as portas).</li>
+    <li>Código: <code>dashboard/src/modules/estufa/infrastructure/reproducao/</code>, <code>dashboard/src/app/dependencias.ts</code>, <code>dashboard/src/app/composicoes/PaginaVitrine.tsx</code>, <code>PaginaAgora.tsx</code>, <code>PaginaHistorico.tsx</code>, <code>PaginaCiclo.tsx</code>, <code>series.ts</code> (<code>ligaDesliga</code>), <code>shared/design-system/graficos/GraficoSerie.tsx</code> (marcas e amostragem).</li>
+  </ul>
+</main>
+</body>
+</html>

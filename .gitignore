@@ -9,3 +9,5 @@ __pycache__/
 !.env.exemplo
 !dashboard/.env.exemplo
 treino/saidas/
+# reavaliações dos campeões salvos (treino/reavaliar.py): ~3 MB por gravação
+treino/reavaliacoes/

@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Badge } from '@astryxdesign/core/Badge'
 import { Card } from '@astryxdesign/core/Card'
 import { HStack } from '@astryxdesign/core/HStack'
 import { Text } from '@astryxdesign/core/Text'
@@ -20,13 +19,11 @@ type Props = {
   detalhe?: ReactNode
   /** sparkline ou outro gráfico pequeno */
   grafico?: ReactNode
-  /** valor de exemplo (o simulador de brinquedo não mede isso) */
+  /** valor fixo da gravação (a fase 1 do treino não controla a solução nutritiva) */
   exemplo?: boolean
   tamanho?: 'compacto' | 'normal'
   /** seta de tendência (↑ ↓), num lugar fixo: o número não sai do lugar quando ela some */
   tendencia?: string
-  /** o "o que é isso?" ao lado do nome */
-  dica?: ReactNode
 }
 
 /** Card de uma variável da estufa: valor, faixa e bolinha. Borda amarela/vermelha quando pede atenção. */
@@ -42,19 +39,15 @@ export function CardVariavel({
   exemplo,
   tamanho = 'normal',
   tendencia,
-  dica,
 }: Props) {
   return (
     <Card padding={tamanho === 'compacto' ? 3 : 4} className={`${css.card} ${css[estado]}`}>
       <VStack gap={tamanho === 'compacto' ? 1 : 2}>
         <HStack gap={1.5} align="center" justify="between">
-          <HStack gap={1} align="center">
-            <Text type="label" color="secondary" maxLines={1}>
-              {nome}
-              {apoio && <span className={css.apoio}> · {apoio}</span>}
-            </Text>
-            {dica}
-          </HStack>
+          <Text type="label" color="secondary" maxLines={1}>
+            {nome}
+            {apoio && <span className={css.apoio}> · {apoio}</span>}
+          </Text>
           <SeloEstado estado={estado} />
         </HStack>
         <HStack gap={1} align="end">
@@ -65,10 +58,9 @@ export function CardVariavel({
               {tendencia || '↑'}
             </span>
           )}
-          {exemplo && <Badge variant="neutral" label="exemplo" />}
         </HStack>
         {grafico}
-        {(faixa || detalhe) && (
+        {(faixa || detalhe || exemplo) && (
           <VStack gap={0.5}>
             {detalhe && (
               <Text type="supporting" color="secondary">
@@ -76,6 +68,9 @@ export function CardVariavel({
               </Text>
             )}
             {faixa && <span className={css.faixa}>faixa {faixa}</span>}
+            {/* a fase 1 do treino não controla a solução: ela fica parada no valor do simulador.
+                Embaixo, e não ao lado do número: no card estreito o selo era cortado */}
+            {exemplo && <span className={css.faixa}>valor fixo na simulação</span>}
           </VStack>
         )}
       </VStack>

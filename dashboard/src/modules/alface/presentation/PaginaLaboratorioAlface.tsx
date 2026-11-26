@@ -40,7 +40,7 @@ export function PaginaLaboratorioAlface() {
         </Text>
       </VStack>
 
-      <Grid columns={{ minWidth: 300 }} gap={6} align="center">
+      <Grid columns={{ minWidth: 300, repeat: 'fit' }} gap={6} align="center">
         <Card>
           <AlfaceImagem parametros={p} rotulo={LEGENDA[nome]} largura={360} />
           <Text type="supporting" color="secondary">
@@ -92,7 +92,7 @@ export function PaginaLaboratorioAlface() {
 
       <VStack gap={3}>
         <Heading level={2}>Todos os desenhos</Heading>
-        <Grid columns={{ minWidth: 160 }} gap={3}>
+        <Grid columns={{ minWidth: 160, repeat: 'fit' }} gap={3}>
           {(Object.keys(DESENHOS) as NomeDesenho[]).map((n) => (
             <Card key={n} padding={2}>
               <img src={DESENHOS[n]} alt={LEGENDA[n]} style={{ width: '100%', aspectRatio: 1, objectFit: 'contain' }} />

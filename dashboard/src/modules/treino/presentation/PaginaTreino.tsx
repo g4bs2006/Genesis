@@ -3,62 +3,43 @@
  * Só usa o módulo treino; por isso mora nele.
  */
 import { useState } from 'react'
-import { Banner } from '@astryxdesign/core/Banner'
 import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Heading } from '@astryxdesign/core/Heading'
-import { HStack } from '@astryxdesign/core/HStack'
-import { Link } from '@astryxdesign/core/Link'
 import { NumberInput } from '@astryxdesign/core/NumberInput'
-import { ProgressBar } from '@astryxdesign/core/ProgressBar'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { proportional, Table } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
-import { OQueEIsso, type IdTermo } from '@/modules/glossario'
 import { CurvaAprendizado } from '@/shared/design-system/graficos/CurvaAprendizado'
+import { LinhaPorGeracao } from '@/shared/design-system/graficos/LinhaPorGeracao'
 import { useAtraso } from '@/shared/hooks/useAtraso'
 import { formatarNumero } from '@/shared/lib/formatar'
-import type { ConfigTreino, EstadoTreino, Geracao, Modelo } from '../domain/contrato'
-import { FASES, LIMIAR_ESQUECEU, provas, situacaoDasFases } from '../domain/curriculo'
-import { useConfigTreino, useEstadoTreino, useGeracoes, useModelos, useOrigemTreino } from './dados'
+import type { ConfigTreino, EstadoTreino, Geracao, ResumoDaGravacao } from '../domain/contrato'
+import { useConfigTreino, useEstadoTreino, useGeracoes, useGravacoes, useOrigemTreino } from './dados'
 import { AvisoTreino } from './AvisoTreino'
-import css from './PaginaTreino.module.css'
 
 const nota = (v: number) => `R$ ${formatarNumero(v)}`
 
 export function PaginaTreino() {
   const estado = useEstadoTreino()
   const geracoes = useGeracoes()
-  const modelos = useModelos()
   const config = useConfigTreino()
-  const pronto = estado.data && geracoes.data && modelos.data && config.data
-  const erro = estado.error ?? geracoes.error ?? modelos.error ?? config.error
+  const pronto = estado.data && geracoes.data && config.data
+  const erro = estado.error ?? geracoes.error ?? config.error
   const esboco = useAtraso(!pronto && !erro)
   if (erro && !pronto) return <AvisoTreino erro={erro} />
   if (!pronto) return esboco ? <Skeleton height={640} radius={3} /> : null
   if (geracoes.data.length === 0) return <AvisoTreino semGeracoes />
-  return <Treino estado={estado.data} geracoes={geracoes.data} modelos={modelos.data} config={config.data} />
+  return <Treino estado={estado.data} geracoes={geracoes.data} config={config.data} />
 }
 
-function Treino({
-  estado,
-  geracoes,
-  modelos,
-  config,
-}: {
-  estado: EstadoTreino
-  geracoes: Geracao[]
-  modelos: Modelo[]
-  config: ConfigTreino
-}) {
+function Treino({ estado, geracoes, config }: { estado: EstadoTreino; geracoes: Geracao[]; config: ConfigTreino }) {
   const ultima = geracoes.at(-1)!
   const recentes = geracoes.slice(-20)
   const mediaSegundos = recentes.reduce((s, g) => s + g.segundos, 0) / recentes.length
   const rodandoHa = geracoes.reduce((s, g) => s + g.segundos, 0)
   const melhorDeTodas = Math.max(...geracoes.map((g) => g.melhor))
-  const fases = situacaoDasFases(estado)
-  const campeao = [...modelos].sort((a, b) => b.geracao - a.geracao)[0]
   const origem = useOrigemTreino()
   const [a, setA] = useState(Math.max(1, ultima.numero - 270))
   const [b, setB] = useState(ultima.numero)
@@ -78,113 +59,106 @@ function Treino({
         <Heading level={1}>Treino e gerações</Heading>
         <Text color="secondary">
           {estado.rodando ? 'Rodando' : 'Parado'} em {estado.onde} ·{' '}
-          {origem === 'nuvem' ? 'ao vivo, direto do treino' : 'dados de exemplo até o treino real exportar os seus'}
+          {origem === 'nuvem'
+            ? 'ao vivo, direto do treino'
+            : 'recorte de uma execução real (modo de teste, sem internet)'}
         </Text>
       </VStack>
 
       {/* colunas pela largura mínima: no celular os números descem, não quebram no meio */}
-      <Grid columns={{ minWidth: 160 }} gap={3}>
-        <Numero rotulo="geração" valor={formatarNumero(ultima.numero)} termo="geracao" />
-        <Numero rotulo="segundos por geração" valor={formatarNumero(mediaSegundos, 1)} termo="geracao" />
-        <Numero rotulo="tempo rodando" valor={duracao(rodandoHa)} termo="geracao" />
-        <Numero rotulo="melhor nota" valor={nota(melhorDeTodas)} termo="nota" />
+      <Grid columns={{ minWidth: 160, repeat: 'fit' }} gap={3}>
+        <Numero rotulo="geração" valor={formatarNumero(ultima.numero)} />
+        <Numero rotulo="segundos por geração" valor={formatarNumero(mediaSegundos, 1)} />
+        <Numero rotulo="tempo rodando" valor={duracao(rodandoHa)} />
+        <Numero rotulo="melhor nota (no clima de cada geração)" valor={nota(melhorDeTodas)} />
       </Grid>
-
-      <VStack gap={2}>
-        <HStack gap={1} align="center">
-          <Heading level={2}>Currículo</Heading>
-          <OQueEIsso id="curriculo" />
-        </HStack>
-        <section className={css.fases}>
-          {fases.map((f) => (
-            <Card key={f.numero} className={`${css.fase} ${css[f.situacao]}`} padding={3}>
-              <VStack gap={1}>
-                <HStack justify="between" align="center">
-                  <Text weight="medium">
-                    {f.situacao === 'feita' ? '✓ ' : ''}Fase {f.numero} · {f.nome}
-                  </Text>
-                </HStack>
-                <Text type="supporting" color="secondary">
-                  {f.obstaculo}
-                </Text>
-                <Text type="code" color="secondary">
-                  {f.situacao === 'feita' && `g${f.inicio}–g${f.fim}`}
-                  {f.situacao === 'atual' && `desde g${f.inicio} · agora g${f.fim}`}
-                  {f.situacao === 'futura' && 'ainda não'}
-                </Text>
-                {f.situacao === 'atual' && <Text type="supporting">Passa quando: {estado.criterioPassagem}</Text>}
-              </VStack>
-            </Card>
-          ))}
-        </section>
-      </VStack>
 
       <Card>
         <VStack gap={2}>
           <Heading level={2}>Curva de aprendizado</Heading>
-          <CurvaAprendizado
-            geracoes={geracoes}
-            fases={fases
-              .filter((f) => f.inicio !== undefined)
-              .map((f) => ({ fase: f.numero, inicio: f.inicio!, fim: f.fim ?? ultima.numero }))}
-            formatarNota={nota}
-            marcas={[a, b]}
-          />
-          <OQueEIsso id="quedaDeFase" rotulo="por que a curva cai ao mudar de fase?" />
+          <CurvaAprendizado geracoes={geracoes} formatarNota={nota} marcas={[a, b]} />
         </VStack>
       </Card>
 
-      <Grid columns={{ minWidth: 360 }} gap={4}>
-        {campeao && <Esqueceu campeao={campeao} />}
-        <Comparar geracoes={geracoes} a={a} b={b} setA={setA} setB={setB} />
-      </Grid>
+      <OQueAprendeu />
+
+      <Comparar geracoes={geracoes} a={a} b={b} setA={setA} setB={setB} />
 
       <Configuracao config={config} />
     </VStack>
   )
 }
 
-function Esqueceu({ campeao }: { campeao: Modelo }) {
-  const p = provas(campeao)
-  const esquecidas = p.filter((x) => x.esqueceu)
+/** As quatro medidas de cada campeão, no mesmo ciclo gravado (passo 09). */
+const MEDIDAS: {
+  titulo: string
+  ler: (r: ResumoDaGravacao) => number
+  formatar: (v: number) => string
+  cor: string
+}[] = [
+  {
+    titulo: 'Tempo fora da faixa',
+    ler: (r) => r.foraDaFaixa * 100,
+    formatar: (v) => `${formatarNumero(v, 1)}%`,
+    cor: 'var(--serie-laranja)',
+  },
+  {
+    titulo: 'Energia no ciclo',
+    ler: (r) => r.energiaKwh,
+    formatar: (v) => `${formatarNumero(v)} kWh`,
+    cor: 'var(--serie-amarelo)',
+  },
+  {
+    titulo: 'Massa na colheita',
+    ler: (r) => r.massaPorPe,
+    formatar: (v) => `${formatarNumero(v)} g`,
+    cor: 'var(--serie-verde)',
+  },
+  { titulo: 'Nota no ciclo gravado', ler: (r) => r.nota, formatar: nota, cor: 'var(--serie-azul)' },
+]
+
+/**
+ * O que o modelo aprendeu: os campeões salvos (e o da geração 1, refeito)
+ * cultivando o mesmo ciclo gravado, com as regras fixas no mesmo clima como
+ * régua. Só os pontos que existem: o treino salva um campeão a cada 25 gerações.
+ */
+function OQueAprendeu() {
+  const gravacoes = useGravacoes()
+  const campeoes = (gravacoes.data ?? [])
+    .filter((g) => g.controlador !== 'regras' && g.controlador !== 'nada' && g.geracao != null && g.resumo)
+    .sort((x, y) => x.geracao! - y.geracao!)
+  const regras = gravacoes.data?.find((g) => g.controlador === 'regras')?.resumo
+  if (gravacoes.isPending) return <Skeleton height={480} radius={3} />
   return (
     <Card>
-      <VStack gap={2}>
-        <HStack gap={1} align="center">
-          <Heading level={2}>Ele esqueceu algo?</Heading>
-          <OQueEIsso id="esquecimentoCatastrofico" />
-        </HStack>
-        <Text type="supporting" color="secondary">
-          O campeão {campeao.id} refaz a prova de cada fase; abaixo de {LIMIAR_ESQUECEU * 100}%, esqueceu.
-        </Text>
-        {p.map((x) => (
-          <VStack key={x.fase} gap={0.5}>
-            <HStack justify="between">
-              <Text>
-                Fase {x.fase} · {FASES.find((f) => f.numero === x.fase)?.nome}
-                {x.aprendendo && ' · aprendendo agora'}
-              </Text>
-              <Text hasTabularNumbers weight={x.esqueceu ? 'medium' : 'normal'}>
-                {formatarNumero(x.acerto * 100)}%
-              </Text>
-            </HStack>
-            <ProgressBar
-              label={`Prova da fase ${x.fase}`}
-              isLabelHidden
-              value={x.acerto * 100}
-              variant={x.esqueceu ? 'warning' : x.aprendendo ? 'neutral' : 'success'}
-            />
-          </VStack>
-        ))}
-        {esquecidas.map((x) => (
-          <Banner
-            key={x.fase}
-            status="warning"
-            title={`Esqueceu um pouco da fase ${x.fase}`}
-            description={x.sugestao}
-            collapsible={false}
-          />
-        ))}
+      <VStack gap={3}>
+        <VStack gap={0.5}>
+          <Heading level={2}>O que o modelo aprendeu</Heading>
+          <Text type="supporting" color="secondary">
+            Cada ponto é um campeão salvo cultivando o mesmo ciclo de 35 dias; o tracejado, as regras fixas no mesmo
+            clima.
+          </Text>
+        </VStack>
+        {campeoes.length === 0 ? (
+          <Text color="secondary">Esta execução ainda não tem gravações com o resumo do ciclo.</Text>
+        ) : (
+          <Grid columns={{ minWidth: 360, repeat: 'fit' }} gap={4}>
+            {MEDIDAS.map((m) => (
+              <VStack key={m.titulo} gap={1}>
+                <Text type="label" color="secondary">
+                  {m.titulo}
+                </Text>
+                <LinhaPorGeracao
+                  pontos={campeoes.map((g) => ({ geracao: g.geracao!, valor: m.ler(g.resumo!) }))}
+                  referencia={regras ? { nome: 'regras fixas', valor: m.ler(regras) } : undefined}
+                  formatarValor={m.formatar}
+                  cor={m.cor}
+                  rotulo={`${m.titulo} do campeão de cada geração, com as regras fixas como referência`}
+                />
+              </VStack>
+            ))}
+          </Grid>
+        )}
       </VStack>
     </Card>
   )
@@ -211,7 +185,7 @@ function Comparar({
     ga && gb
       ? [
           { id: 'fase', metrica: 'Fase', a: String(ga.fase), b: String(gb.fase) },
-          { id: 'melhor', metrica: 'Melhor nota', a: nota(ga.melhor), b: nota(gb.melhor) },
+          { id: 'melhor', metrica: 'Melhor nota (clima da geração)', a: nota(ga.melhor), b: nota(gb.melhor) },
           { id: 'mediana', metrica: 'Nota mediana', a: nota(ga.mediana), b: nota(gb.mediana) },
           { id: 'regras', metrica: 'Regras fixas (mesmo clima)', a: nota(ga.regras), b: nota(gb.regras) },
           { id: 'segundos', metrica: 'Segundos', a: formatarNumero(ga.segundos, 2), b: formatarNumero(gb.segundos, 2) },
@@ -221,22 +195,21 @@ function Comparar({
     <Card>
       <VStack gap={2}>
         <Heading level={2}>Comparar gerações</Heading>
-        <HStack gap={3}>
+        <Grid columns={{ minWidth: 140, repeat: 'fit' }} gap={3}>
           <NumberInput label="Geração A" value={a} onChange={(v) => setA(limitar(v, ultima))} min={1} max={ultima} />
           <NumberInput label="Geração B" value={b} onChange={(v) => setB(limitar(v, ultima))} min={1} max={ultima} />
-        </HStack>
+        </Grid>
         <Table<Linha>
           data={linhas}
           idKey="id"
           density="compact"
           columns={[
-            // a métrica tem piso de largura: no celular a tabela rola de lado em vez de partir palavras
-            { key: 'metrica', header: 'Métrica', width: proportional(2, { minWidth: 150 }) },
-            { key: 'a', width: proportional(1, { minWidth: 88 }), header: `g${a}`, align: 'end' },
-            { key: 'b', width: proportional(1, { minWidth: 88 }), header: `g${b}`, align: 'end' },
+            // pisos pequenos: as três colunas cabem nos 375 px do celular sem vazar do cartão
+            { key: 'metrica', header: 'Métrica', width: proportional(2, { minWidth: 110 }) },
+            { key: 'a', width: proportional(1, { minWidth: 72 }), header: `g${a}`, align: 'end' },
+            { key: 'b', width: proportional(1, { minWidth: 72 }), header: `g${b}`, align: 'end' },
           ]}
         />
-        <Link href="/dev">Ver os campeões nas estufas lado a lado</Link>
       </VStack>
     </Card>
   )
@@ -245,41 +218,30 @@ function Comparar({
 const limitar = (v: number, max: number) => Math.min(max, Math.max(1, Math.round(v || 1)))
 
 function Configuracao({ config }: { config: ConfigTreino }) {
-  const itens: { nome: string; valor: string; termo: IdTermo }[] = [
+  const itens: { nome: string; valor: string }[] = [
     {
       nome: 'População',
       valor: formatarNumero(config.populacao),
-      termo: 'populacao',
     },
     {
       nome: 'Elite',
       valor: `${formatarNumero(config.elite * 100)}%`,
-      termo: 'elitismo',
     },
     {
       nome: 'Torneio',
       valor: String(config.torneio),
-      termo: 'torneio',
     },
     {
       nome: 'Mutação',
       valor: formatarNumero(config.mutacao, 2),
-      termo: 'mutacao',
-    },
-    {
-      nome: 'Mistura de fases',
-      valor: `${formatarNumero(config.misturaFases * 100)}%`,
-      termo: 'misturaFases',
     },
     {
       nome: 'Arquitetura',
       valor: config.arquitetura.join(' → '),
-      termo: 'mlp',
     },
     {
       nome: 'Passo do simulador',
       valor: `${config.passoMinutos} min`,
-      termo: 'geracao',
     },
   ]
   return (
@@ -289,39 +251,33 @@ function Configuracao({ config }: { config: ConfigTreino }) {
         <Text type="supporting" color="secondary">
           Só leitura: quem muda é o treino, no backend.
         </Text>
-        <section className={css.config}>
+        <Grid columns={{ minWidth: 160, repeat: 'fit' }} gap={4}>
           {itens.map((i) => (
             <VStack key={i.nome} gap={0.5}>
-              <HStack gap={1} align="center">
-                <Text type="supporting" color="secondary">
-                  {i.nome}
-                </Text>
-                <OQueEIsso id={i.termo} />
-              </HStack>
+              <Text type="supporting" color="secondary">
+                {i.nome}
+              </Text>
               <Text size="lg" weight="medium" hasTabularNumbers>
                 {i.valor}
               </Text>
             </VStack>
           ))}
-        </section>
+        </Grid>
       </VStack>
     </Card>
   )
 }
 
-function Numero({ rotulo, valor, termo }: { rotulo: string; valor: string; termo: IdTermo }) {
+function Numero({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
     <Card>
       <VStack gap={0.5}>
         <Text size="2xl" weight="medium" hasTabularNumbers>
           {valor}
         </Text>
-        <HStack gap={1} align="center">
-          <Text type="supporting" color="secondary">
-            {rotulo}
-          </Text>
-          <OQueEIsso id={termo} />
-        </HStack>
+        <Text type="supporting" color="secondary">
+          {rotulo}
+        </Text>
       </VStack>
     </Card>
   )

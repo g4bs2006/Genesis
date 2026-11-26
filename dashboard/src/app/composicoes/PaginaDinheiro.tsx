@@ -1,54 +1,44 @@
 /**
- * Dinheiro: lucro × gasto da estufa. Junta estufa (o ciclo e os consumos) e
- * dinheiro (preços e contas): por isso mora em composicoes.
- * Celular: a versão curta. Desktop: completa.
+ * Dinheiro (Produtor), repaginado no passo 11. A pergunta do Gabriel: o que o
+ * pequeno produtor faz hoje em planilha que o app pode fazer por ele? A
+ * pesquisa (página do passo) mostrou: a conta do ciclo (quanto entra, quanto
+ * sai, cada gasto numa linha), o ponto de equilíbrio e o caderno de entradas e
+ * saídas. Esta página é isso, de cima para baixo, e cada número diz de onde veio.
+ * Junta estufa (o consumo medido) e dinheiro (preços e lançamentos).
  */
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
+import { List, ListItem } from '@astryxdesign/core/List'
 import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
-import { Link } from '@astryxdesign/core/Link'
-import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
+import { Table } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import { PencilSquareIcon } from '@heroicons/react/24/outline'
 import {
-  barraDeCustos,
+  CATEGORIAS_GASTO,
+  contaDoCiclo,
   FormularioPrecos,
   formatarReais,
   formatarReaisCurto,
   MASSA_COMERCIAL_G,
-  MASSA_MINIMA_VENDA_G,
-  pontoDeEquilibrio,
-  projecao,
-  resultadoDoCiclo,
+  NOME_CATEGORIA,
+  totaisDosLancamentos,
+  useLancamentos,
   usePrecos,
-  vantagemDoAgente,
-  type Cenario,
+  type Categoria,
+  type ContaDoCiclo,
   type Precos,
 } from '@/modules/dinheiro'
-import { useEstufaAtual, useEstufas, useResumoCiclo, type Estufa, type ResumoCiclo } from '@/modules/estufa'
-import { OQueEIsso } from '@/modules/glossario'
-import { BarraEmpilhada } from '@/shared/design-system/graficos/BarraEmpilhada'
-import { SeloDados } from '@/shared/design-system/molecules/SeloDados'
+import { useEstufaAtual, useResumoCiclo, type Estufa, type ResumoCiclo } from '@/modules/estufa'
 import { useAtraso } from '@/shared/hooks/useAtraso'
 import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
 import { formatarNumero } from '@/shared/lib/formatar'
-import { origemDosDados } from '../dependencias'
-
-const COR_FATIA: Record<string, string> = {
-  energia: 'var(--serie-amarelo)',
-  nutrientes: 'var(--serie-roxo)',
-  acido: 'var(--serie-laranja)',
-  agua: 'var(--serie-azul)',
-  mudas: 'var(--serie-menta)',
-  fixos: 'var(--serie-cinza)',
-  lucro: 'var(--ok)',
-}
-const NOME_CENARIO: Record<Cenario, string> = { baixo: 'Preço baixo', medio: 'Preço médio', alto: 'Preço alto' }
+import { ControleReproducao } from './ControleReproducao'
+import { Lancamentos } from './Lancamentos'
 
 export function PaginaDinheiro() {
   const estufa = useEstufaAtual()
@@ -69,6 +59,8 @@ export function PaginaDinheiro() {
   )
 }
 
+type Linha = { id: string; item: string; conta: string; origem: string; valor: string; forte?: boolean }
+
 function Dinheiro({
   estufa,
   resumo,
@@ -80,235 +72,307 @@ function Dinheiro({
   precos: Precos
   aoEditar: () => void
 }) {
+  const c = contaDoCiclo(resumo, estufa.plantas, precos)
   const largo = useTelaLarga()
-  const [cenario, setCenario] = useState<Cenario>('medio')
-  const r = resultadoDoCiclo(resumo, estufa.plantas, precos, cenario)
-  const p = projecao(r.lucro, estufa.diasDoCiclo)
-  const fatias = barraDeCustos(r).map((f) => ({ ...f, cor: COR_FATIA[f.chave] ?? 'var(--serie-cinza)' }))
-  const prejuizo = r.lucro < 0
-
-  const topo = (
-    <HStack justify="between" align="end" wrap="wrap" gap={3}>
-      <VStack gap={1}>
-        {origemDosDados === 'exemplo' && <SeloDados origem="exemplo" />}
-        <Heading level={1}>Dinheiro</Heading>
-        <Text color="secondary">
-          {estufa.nome} · {estufa.plantas} pés · ciclo de {estufa.diasDoCiclo} dias
-        </Text>
-      </VStack>
-      <Button
-        label="Editar preços"
-        size={largo ? 'md' : 'lg'}
-        icon={<PencilSquareIcon width={16} aria-hidden />}
-        onClick={aoEditar}
-      />
-    </HStack>
-  )
-
-  const seletor = (
-    <SegmentedControl
-      label="Cenário de preço"
-      layout={largo ? 'hug' : 'fill'}
-      size="lg"
-      value={cenario}
-      onChange={(v) => setCenario(v as Cenario)}
-    >
-      <SegmentedControlItem value="baixo" label="Baixo" />
-      <SegmentedControlItem value="medio" label="Médio" />
-      <SegmentedControlItem value="alto" label="Alto" />
-    </SegmentedControl>
-  )
-
-  const lucro = (
-    <Card>
-      <VStack gap={2}>
-        <Text type="label" color="secondary">
-          {prejuizo ? 'Prejuízo' : 'Lucro'} previsto · {NOME_CENARIO[cenario].toLowerCase()} (
-          {formatarReais(precos.alfacePorPe[cenario])}/pé)
-        </Text>
-        {/* largura mínima: no celular "por ano" desce para a linha de baixo em vez de sair do card */}
-        <Grid columns={{ minWidth: 140 }} gap={3}>
-          {(
-            [
-              ['por ciclo', p.ciclo],
-              ['por mês', p.mes],
-              ['por ano', p.ano],
-            ] as const
-          ).map(([rotulo, v]) => (
-            <VStack key={rotulo} gap={0.5}>
-              <Text
-                size={rotulo === 'por ciclo' ? '3xl' : 'xl'}
-                weight="medium"
-                hasTabularNumbers
-                color={prejuizo ? 'primary' : 'primary'}
-              >
-                {formatarReaisCurto(v)}
-              </Text>
-              <Text type="supporting" color="secondary">
-                {rotulo}
-              </Text>
-            </VStack>
-          ))}
-        </Grid>
-        <Text type="supporting" color="secondary" hasTabularNumbers>
-          Venda de {formatarReaisCurto(r.receita)} − gastos de {formatarReaisCurto(r.custos.total)} · margem de{' '}
-          {formatarNumero(r.margem * 100)}%
-        </Text>
-      </VStack>
-    </Card>
-  )
-
-  const barra = (
-    <Card>
-      <VStack gap={2}>
-        <Heading level={2}>Para onde vai o dinheiro da venda</Heading>
-        <BarraEmpilhada fatias={fatias} formatar={formatarReaisCurto} rotulo="Custos e lucro do ciclo" />
-      </VStack>
-    </Card>
-  )
-
-  if (!largo)
-    return (
-      <VStack gap={4} paddingBlock={4}>
-        {topo}
-        {seletor}
-        {lucro}
-        {barra}
-        <Cenarios estufa={estufa} resumo={resumo} precos={precos} />
-      </VStack>
-    )
-
   return (
     <VStack gap={5} paddingBlock={6}>
-      {topo}
-      {seletor}
-      <Grid columns={2} gap={4}>
-        {lucro}
-        <Equilibrio estufa={estufa} resumo={resumo} precos={precos} cenario={cenario} />
+      <HStack justify="between" align="end" wrap="wrap" gap={3}>
+        <VStack gap={1}>
+          <ControleReproducao />
+          <Heading level={1}>Dinheiro</Heading>
+          <Text color="secondary">
+            A conta de um ciclo de {estufa.diasDoCiclo} dias, com {formatarNumero(estufa.plantas)} pés.
+          </Text>
+        </VStack>
+        <Button label="Editar preços" icon={<PencilSquareIcon width={16} aria-hidden />} onClick={aoEditar} />
+      </HStack>
+
+      <Grid columns={{ minWidth: 300, repeat: 'fit' }} gap={4}>
+        <Sobra conta={c} />
+        <Equilibrio conta={c} />
       </Grid>
-      {barra}
-      <Grid columns={2} gap={4}>
-        <Cenarios estufa={estufa} resumo={resumo} precos={precos} />
-        <VantagemAgente estufa={estufa} precos={precos} cenario={cenario} />
-      </Grid>
-      <Suposicoes />
+
+      <Card>
+        <VStack gap={3}>
+          <Heading level={2}>A conta do ciclo</Heading>
+          {largo ? (
+            <Table<Linha>
+              data={linhasDaConta(c, precos)}
+              idKey="id"
+              density="compact"
+              columns={[
+                {
+                  key: 'item',
+                  header: 'Item',
+                  renderCell: (l) => <Text weight={l.forte ? 'medium' : 'normal'}>{l.item}</Text>,
+                },
+                { key: 'conta', header: 'Conta', renderCell: (l) => <Text hasTabularNumbers>{l.conta}</Text> },
+                {
+                  key: 'origem',
+                  header: 'De onde veio',
+                  renderCell: (l) => (
+                    <Text type="supporting" color="secondary">
+                      {l.origem}
+                    </Text>
+                  ),
+                },
+                {
+                  key: 'valor',
+                  header: 'Valor',
+                  align: 'end',
+                  renderCell: (l) => (
+                    <Text hasTabularNumbers weight={l.forte ? 'medium' : 'normal'}>
+                      {l.valor}
+                    </Text>
+                  ),
+                },
+              ]}
+            />
+          ) : (
+            <LinhasCelular
+              linhas={linhasDaConta(c, precos).map((l) => ({
+                id: l.id,
+                item: l.item,
+                valor: l.valor,
+                detalhe: [l.conta, l.origem].filter(Boolean).join(' · '),
+                forte: l.forte,
+              }))}
+            />
+          )}
+        </VStack>
+      </Card>
+
+      <PrevistoReal conta={c} />
+      <Lancamentos />
     </VStack>
   )
 }
 
-function Cenarios({ estufa, resumo, precos }: { estufa: Estufa; resumo: ResumoCiclo; precos: Precos }) {
-  return (
-    <Card>
-      <VStack gap={2}>
-        <HStack gap={1} align="center">
-          <Heading level={2}>Cenários de preço</Heading>
-          <OQueEIsso id="cenarioPreco" />
-        </HStack>
-        <Grid columns={3} gap={3}>
-          {(['baixo', 'medio', 'alto'] as const).map((c) => {
-            const lucro = resultadoDoCiclo(resumo, estufa.plantas, precos, c).lucro
-            return (
-              <VStack key={c} gap={0.5}>
-                <Text type="supporting" color="secondary">
-                  {NOME_CENARIO[c]} · {formatarReais(precos.alfacePorPe[c])}
-                </Text>
-                <Text size="lg" weight="medium" hasTabularNumbers>
-                  {formatarReaisCurto(lucro)}
-                </Text>
-                <Text type="supporting" color="secondary">
-                  por ciclo
-                </Text>
-              </VStack>
-            )
-          })}
-        </Grid>
-      </VStack>
-    </Card>
-  )
+const kg = (g: number) => formatarNumero(g / 1000, 1)
+
+/** As linhas da planilha, de cima para baixo. Cada uma: a conta e de onde veio cada número. */
+function linhasDaConta(c: ContaDoCiclo, p: Precos): Linha[] {
+  const gravado = 'medido no ciclo gravado'
+  const seu = 'seu preço (Editar preços)'
+  return [
+    {
+      id: 'pes',
+      item: 'Pés plantados',
+      conta: formatarNumero(c.plantas),
+      origem: 'o tamanho da estufa no simulador',
+      valor: '',
+    },
+    {
+      id: 'peso',
+      item: 'Peso na colheita',
+      conta: `${formatarNumero(c.massaPorPe)} g por pé · ${kg(c.massaPorPe * c.plantas)} kg no total`,
+      origem: gravado,
+      valor: '',
+    },
+    {
+      id: 'preco',
+      item: 'Preço por pé',
+      conta: `${formatarReais(p.alfacePorPe)} o pé de ${MASSA_COMERCIAL_G} g × ${formatarNumero(c.fator, 2)} pelo peso = ${formatarReais(c.precoDoPe)}`,
+      origem: `${seu}; pé maior vale até 10% a mais, abaixo de 120 g não vende`,
+      valor: '',
+    },
+    {
+      id: 'venda',
+      item: 'Entra (venda)',
+      conta: `${formatarNumero(c.plantas)} pés × ${formatarReais(c.precoDoPe)}`,
+      origem: 'supõe que todos os pés são vendidos',
+      valor: formatarReais(c.venda),
+      forte: true,
+    },
+    {
+      id: 'energia',
+      item: NOME_CATEGORIA.energia,
+      conta: `${formatarNumero(c.energiaKwh)} kWh × ${formatarReais(p.tarifaKwh)}`,
+      origem: `kWh ${gravado} (exaustor, névoa e luz); tarifa: ${seu}`,
+      valor: `− ${formatarReais(c.gastos.energia)}`,
+    },
+    {
+      id: 'agua',
+      item: NOME_CATEGORIA.agua,
+      conta: `${formatarNumero(c.aguaL)} L × ${formatarReais(p.aguaPorM3)} por m³`,
+      origem: `litros da névoa ${gravado}; tarifa: ${seu}`,
+      valor: `− ${formatarReais(c.gastos.agua)}`,
+    },
+    {
+      id: 'adubo',
+      item: NOME_CATEGORIA.adubo,
+      conta: 'o seu gasto no ciclo',
+      origem: p.aduboPorCiclo ? seu : 'informe em Editar preços (a simulação ainda não dosa adubo)',
+      valor: `− ${formatarReais(c.gastos.adubo)}`,
+    },
+    {
+      id: 'mudas',
+      item: NOME_CATEGORIA.mudas,
+      conta: `${formatarNumero(c.plantas)} × ${formatarReais(p.mudaPorUnidade)}`,
+      origem: seu,
+      valor: `− ${formatarReais(c.gastos.mudas)}`,
+    },
+    {
+      id: 'embalagem',
+      item: NOME_CATEGORIA.embalagem,
+      conta: `${formatarNumero(c.plantas)} × ${formatarReais(p.embalagemPorPe)}`,
+      origem: p.embalagemPorPe ? seu : 'informe em Editar preços, se usar',
+      valor: `− ${formatarReais(c.gastos.embalagem)}`,
+    },
+    {
+      id: 'outros',
+      item: NOME_CATEGORIA.outros,
+      conta: 'por ciclo',
+      origem: `${seu}: seu trabalho e a estrutura divididos por ciclo`,
+      valor: `− ${formatarReais(c.gastos.outros)}`,
+    },
+    {
+      id: 'gastos',
+      item: 'Sai (gastos)',
+      conta: 'a soma das linhas acima',
+      origem: '',
+      valor: `− ${formatarReais(c.totalGastos)}`,
+      forte: true,
+    },
+    {
+      id: 'sobra',
+      item: c.sobra >= 0 ? 'Sobra' : 'Falta',
+      conta: 'entra − sai',
+      origem: '',
+      valor: formatarReais(c.sobra),
+      forte: true,
+    },
+  ]
 }
 
-function Equilibrio({
-  estufa,
-  resumo,
-  precos,
-  cenario,
-}: {
-  estufa: Estufa
-  resumo: ResumoCiclo
-  precos: Precos
-  cenario: Cenario
-}) {
-  const e = pontoDeEquilibrio(resumo, estufa.plantas, precos, cenario)
+function Sobra({ conta: c }: { conta: ContaDoCiclo }) {
   return (
     <Card>
-      <VStack gap={2}>
-        <HStack gap={1} align="center">
-          <Heading level={2}>Ponto de equilíbrio</Heading>
-          <OQueEIsso id="pontoEquilibrio" />
-        </HStack>
-        <Text color="secondary">Abaixo disto, a estufa não se paga.</Text>
-        <Grid columns={2} gap={3}>
-          <VStack gap={0.5}>
-            <Text size="xl" weight="medium" hasTabularNumbers>
-              {Number.isFinite(e.precoMinimoPorPe) ? formatarReais(e.precoMinimoPorPe) : '—'}
-            </Text>
-            <Text type="supporting" color="secondary">
-              preço mínimo por pé
-            </Text>
-          </VStack>
-          <VStack gap={0.5}>
-            <Text size="xl" weight="medium" hasTabularNumbers>
-              {Number.isFinite(e.plantasMinimas) ? `${formatarNumero(Math.ceil(e.plantasMinimas))} pés` : 'não se paga'}
-            </Text>
-            <Text type="supporting" color="secondary">
-              plantas mínimas no preço {NOME_CENARIO[cenario].toLowerCase().replace('preço ', '')}
-            </Text>
-          </VStack>
-        </Grid>
-      </VStack>
-    </Card>
-  )
-}
-
-function VantagemAgente({ estufa, precos, cenario }: { estufa: Estufa; precos: Precos; cenario: Cenario }) {
-  const estufas = useEstufas()
-  const regras = estufas.data?.find((e) => e.controlador.tipo === 'regras')
-  const ra = useResumoCiclo(estufa.id)
-  const rr = useResumoCiclo(regras?.id ?? '')
-  if (estufa.controlador.tipo !== 'agente' || !regras || !ra.data || !rr.data) return null
-  const ganho = vantagemDoAgente(ra.data, rr.data, estufa.plantas, precos, cenario)
-  return (
-    <Card>
-      <VStack gap={2}>
-        <Heading level={2}>Quanto o agente ganha</Heading>
-        <Text size="3xl" weight="medium" hasTabularNumbers>
-          {ganho >= 0 ? '+' : '−'}
-          {formatarReaisCurto(Math.abs(ganho))}
-        </Text>
-        <Text color="secondary">
-          por ciclo, contra as regras fixas no mesmo clima (
-          {formatarReaisCurto(projecao(ganho, estufa.diasDoCiclo).ano)} por ano).
-        </Text>
-        <Link href="/agente-x-regras">Ver a comparação</Link>
-      </VStack>
-    </Card>
-  )
-}
-
-/** As contas assumem coisas: elas ficam à vista, para ninguém tomar a projeção por promessa. */
-function Suposicoes() {
-  return (
-    <Card variant="muted">
       <VStack gap={1}>
-        <HStack gap={1} align="center">
-          <Text weight="medium">Como a conta é feita</Text>
-          <OQueEIsso id="suposicoesConta" />
-        </HStack>
-        <Text type="supporting" color="secondary">
-          Preço por pé de uma cabeça de {MASSA_COMERCIAL_G} g (bônus até 10%); abaixo de {MASSA_MINIMA_VENDA_G} g não
-          vende.
+        <Text type="label" color="secondary">
+          {c.sobra >= 0 ? 'Sobra no ciclo (previsto)' : 'Prejuízo no ciclo (previsto)'}
+        </Text>
+        <Text size="3xl" weight="medium" hasTabularNumbers>
+          {formatarReaisCurto(c.sobra)}
+        </Text>
+        <Text type="supporting" color="secondary" hasTabularNumbers>
+          entra {formatarReaisCurto(c.venda)} da venda, sai {formatarReaisCurto(c.totalGastos)} de gastos
         </Text>
       </VStack>
     </Card>
+  )
+}
+
+/** O ponto de equilíbrio numa frase, com a conta embaixo. */
+function Equilibrio({ conta: c }: { conta: ContaDoCiclo }) {
+  return (
+    <Card>
+      <VStack gap={1}>
+        <Text type="label" color="secondary">
+          Ponto de equilíbrio
+        </Text>
+        <Text size="xl" weight="medium">
+          {Number.isFinite(c.precoMinimoPorPe)
+            ? `Abaixo de ${formatarReais(c.precoMinimoPorPe)} o pé, você perde dinheiro.`
+            : 'Com este peso, a alface não chega ao tamanho de venda.'}
+        </Text>
+        <Text type="supporting" color="secondary" hasTabularNumbers>
+          {Number.isFinite(c.precoMinimoPorPe)
+            ? `gastos de ${formatarReais(c.totalGastos)} ÷ ${formatarNumero(c.plantas)} pés ÷ ${formatarNumero(c.fator, 2)} pelo peso (preço do pé de ${MASSA_COMERCIAL_G} g)`
+            : 'abaixo de 120 g por pé não se vende'}
+        </Text>
+      </VStack>
+    </Card>
+  )
+}
+
+type LinhaComparacao = { id: Categoria | 'sobra'; item: string; previsto: number; real: number }
+
+/** O previsto do ciclo lado a lado com o que o produtor lançou de verdade. */
+function PrevistoReal({ conta: c }: { conta: ContaDoCiclo }) {
+  const largo = useTelaLarga()
+  const lancamentos = useLancamentos()
+  const t = totaisDosLancamentos(lancamentos.data ?? [])
+  const linhas: LinhaComparacao[] = [
+    { id: 'venda', item: NOME_CATEGORIA.venda, previsto: c.venda, real: t.venda },
+    ...CATEGORIAS_GASTO.map((k) => ({ id: k, item: NOME_CATEGORIA[k], previsto: c.gastos[k], real: t[k] })),
+    { id: 'sobra', item: 'Sobra', previsto: c.sobra, real: t.sobra },
+  ]
+  return (
+    <Card>
+      <VStack gap={3}>
+        <VStack gap={0.5}>
+          <Heading level={2}>Previsto × real</Heading>
+          <Text type="supporting" color="secondary">
+            Previsto: a conta acima. Real: a soma dos seus lançamentos, logo abaixo.
+          </Text>
+        </VStack>
+        {largo ? (
+          <Table<LinhaComparacao>
+            data={linhas}
+            idKey="id"
+            density="compact"
+            columns={[
+              {
+                key: 'item',
+                header: 'Item',
+                renderCell: (l) => <Text weight={l.id === 'sobra' ? 'medium' : 'normal'}>{l.item}</Text>,
+              },
+              { key: 'previsto', header: 'Previsto', align: 'end', renderCell: (l) => formatarReais(l.previsto) },
+              { key: 'real', header: 'Real', align: 'end', renderCell: (l) => formatarReais(l.real) },
+              {
+                key: 'diferenca',
+                header: 'Real − previsto',
+                align: 'end',
+                renderCell: (l) => {
+                  const d = l.real - l.previsto
+                  return `${d > 0 ? '+' : d < 0 ? '−' : ''}${formatarReais(Math.abs(d))}`
+                },
+              },
+            ]}
+          />
+        ) : (
+          <LinhasCelular
+            linhas={linhas.map((l) => ({
+              id: l.id,
+              item: l.item,
+              valor: `real ${formatarReais(l.real)}`,
+              detalhe: `previsto ${formatarReais(l.previsto)}`,
+              forte: l.id === 'sobra',
+            }))}
+          />
+        )}
+      </VStack>
+    </Card>
+  )
+}
+
+/** No celular, cada linha da conta vira item e valor na mesma linha, e a conta e a origem embaixo. */
+function LinhasCelular({
+  linhas,
+}: {
+  linhas: { id: string; item: string; valor: string; detalhe: string; forte?: boolean }[]
+}) {
+  return (
+    <List hasDividers density="compact" edge="flush">
+      {linhas.map((l) => (
+        <ListItem
+          key={l.id}
+          label={<Text weight={l.forte ? 'medium' : 'normal'}>{l.item}</Text>}
+          description={
+            l.detalhe ? (
+              <Text type="supporting" color="secondary">
+                {l.detalhe}
+              </Text>
+            ) : undefined
+          }
+          endContent={
+            <Text hasTabularNumbers weight={l.forte ? 'medium' : 'normal'} textWrap="nowrap">
+              {l.valor}
+            </Text>
+          }
+        />
+      ))}
+    </List>
   )
 }

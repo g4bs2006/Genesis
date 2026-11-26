@@ -3,7 +3,7 @@
  * Cada aba pode ter mais de um gráfico (pH e EC têm escalas diferentes).
  */
 import { FAIXAS, valorDe, valorExibido, type Passo, type Variavel } from '@/modules/estufa'
-import type { Serie, TrilhaAcao } from '@/shared/design-system/graficos/GraficoSerie'
+import type { MarcaAcao, Serie, TrilhaAcao } from '@/shared/design-system/graficos/GraficoSerie'
 import { formatarNumero } from '@/shared/lib/formatar'
 
 export type Painel = {
@@ -12,6 +12,7 @@ export type Painel = {
   series: Serie[]
   faixa: [number, number]
   acoes: TrilhaAcao[]
+  marcas: MarcaAcao[]
   formatarValor: (v: number) => string
 }
 
@@ -42,13 +43,52 @@ export const formato = (v: Variavel) => {
   return (x: number) => `${formatarNumero(x, f.casas)}${unidade}`
 }
 
-function painel(passos: Passo[], v: Variavel, titulo: string, acoes: TrilhaAcao[], extra: Serie[] = []): Painel {
+type Ligavel = 'exaustor' | 'nebulizacao' | 'sombreamento' | 'luz'
+const EQUIPAMENTO: Record<Ligavel, { nome: string; cor: string }> = {
+  exaustor: { nome: 'exaustor', cor: 'var(--serie-azul)' },
+  nebulizacao: { nome: 'névoa', cor: 'var(--serie-menta)' },
+  sombreamento: { nome: 'sombra', cor: 'var(--serie-cinza)' },
+  luz: { nome: 'luz extra', cor: 'var(--serie-amarelo)' },
+}
+/** acima disto o equipamento "ligou"; abaixo daquilo, "desligou" (a folga evita marcar ruído) */
+const LIGA = 0.1
+const DESLIGA = 0.05
+
+/**
+ * Quando cada equipamento ligou e desligou. A rede decide de 0 a 1, então
+ * "ligar" é passar de 10% e "desligar" é cair abaixo de 5%. Nas gravações dos
+ * campeões isso dá ~2 trocas por dia por equipamento; nas regras fixas, dezenas.
+ */
+export function ligaDesliga(passos: Passo[], equipamentos: Ligavel[]): MarcaAcao[] {
+  const marcas: MarcaAcao[] = []
+  for (const k of equipamentos) {
+    let ligado = (passos[0]?.acoes[k] ?? 0) > LIGA
+    for (const p of passos.slice(1)) {
+      const v = p.acoes[k]
+      if (!ligado && v > LIGA) ligado = true
+      else if (ligado && v < DESLIGA) ligado = false
+      else continue
+      marcas.push({ t: t(p), nome: EQUIPAMENTO[k].nome, cor: EQUIPAMENTO[k].cor, liga: ligado })
+    }
+  }
+  return marcas.sort((a, b) => a.t - b.t)
+}
+
+function painel(
+  passos: Passo[],
+  v: Variavel,
+  titulo: string,
+  acoes: TrilhaAcao[],
+  extra: Serie[] = [],
+  ligaveis: Ligavel[] = [],
+): Painel {
   return {
     titulo,
     variavel: v,
     series: [serieDe(passos, v, 'dentro', 'var(--serie-azul)'), ...extra],
     faixa: faixa(v),
     acoes,
+    marcas: ligaDesliga(passos, ligaveis),
     formatarValor: formato(v),
   }
 }
@@ -63,7 +103,7 @@ export function abasDoHistorico(passos: Passo[]): Aba[] {
   return [
     {
       id: 'temperatura',
-      nome: 'Temperatura',
+      nome: 'Ar', // curto: as 4 abas cabem no celular
       paineis: [
         painel(
           passos,
@@ -71,10 +111,11 @@ export function abasDoHistorico(passos: Passo[]): Aba[] {
           'Temperatura do ar',
           [
             acao(passos, 'exaustor', 'intensidade', 'var(--serie-azul)', (p) => p.acoes.exaustor),
-            acao(passos, 'nebulização', 'intensidade', 'var(--serie-menta)', (p) => p.acoes.nebulizacao),
-            acao(passos, 'sombreamento', 'intensidade', 'var(--serie-cinza)', (p) => p.acoes.sombreamento),
+            acao(passos, 'névoa', 'intensidade', 'var(--serie-menta)', (p) => p.acoes.nebulizacao),
+            acao(passos, 'sombra', 'intensidade', 'var(--serie-cinza)', (p) => p.acoes.sombreamento),
           ],
           [fora],
+          ['exaustor', 'nebulizacao', 'sombreamento'],
         ),
       ],
     },
@@ -106,13 +147,25 @@ export function abasDoHistorico(passos: Passo[]): Aba[] {
       id: 'luz-co2',
       nome: 'Luz e CO₂',
       paineis: [
-        painel(passos, 'luz', 'Luz na planta', [
-          acao(passos, 'luz extra', 'intensidade', 'var(--serie-amarelo)', (p) => p.acoes.luz),
-          acao(passos, 'sombreamento', 'intensidade', 'var(--serie-cinza)', (p) => p.acoes.sombreamento),
-        ]),
-        painel(passos, 'co2', 'CO₂ no ar', [
-          acao(passos, 'exaustor', 'intensidade', 'var(--serie-azul)', (p) => p.acoes.exaustor),
-        ]),
+        painel(
+          passos,
+          'luz',
+          'Luz na planta',
+          [
+            acao(passos, 'luz extra', 'intensidade', 'var(--serie-amarelo)', (p) => p.acoes.luz),
+            acao(passos, 'sombra', 'intensidade', 'var(--serie-cinza)', (p) => p.acoes.sombreamento),
+          ],
+          [],
+          ['luz', 'sombreamento'],
+        ),
+        painel(
+          passos,
+          'co2',
+          'CO₂ no ar',
+          [acao(passos, 'exaustor', 'intensidade', 'var(--serie-azul)', (p) => p.acoes.exaustor)],
+          [],
+          ['exaustor'],
+        ),
       ],
     },
   ]

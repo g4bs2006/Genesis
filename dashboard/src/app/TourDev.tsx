@@ -15,17 +15,17 @@ const PASSOS = [
   {
     titulo: 'Estufas lado a lado',
     texto:
-      'Os campeões do treino, o PID e as regras fixas no mesmo clima. Passe o ponteiro no gráfico para ver todas as alfaces naquele instante, e injete perturbações para ver quem aguenta.',
+      'Os campeões do treino e as regras fixas no mesmo clima. Passe o ponteiro no gráfico para ver todas as alfaces naquele instante.',
   },
   {
     titulo: 'Treino e Modelo',
     texto:
-      'Treino mostra a evolução geração a geração e as 6 fases do currículo. Modelo abre a rede por dentro: quais entradas pesaram em cada decisão.',
+      'Treino mostra a evolução geração a geração. Modelo abre a rede por dentro: quais entradas pesaram em cada decisão.',
   },
   {
-    titulo: 'Gravações e o "o que é isso?"',
+    titulo: 'Gravações e a Vitrine',
     texto:
-      'Gravações reproduz um ciclo inteiro acelerado, com as ações gravadas. Todo número técnico tem um ⓘ: toque nele para uma explicação curta. O glossário completo fica em Ajustes.',
+      'Gravações reproduz um ciclo inteiro acelerado, com as ações gravadas no treino. Na Vitrine do produtor você escolhe qual gravação o modo Produtor mostra, e em que velocidade.',
   },
 ]
 

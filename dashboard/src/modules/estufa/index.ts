@@ -12,8 +12,12 @@
 export * from './dominio'
 export type { FonteEstufa, ControleSimulacao, EstadoRelogio } from './application/portas'
 export * from './presentation/dados'
-export { ListaEstufasLateral } from './presentation/ListaEstufasLateral'
 export { ListaEventos } from './presentation/ListaEventos'
 // Adaptadores (só app/dependencias.ts deve usar)
-export { criarFonteEstufaExemplo } from './infrastructure/dadosExemplo'
-export { criarSimuladorBrinquedo } from './infrastructure/simuladorBrinquedo'
+export {
+  criarFonteEstufaReproducao,
+  nomeDaGravacao,
+  PLANTAS_POR_ESTUFA,
+  VELOCIDADE_PADRAO,
+  type FonteDeGravacoes,
+} from './infrastructure/reproducao'

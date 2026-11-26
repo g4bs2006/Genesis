@@ -43,59 +43,43 @@ function Campos({ inicial, aoTerminar }: { inicial: Precos; aoTerminar: () => vo
   return (
     <VStack gap={4} paddingBlock={2}>
       <Text type="supporting" color="secondary">
-        Valores de referência para começar. Ponha os seus: a conta do Dinheiro muda na hora.
+        Valores de referência para começar. Ponha os seus: a conta do ciclo muda na hora. Ficam salvos neste navegador.
       </Text>
       <FormLayout>
-        <Text weight="medium">Alface (R$ por pé vendido, cabeça de 220 g)</Text>
         {campo(
-          'Preço baixo',
-          p.alfacePorPe.baixo,
-          (v) => setP({ ...p, alfacePorPe: { ...p.alfacePorPe, baixo: v } }),
-          'CEAGESP / Conab Prohort: entressafra cheia',
+          'Alface',
+          p.alfacePorPe,
+          (v) => setP({ ...p, alfacePorPe: v }),
+          'Por quanto você vende um pé de 220 g. Pé maior vale até 10% a mais.',
+          'R$/pé',
+        )}
+        {campo('Energia', p.tarifaKwh, (v) => setP({ ...p, tarifaKwh: v }), 'A tarifa da sua conta de luz', 'R$/kWh')}
+        {campo('Água', p.aguaPorM3, (v) => setP({ ...p, aguaPorM3: v }), 'A tarifa da sua conta de água', 'R$/m³')}
+        {campo('Mudas', p.mudaPorUnidade, (v) => setP({ ...p, mudaPorUnidade: v }), 'Preço de uma muda', 'R$')}
+        {campo(
+          'Adubo no ciclo',
+          p.aduboPorCiclo,
+          (v) => setP({ ...p, aduboPorCiclo: v }),
+          'Quanto você gasta de sais (A+B) num ciclo',
           'R$',
         )}
         {campo(
-          'Preço médio',
-          p.alfacePorPe.medio,
-          (v) => setP({ ...p, alfacePorPe: { ...p.alfacePorPe, medio: v } }),
-          'CEAGESP / Conab Prohort: média do ano',
-          'R$',
+          'Embalagem',
+          p.embalagemPorPe,
+          (v) => setP({ ...p, embalagemPorPe: v }),
+          'Saquinho ou caixa por pé vendido (0 se não usa)',
+          'R$/pé',
         )}
         {campo(
-          'Preço alto',
-          p.alfacePorPe.alto,
-          (v) => setP({ ...p, alfacePorPe: { ...p.alfacePorPe, alto: v } }),
-          'CEAGESP / Conab Prohort: escassez',
-          'R$',
-        )}
-        <Text weight="medium">Custos</Text>
-        {campo(
-          'Energia',
-          p.tarifaKwh,
-          (v) => setP({ ...p, tarifaKwh: v }),
-          'Tarifa média com bandeira (ANEEL)',
-          'R$/kWh',
-        )}
-        {campo('Nutrientes', p.nutrientePorKg, (v) => setP({ ...p, nutrientePorKg: v }), 'Sal nutritivo A+B', 'R$/kg')}
-        {campo(
-          'Ácido (corretor de pH)',
-          p.acidoPorL,
-          (v) => setP({ ...p, acidoPorL: v }),
-          'Solução ácida para pH',
-          'R$/L',
-        )}
-        {campo('Água', p.aguaPorM3, (v) => setP({ ...p, aguaPorM3: v }), 'Tarifa da concessionária', 'R$/m³')}
-        {campo('Mudas', p.mudaPorUnidade, (v) => setP({ ...p, mudaPorUnidade: v }), 'Preço por muda', 'R$')}
-        {campo(
-          'Custos fixos por ciclo',
-          p.fixosPorCiclo,
-          (v) => setP({ ...p, fixosPorCiclo: v }),
-          'Estrutura e equipamentos divididos por ciclo, mão de obra',
+          'Mão de obra e outros',
+          p.outrosPorCiclo,
+          (v) => setP({ ...p, outrosPorCiclo: v }),
+          'Seu trabalho e a estrutura (estufa, bomba, canos) divididos por ciclo',
           'R$',
         )}
       </FormLayout>
       {!conferido.success && <Text color="secondary">Confira os valores: nenhum pode ser negativo.</Text>}
-      {/* ações presas embaixo: o "Salvar" fica à vista sem rolar os 9 campos */}
+      {/* ações presas embaixo: o "Salvar" fica à vista sem rolar os campos */}
       <HStack gap={2} justify="between" className={css.acoes}>
         <Button label="Voltar aos valores de referência" variant="ghost" onClick={() => setP(PRECOS_PADRAO)} />
         <Button

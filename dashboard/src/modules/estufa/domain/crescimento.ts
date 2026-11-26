@@ -1,23 +1,23 @@
 /**
- * Crescimento esperado da alface (massa fresca por pé) ao longo do ciclo.
+ * O ciclo da alface: os estágios e a massa por pé de cada dia.
  *
- * Curva logística: começa devagar (muda), acelera no meio e desacelera perto
- * da colheita. Calibrada no rascunho: dia 23 → 182 g, dia 35 → ~245 g.
- * shortcut: é uma curva de referência, não o modelo de Van Henten; quando o
- * simulador do backend existir, a massa vem dele.
+ * A massa vem da fonte (na reprodução, a massa por dia gravada pelo simulador
+ * do treino). Até o passo 08 havia aqui uma curva logística "calibrada no
+ * rascunho": era um número inventado e saiu (passo 10).
  */
-const MASSA_MAXIMA = 260 // g
-const INCLINACAO = 0.1618 // por dia
-const DIA_DO_MEIO = 17.76 // dia em que a planta tem metade da massa máxima
 
-export function massaEsperada(dia: number): number {
-  return MASSA_MAXIMA / (1 + Math.exp(-INCLINACAO * (dia - DIA_DO_MEIO)))
+/** A massa num dia fracionário, ligando em linha reta o fim de um dia ao do outro. */
+export function massaNoDia(massaPorDia: readonly number[], dia: number): number {
+  if (massaPorDia.length === 0) return 0
+  const d = Math.min(Math.max(dia, 0), massaPorDia.length - 1)
+  const i = Math.floor(d)
+  const a = massaPorDia[i]!
+  const b = massaPorDia[Math.min(i + 1, massaPorDia.length - 1)]!
+  return a + (b - a) * (d - i)
 }
 
 /** A curva inteira, um ponto por dia (para o gráfico do ciclo). */
-export function curvaDeCrescimento(diasDoCiclo: number): { dia: number; massa: number }[] {
-  return Array.from({ length: diasDoCiclo + 1 }, (_, dia) => ({ dia, massa: massaEsperada(dia) }))
-}
+export const curvaDoCiclo = (massaPorDia: readonly number[]) => massaPorDia.map((massa, dia) => ({ dia, massa }))
 
 export type Estagio = { nome: string; inicio: number; fim: number; descricao: string }
 

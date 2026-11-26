@@ -1,1 +1,0 @@
-export { criarSimuladorBrinquedo } from './adaptador'

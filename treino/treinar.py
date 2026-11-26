@@ -11,7 +11,8 @@ A cada geração (o laço do estudo, em escala maior):
   4. elitismo, torneio, cruzamento e mutação: nasce a próxima geração.
 A cada `--prova-cada` gerações, o campeão faz a PROVA: 10 climas fixos que o
 treino nunca vê, contra as regras fixas. Campeão novo vira modelos/<id>.json e
-ganha uma gravação do ciclo dele.
+ganha uma gravação do ciclo dele. Na geração 1, também o campeão dela e as
+gravações das regras fixas e de "sem controle" no mesmo clima (passo 09).
 
 Robustez para a noite: checkpoint a cada poucas gerações, --retomar, orçamento
 de --horas, Ctrl+C salva antes de sair, log em arquivo. Os JSON seguem o
@@ -34,8 +35,9 @@ import torch
 
 from controle.ciclo import simular_ciclo
 from controle.controladores import Nada, RegrasFixas
+from controle.metricas import Medidor
 from controle.seguranca import Seguranca, lista_barradas
-from simulador.clima import MINUTOS_POR_PASSO, clima_ameno, empilhar
+from simulador.clima import MINUTOS_POR_PASSO, PASSOS_POR_DIA, clima_ameno, empilhar
 from simulador.estufa import Estufa
 from treino.evolucao import Combinado, proxima_geracao
 from treino.nuvem import FUSO_SP, agora_sp, escrever_json
@@ -106,18 +108,56 @@ def acoes_contrato(acoes: dict) -> dict:
     return {**ar, "dosagemAB": 0.0, "dosagemAcido": 0.0, "reposicaoAgua": False, "bomba": True}
 
 
-def gravar(pesos: torch.Tensor, modelo_id: str, dias: int) -> dict:
-    """O campeão num ciclo de clima fixo, passo a passo: o que leu, o que fez, o que foi barrado."""
-    e, ctrl, seg = Estufa(1, clima_ameno(dias, SEMENTE_GRAVACAO)), ControladorRede(pesos), Seguranca()
-    passos = []
+def gravar(controlador, gravacao_id: str, modelo_id: str, dias: int, tipo: str = "agente") -> dict:
+    """
+    Um controlador num ciclo de clima fixo (SEMENTE_GRAVACAO), passo a passo: o
+    que leu, o que fez, o que foi barrado. Como todos (campeões, regras fixas e
+    "sem controle") usam o mesmo clima, a comparação entre gravações é justa.
+
+    Além dos passos, a gravação leva o que o dashboard não consegue tirar deles:
+    a massa por pé no fim de cada dia (massaPorDia[0] é o transplante) e o
+    resumo do ciclo (ResumoCiclo + a nota em R$), medidos pelo mesmo Medidor do
+    treino. Assim nenhuma tela precisa estimar massa ou energia.
+    """
+    e, seg = Estufa(1, clima_ameno(dias, SEMENTE_GRAVACAO)), Seguranca()
+    med = Medidor(1, e.ad)
+    if hasattr(controlador, "reiniciar"):
+        controlador.reiniciar()
+    passos, massa = [], [round(float(e.massa_por_pe[0]), 1)]
     while not e.fim:
         obs = e.ler_sensores()
-        pedidas = ctrl.decidir(obs)
+        pedidas = controlador.decidir(obs)
         acoes, barradas = seg.filtrar(pedidas, obs)
         passos.append({"leitura": e.leitura(0, "campeao"), "acoes": acoes_contrato(acoes),
                        "barradas": lista_barradas(0, pedidas, barradas)})
         e.acionar(acoes)
-    return {"id": f"{modelo_id}-gravacao", "semente": SEMENTE_GRAVACAO, "modeloId": modelo_id, "passos": passos}
+        med.registrar(obs, acoes, barradas)  # mesma ordem do simular_ciclo
+        if e.passo % PASSOS_POR_DIA == 0:
+            massa.append(round(float(e.massa_por_pe[0]), 1))
+    resumo = {**med.resumo(0, gravacao_id, e.massa_por_pe), "nota": round(float(med.nota(e.massa_por_pe)[0]), 1)}
+    return {"id": gravacao_id, "semente": SEMENTE_GRAVACAO, "modeloId": modelo_id, "controlador": tipo,
+            "massaPorDia": massa, "resumo": resumo, "passos": passos}
+
+
+def resumo_gravacao(g: dict, titulo: str, geracao: int | None) -> dict:
+    """O ResumoGravacao (contrato) de uma gravação: a linha da lista, sem os passos."""
+    return {"id": g["id"], "semente": g["semente"], "modeloId": g["modeloId"], "titulo": titulo,
+            "criadaEm": agora_sp(), "passos": len(g["passos"]), "controlador": g["controlador"],
+            "geracao": geracao, "resumo": g["resumo"]}
+
+
+def gravar_referencias(prefixo: str, dias: int) -> list[tuple[dict, str]]:
+    """As regras fixas e "sem controle" no clima da gravação: as réguas das gravações dos campeões."""
+    return [
+        (gravar(RegrasFixas(), f"{prefixo}-regras-gravacao", "regras-fixas", dias, "regras"), "Regras fixas"),
+        (gravar(Nada(), f"{prefixo}-nada-gravacao", "sem-controle", dias, "nada"), "Sem controle"),
+    ]
+
+
+def modelo_contrato(modelo_id: str, geracao: int, pesos: torch.Tensor, vence: float) -> dict:
+    """O Modelo do contrato: os pesos do campeão e a fração dos climas de prova em que venceu as regras."""
+    return {"id": modelo_id, "geracao": geracao, "fase": FASE, "arquitetura": list(ARQUITETURA),
+            "pesos": [round(v, 6) for v in pesos[0].tolist()], "provaPorFase": {str(FASE): vence}}
 
 
 # ---------------------------------------------------------------------------
@@ -163,6 +203,31 @@ class Execucao:
 
     # ----- o laço -----
 
+    def guardar_gravacao(self, g: dict, titulo: str, geracao: int | None) -> None:
+        escrever_json(self.pasta / "gravacoes" / f"{g['id']}.json", g)
+        self.gravacoes.append(resumo_gravacao(g, titulo, geracao))
+        escrever_json(self.pasta / "gravacoes" / "indice.json", self.gravacoes)
+
+    def salvar_campeao(self, campeao: torch.Tensor, vence: float) -> None:
+        """modelos/<id>.json e a gravação do ciclo dele."""
+        modelo_id = f"{self.pasta.name}-g{self.geracao}"
+        escrever_json(self.pasta / "modelos" / f"{modelo_id}.json",
+                      modelo_contrato(modelo_id, self.geracao, campeao, vence))
+        g = gravar(ControladorRede(campeao), f"{modelo_id}-gravacao", modelo_id, self.cfg.dias)
+        self.guardar_gravacao(g, f"Campeão da geração {self.geracao} · fase {FASE}", self.geracao)
+        log.info("campeão salvo: %s (gravação de %d passos)", modelo_id, len(g["passos"]))
+
+    def primeira_geracao(self, campeao: torch.Tensor) -> None:
+        """
+        Só exportação, sem mexer na evolução: o campeão da geração 1 (o ponto de
+        partida das comparações) e as gravações das regras fixas e de "sem
+        controle" no mesmo clima. A prova aqui NÃO conta como melhor prova:
+        quais campeões são salvos depois continua igual.
+        """
+        self.salvar_campeao(campeao, provar(campeao, self.cfg.dias)["vence"])
+        for g, titulo in gravar_referencias(self.pasta.name, self.cfg.dias):
+            self.guardar_gravacao(g, titulo, None)
+
     def prova_e_campeao(self, campeao: torch.Tensor) -> None:
         t0 = time.perf_counter()
         r = provar(campeao, self.cfg.dias)
@@ -171,18 +236,8 @@ class Execucao:
         if r["campeao"] <= self.melhor_prova:
             return
         self.melhor_prova = r["campeao"]
-        modelo_id = f"{self.pasta.name}-g{self.geracao}"
-        escrever_json(self.pasta / "modelos" / f"{modelo_id}.json", {
-            "id": modelo_id, "geracao": self.geracao, "fase": FASE, "arquitetura": list(ARQUITETURA),
-            "pesos": [round(v, 6) for v in campeao[0].tolist()], "provaPorFase": {str(FASE): r["vence"]},
-        })
-        g = gravar(campeao, modelo_id, self.cfg.dias)
-        escrever_json(self.pasta / "gravacoes" / f"{g['id']}.json", g)
-        self.gravacoes.append({"id": g["id"], "semente": g["semente"], "modeloId": modelo_id,
-                               "titulo": f"Campeão da geração {self.geracao} · fase {FASE}",
-                               "criadaEm": agora_sp(), "passos": len(g["passos"])})
-        escrever_json(self.pasta / "gravacoes" / "indice.json", self.gravacoes)
-        log.info("campeão novo salvo: %s (gravação de %d passos)", modelo_id, len(g["passos"]))
+        if self.geracao > 1:  # o g1 já foi salvo pela primeira_geracao
+            self.salvar_campeao(campeao, r["vence"])
 
     def rodar(self, fim: float, max_geracoes: int | None) -> None:
         cfg = self.cfg
@@ -211,6 +266,8 @@ class Execucao:
                 self.salvar_estado(rodando=True)
                 log.info("g%d: melhor R$ %.0f | mediana R$ %.0f | regras R$ %.0f | %.0fs",
                          numero, notas.max(), notas.median(), regras, seg)
+                if numero == 1:
+                    self.primeira_geracao(campeao)
                 if numero % cfg.prova_cada == 0:
                     self.prova_e_campeao(campeao)
                 if numero % cfg.checkpoint_cada == 0:

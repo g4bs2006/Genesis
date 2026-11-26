@@ -214,12 +214,14 @@ class Supabase:
         if nomes:
             self._json("DELETE", f"/storage/v1/object/{BUCKET}", {"prefixes": nomes}, self._autorizado())
 
-    def enviar_arquivo(self, caminho_no_bucket: str, conteudo: bytes) -> None:
+    def enviar_arquivo(self, caminho_no_bucket: str, conteudo: bytes, cache_s: int = 3600) -> None:
+        """cache_s: quanto tempo a CDN do Supabase pode guardar a cópia (o índice muda; a gravação quase nunca)."""
         self._pedir(
             "POST",
             f"/storage/v1/object/{BUCKET}/{urllib.parse.quote(caminho_no_bucket)}",
             conteudo,
-            {**self._autorizado(), "Content-Type": "application/json", "x-upsert": "true"},
+            {**self._autorizado(), "Content-Type": "application/json", "x-upsert": "true",
+             "cache-control": f"max-age={cache_s}"},
         )
 
 
@@ -257,6 +259,9 @@ class Sincronizador:
     enviados: dict[str, float] = field(default_factory=dict)
     ultima_geracao: int = -1
     marcado_parado: bool = False
+    # a pasta do treino manda "indice.json"; a da reavaliação (treino/reavaliar.py),
+    # "indice-reavaliacao.json": uma nunca apaga o que a outra mandou
+    indice_na_nuvem: str = "indice.json"
 
     @property
     def execucao_id(self) -> str:
@@ -339,12 +344,37 @@ class Sincronizador:
             arq = p / "gravacoes" / f"{resumo['id']}.json"
             if not self._mudou(arq):
                 continue
+            if resumo["id"] in self._reavaliadas():
+                # A reavaliação (treino/reavaliar.py) já mandou esta gravação com a
+                # massa e o resumo; a versão antiga desta pasta não pode apagá-la.
+                self._marcar(arq)
+                feito.append(f"gravação {resumo['id']} pulada (a reavaliação mandou uma versão mais completa)")
+                continue
             no_bucket = f"{self.execucao_id}/{resumo['id']}.json"
             self.nuvem.enviar_arquivo(no_bucket, arq.read_bytes())
             self.nuvem.gravar("gravacoes", linha_gravacao(self.execucao_id, resumo, no_bucket), "execucao_id,id")
             self._marcar(arq)
             feito.append(f"gravação {resumo['id']} ({arq.stat().st_size // 1024} KB)")
+
+        # 5. O índice inteiro, no Storage: leva o que a tabela não tem coluna para
+        # guardar (controlador, geração e o resumo do ciclo, passo 09). Pequeno
+        # (poucos KB) e com cache curto, porque muda a cada campeão novo.
+        if indice is not None and self._mudou(indice_arq):
+            self.nuvem.enviar_arquivo(f"{self.execucao_id}/{self.indice_na_nuvem}",
+                                      json.dumps(indice, ensure_ascii=False).encode("utf-8"), cache_s=60)
+            self._marcar(indice_arq)
+            feito.append(f"índice ({len(indice)} gravações)")
         return feito
+
+    def _reavaliadas(self) -> set[str]:
+        """
+        Ids que treino/reavaliacoes/<execucao>/ já tem (vazio na própria pasta da
+        reavaliação). treino/saidas/<execucao> -> treino/reavaliacoes/<execucao>.
+        """
+        if self.indice_na_nuvem != "indice.json":
+            return set()
+        outra = ler_json(self.pasta.parent.parent / "reavaliacoes" / self.pasta.name / "gravacoes" / "indice.json")
+        return {r["id"] for r in outra or []}
 
     def _precisa_marcar_parado(self, estado_arq: Path) -> bool:
         if not estado_arq.exists():
@@ -370,7 +400,11 @@ def linha_geracao(execucao_id: str, g: dict) -> dict:
 
 
 def linha_gravacao(execucao_id: str, r: dict, arquivo: str) -> dict:
-    """ResumoGravacao do contrato (camelCase) -> linha da tabela (snake_case)."""
+    """
+    ResumoGravacao do contrato (camelCase) -> linha da tabela (snake_case).
+    Os campos do passo 09 (controlador, geracao, resumo) não têm coluna: vão no
+    índice da pasta, enviado ao Storage (ver Sincronizador.uma_volta).
+    """
     return {
         "execucao_id": execucao_id,
         "id": r["id"],
@@ -507,7 +541,9 @@ def main(argv: list[str] | None = None) -> None:
     elif args.pasta:
         if not args.pasta.is_dir():
             sys.exit(f"Pasta não encontrada: {args.pasta}")
-        sinc = Sincronizador(args.pasta.resolve(), nuvem, parado_apos_s=args.parado_apos * 60)
+        reavaliacao = not (args.pasta / "estado.json").exists()  # treino/reavaliacoes/<execucao>
+        sinc = Sincronizador(args.pasta.resolve(), nuvem, parado_apos_s=args.parado_apos * 60,
+                             indice_na_nuvem="indice-reavaliacao.json" if reavaliacao else "indice.json")
         print(f"Olhando {args.pasta} a cada {args.intervalo:.0f} s (Ctrl+C para parar)...")
         try:
             vigiar(sinc, args.intervalo, args.uma_vez)

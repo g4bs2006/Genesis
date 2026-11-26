@@ -115,6 +115,40 @@ O que foi feito, em ordem, e onde está cada coisa. As decisões ficam no
   ~R$ 380, PID ~R$ 700, não fazer nada ~R$ −8.000. Ver a
   [decisão 0005](decisoes/0005-controle-e-nota.md).
 
+## 2026-11-25: o dashboard só com dado real (passos 08 a 14)
+
+- **Pedido do Gabriel:** nenhum número inventado na tela, e o app organizado
+  pelo que cada pessoa precisa: o **Produtor** (quem cultiva) e o
+  **Desenvolvedor** (quem treina a rede). Cada passo tem página em
+  [`passos/`](passos/index.html).
+- **Limpeza (08):** saíram os "?", o Glossário, o Currículo, "Ele esqueceu
+  algo?", as perturbações, o Agente × regras do Produtor e o simulador de
+  brinquedo. Foco padrão do navegador; grades na largura toda.
+- **Dados que faltavam (09):** o treino grava as regras fixas e "sem
+  controle" no mesmo clima, a massa por dia e o resumo de cada ciclo. As 3
+  execuções da noite foram reavaliadas **sem retreinar** (`treino/reavaliar.py`):
+  a geração 1 refeita bateu com o `geracoes.json`, e cada gravação refeita foi
+  conferida contra a original. Sem acesso ao projeto PequiDev desta máquina, os
+  campos novos foram num índice no Storage, sem migração.
+- **O Produtor reproduz uma gravação real (10, decisão
+  [0007](decisoes/0007-produtor-alimentado-por-gravacao.md)):** a estufa do
+  app é um ciclo gravado no simulador, tocado em ciclo e com pausa; a **Vitrine
+  do produtor** escolhe qual e em que velocidade. Agora ganhou a Colheita no
+  lugar do Agente × regras; o Histórico mostra o ciclo inteiro e os alertas.
+- **Dinheiro como planilha (11, decisão
+  [0008](decisoes/0008-dinheiro-como-planilha.md)):** a conta do ciclo linha a
+  linha, cada número com a origem, o ponto de equilíbrio numa frase e os
+  lançamentos reais com CSV.
+- **Desenvolvedor (12):** Estufas lado a lado com N gravações, "o que o modelo
+  aprendeu" por geração e o Modelo explicado em frases.
+- **Revisão visual (13):** um subagente tirou 44 capturas e apontou 30
+  problemas; os altos e médios foram corrigidos.
+- **Números para o artigo:** o campeão final ganha das regras fixas na nota
+  (~R$ 1.080 contra R$ 420 no clima da gravação) e fica menos tempo fora da
+  faixa (~49% contra 75,5%), mas gasta 2,4 a 4 vezes a energia (370 a 630 kWh
+  contra 157). "Sem controle" termina com 7,8 g por pé.
+- **Entrega (14):** PR para a `main`, CI verde, merge e deploy no Vercel.
+
 ## Onde está cada coisa
 
 | O quê | Onde |
@@ -127,3 +161,5 @@ O que foi feito, em ordem, e onde está cada coisa. As decisões ficam no
 | Treino na nuvem (Supabase, Vercel) | [`docs/nuvem.md`](nuvem.md), [`supabase/`](../supabase/), [`treino/nuvem.py`](../treino/nuvem.py) |
 | Prompts dos agentes | [`docs/prompt-frontend.md`](prompt-frontend.md), [`docs/prompt-treino.md`](prompt-treino.md) |
 | Revisão visual (capturas) | [`docs/revisao-visual/`](revisao-visual/) |
+| Passo a passo (uma página por passo) | [`docs/passos/`](passos/index.html) |
+| Reavaliar uma execução antiga | [`treino/reavaliar.py`](../treino/reavaliar.py) |

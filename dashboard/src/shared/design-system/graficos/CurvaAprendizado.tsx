@@ -10,11 +10,9 @@ import { COR, rotuloEixo } from './estilo'
 import { LegendaGrafico } from './LegendaGrafico'
 
 export type PontoGeracao = { numero: number; melhor: number; mediana: number; regras: number }
-export type FaixaFase = { fase: number; inicio: number; fim: number }
 
 type Props = {
   geracoes: PontoGeracao[]
-  fases: FaixaFase[]
   formatarNota: (v: number) => string
   altura?: number
   /** gerações destacadas (ex.: as duas comparadas) */
@@ -23,9 +21,8 @@ type Props = {
 
 /**
  * Curva de aprendizado: a nota da melhor rede e da rede mediana a cada
- * geração, a linha das regras fixas e faixas de fundo marcando cada fase do
- * currículo. A queda ao entrar numa fase nova é esperada: o problema ficou
- * mais difícil. Ponteiro em cima: balão com as três notas daquela geração.
+ * geração e a linha das regras fixas no mesmo clima. Ponteiro em cima: balão
+ * com as três notas daquela geração.
  */
 export function CurvaAprendizado(props: Props) {
   const altura = props.altura ?? 280
@@ -48,14 +45,13 @@ const LINHAS = [
 
 function Desenho({
   geracoes,
-  fases,
   formatarNota,
   altura,
   largura,
   marcas = [],
 }: Props & { altura: number; largura: number }) {
   const [sobre, setSobre] = useState<number | null>(null)
-  const m = { topo: 22, direita: 12, baixo: 26, esquerda: 64 }
+  const m = { topo: 22, direita: 12, baixo: 26, esquerda: 84 }
   const w = largura - m.esquerda - m.direita
   const h = altura - m.topo - m.baixo
   if (geracoes.length < 2) return <svg width={largura} height={altura} />
@@ -82,23 +78,6 @@ function Desenho({
       aria-label="Curva de aprendizado: nota da melhor rede, da mediana e das regras fixas por geração"
     >
       <Group left={m.esquerda} top={m.topo}>
-        {fases.map((f, i) => (
-          <g key={f.fase}>
-            <rect
-              x={x(f.inicio)}
-              width={Math.max(0, x(f.fim) - x(f.inicio))}
-              y={0}
-              height={h}
-              fill={i % 2 ? 'var(--hover)' : 'var(--selecao)'}
-            />
-            {/* o nome só cabe se a faixa da fase tiver largura para ele */}
-            {x(f.fim) - x(f.inicio) > 48 && (
-              <text x={x(f.inicio) + 6} y={-8} {...rotuloEixo}>
-                fase {f.fase}
-              </text>
-            )}
-          </g>
-        ))}
         {y.ticks(4).map((v) => (
           <line key={v} x1={0} x2={w} y1={y(v)} y2={y(v)} stroke={COR.grade} />
         ))}

@@ -1,16 +1,16 @@
 /**
  * Adaptadores "dados de exemplo" das portas FonteTreino e FonteGravacoes.
  *
- * treino.json (gerações, campeões, configuração e a lista de gravações) é
- * pequeno e vem junto com o app. Cada gravação (um ciclo de 35 dias, ~0,5 MB)
- * só é baixada quando alguém abre a reprodução: import dinâmico, o Vite separa
- * cada arquivo num pedaço próprio.
+ * Tudo é recorte de uma execução REAL do treino (scripts/gerar-dados-exemplo.mjs):
+ * treino.json (gerações, campeões, configuração e a lista de gravações) e uma
+ * gravação por arquivo (os 3 primeiros dias, ~260 KB). Cada gravação só é
+ * baixada quando alguém pede: import dinâmico, o Vite separa cada arquivo.
  */
 import { z } from 'zod'
 import { ConfigTreino, EstadoTreino, Geracao, Gravacao, Modelo, ResumoGravacao } from '../../domain/contrato'
 import type { FonteGravacoes, FonteTreino } from '../../application/portas'
 
-/** O formato de treino.json, gerado por scripts/gerar-dados-exemplo.ts. */
+/** O formato de treino.json, gerado por scripts/gerar-dados-exemplo.mjs. */
 export const DadosTreinoExemplo = z.object({
   estado: EstadoTreino,
   geracoes: z.array(Geracao),
@@ -54,9 +54,9 @@ export function criarFonteTreinoExemplo(): FonteTreino {
 /**
  * import.meta.glob é do Vite: acha os arquivos na hora do build e devolve, para
  * cada um, uma função que faz o import dinâmico. Tipado como unknown de
- * propósito (o TypeScript não precisa ler 0,5 MB de JSON): quem dá o tipo é o Zod.
+ * propósito (o TypeScript não precisa ler centenas de KB de JSON): quem dá o tipo é o Zod.
  */
-const ARQUIVOS_GRAVACAO = import.meta.glob<unknown>('./gravacao-*.json', { import: 'default' })
+const ARQUIVOS_GRAVACAO = import.meta.glob<unknown>('./*-gravacao.json', { import: 'default' })
 
 export function criarFonteGravacoesExemplo(): FonteGravacoes {
   return {

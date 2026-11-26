@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12 · O modo Desenvolvedor com dado real · Genesis</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+  <div class="olho">Passo 12 · Dashboard · 25/11/2026</div>
+  <h1>O modo Desenvolvedor com dado real</h1>
+  <p class="resumo">As três páginas de análise do Desenvolvedor passaram a usar só as gravações reais do treino. Estufas lado a lado compara quantas estufas o Desenvolvedor quiser (por padrão: o campeão da geração 1, um intermediário, o final, as regras fixas e "sem controle"), no mesmo clima e no mesmo relógio. Treino e gerações ganhou "o que o modelo aprendeu", geração a geração. Modelo deixou claro o que pesou em cada decisão e os acertos e erros da gravação.</p>
+
+  <h2>Antes e depois</h2>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-08/desktop-claro-dev.png" alt="Lado a lado antes: quatro estufas de exemplo, uma delas PID">
+    <figcaption>Antes: quatro estufas fixas dos dados de exemplo (inclusive um PID que o treino não grava), ranking pelo lucro e o selo "clima de exemplo".</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-12/desktop-claro-dev.png" alt="Lado a lado depois: botões para ligar cada estufa e o gráfico com uma linha por estufa">
+    <figcaption>Depois: um botão por gravação (liga e desliga), o gráfico na largura toda com uma linha por estufa, a faixa boa e o balão com o valor exato. Olhe a linha vermelha tracejada ("sem controle"): passa de 45 °C à tarde, enquanto as outras ficam perto da faixa.</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-12/desktop-claro-dev-treino.png" alt="Treino depois: os números, a curva de aprendizado e o começo de o que o modelo aprendeu">
+    <figcaption>Treino: saíram o Currículo e "Ele esqueceu algo?" (passo 08); entra "O que o modelo aprendeu" (abaixo da curva), quatro gráficos de linha com as regras fixas tracejadas.</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-12/desktop-claro-dev-modelo.png" alt="Modelo depois: a rede por dentro e o seletor de campeão por geração">
+    <figcaption>Modelo: o seletor lista todos os campeões salvos (antes, só um por fase do currículo, ou seja, um só). A página segue a gravação do campeão escolhido.</figcaption>
+  </figure>
+  <p>Capturas: <code>docs/revisao-visual/passo-12/</code>.</p>
+
+  <h2>O que foi feito, e por quê</h2>
+  <h3>Estufas lado a lado</h3>
+  <ul>
+    <li>As estufas são as gravações da execução (10 na semente 9). Um botão por gravação liga e desliga; só as ligadas baixam a gravação (cada uma ~270 KB pela rede).</li>
+    <li>O gráfico "Uma variável nas N estufas" (o ponto forte da página, nas palavras do Gabriel): largura toda, 380 px de altura, uma linha por estufa, a faixa boa, o balão com o valor de cada uma. As variáveis são as do ar (temperatura, umidade, VPD, CO₂, luz): pH, EC e água são fixos na fase 1 e dariam linhas iguais.</li>
+    <li>Os cartões ocupam a largura (grade com <code>auto-fit</code>): com 5 ligadas, uma linha de 5; com 3, três cartões largos. Cada um mostra a nota do treino e a sobra do Dinheiro, lado a lado.</li>
+  </ul>
+  <div class="decisao">
+    <div class="rotulo">Decisão · cor fixa por estufa</div>
+    <p>Se a cor seguisse a posição na seleção, desligar uma estufa trocaria a cor das outras. Cada estufa tem a sua: regras fixas em cinza tracejado, "sem controle" em vermelho tracejado (as duas réguas, sempre reconhecíveis), e os campeões em sequência pela geração.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · sem ranking</div>
+    <p>O "#1, #2" de antes ordenava pelo lucro. Com dados reais, as regras fixas ficam em 1º no lucro (gastam 3 vezes menos energia) e em último na nota do treino (ficam mais tempo longe do meio da faixa). Um ranking escolheria um dos dois critérios sem dizer. Os cartões mostram os dois números e deixam a comparação para quem olha.</p>
+  </div>
+
+  <h3>Treino e gerações: o que o modelo aprendeu</h3>
+  <p>Quatro gráficos de linha (tempo fora da faixa, energia, massa na colheita e nota), um ponto por campeão salvo, com as regras fixas como linha tracejada de referência. Os pontos vêm do resumo de cada gravação (passo 09): o mesmo ciclo de 35 dias para todos. Só os pontos que existem: o treino salva um campeão a cada 25 gerações, e o da geração 1 foi refeito e conferido. A linha liga os pontos medidos; não há valor inventado entre eles. "Comparar gerações" continua na largura toda.</p>
+
+  <h3>Modelo</h3>
+  <ul>
+    <li><strong>O que mais pesou nesta decisão</strong> virou uma frase: "A rede pede o exaustor em 62% agora. Quem mais empurrou para ligar: … Quem mais empurrou para desligar: …", ao lado das barras, com a legenda de cor e o que é p.p. escrita embaixo (os "?" saíram no passo 08).</li>
+    <li><strong>Acertos e erros</strong>: três números grandes (saiu da faixa, voltou para a faixa, segurança barrou) que filtram a lista; cada linha abre a gravação naquele passo exato (antes abria "a gravação mais recente na mesma hora do dia").</li>
+    <li>Saiu "Como lidou com cada perturbação" (passo 08).</li>
+  </ul>
+
+  <h2>Números</h2>
+  <table>
+    <tr><th>Estufa (semente 9, ciclo inteiro)</th><th>Nota do treino</th><th>Energia</th><th>Fora da faixa</th></tr>
+    <tr><td>Geração 1</td><td>−R$ 515</td><td>527 kWh</td><td>84,9%</td></tr>
+    <tr><td>Geração 75</td><td>R$ 976</td><td>628 kWh</td><td>49,7%</td></tr>
+    <tr><td>Geração 158</td><td>R$ 1.080</td><td>453 kWh</td><td>49,3%</td></tr>
+    <tr><td>Regras fixas</td><td>R$ 420</td><td>157 kWh</td><td>75,5%</td></tr>
+    <tr><td>Sem controle</td><td>−R$ 8.462</td><td>0 kWh</td><td>99,9%</td></tr>
+  </table>
+  <p>Fonte: o índice da reavaliação (passo 09), que é o que os cartões e os gráficos mostram.</p>
+  <table>
+    <tr><th>Testes</th><th>Resultado</th></tr>
+    <tr><td>e2e: a comparação mostra geração 1, 75 e 158, regras fixas e sem controle; desligar uma muda para "4 estufas"</td><td>passa</td></tr>
+    <tr><td>e2e: Treino com os quatro gráficos de "o que aprendeu"; Modelo com a frase e os três números</td><td>passam</td></tr>
+  </table>
+
+  <h2>O que deu errado ou surpreendeu</h2>
+  <div class="erro">
+    <p><strong>O seletor de campeão tinha um item só.</strong> Ele mostrava "o campeão de cada fase do currículo"; como só existe a fase 1, sobrava um campeão. Agora lista todos os salvos.</p>
+  </div>
+  <div class="erro">
+    <p><strong>O eixo da curva de aprendizado cortava "R$ 1.000".</strong> A margem esquerda era de 64 px, pensada para notas menores; com a nota real passando de mil, subiu para 84 px.</p>
+  </div>
+
+  <h2>Como reproduzir</h2>
+  <pre><code>cd dashboard
+npx playwright test moldura -g desenvolvedor
+MSYS_NO_PATHCONV=1 CAPTURAS=passo-12 ROTAS="/dev,/dev/treino,/dev/modelo" npx playwright test capturas -g light --project=desktop</code></pre>
+
+  <h2>Em aberto</h2>
+  <ul>
+    <li>Escolher a execução (sementes 7, 8, 9) nas páginas do Desenvolvedor: hoje é sempre a mais recente.</li>
+    <li>O "Lado a lado" mostra as últimas 24 h; um modo "ciclo todo" fica para depois.</li>
+  </ul>
+
+  <h2>Links</h2>
+  <ul>
+    <li>Código: <code>dashboard/src/app/composicoes/PaginaEstufasLadoALado.tsx</code>, <code>PaginaModelo.tsx</code>, <code>dashboard/src/modules/treino/presentation/PaginaTreino.tsx</code> (<code>OQueAprendeu</code>), <code>dashboard/src/shared/design-system/graficos/LinhaPorGeracao.tsx</code>.</li>
+    <li>Dados: <a href="09-dados-reais.html">passo 09</a>. Reprodução: <a href="10-produtor-gravacao.html">passo 10</a>.</li>
+  </ul>
+</main>
+</body>
+</html>

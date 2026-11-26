@@ -1,5 +1,5 @@
 /**
- * Desenvolvedor · celular: só o resumo. O treino está rodando? Em que fase e
+ * Desenvolvedor · celular: só o resumo. O treino está rodando? Em que
  * geração? Melhor nota e o último evento importante. Nada de gráfico grande.
  */
 import { Badge } from '@astryxdesign/core/Badge'
@@ -12,26 +12,25 @@ import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import { formatarReaisCurto } from '@/modules/dinheiro'
 import { useEstufas, useEventos, type Evento } from '@/modules/estufa'
-import { AvisoTreino, situacaoDasFases, useEstadoTreino, useGeracoes, useOrigemTreino } from '@/modules/treino'
+import { AvisoTreino, useEstadoTreino, useGeracoes, useOrigemTreino } from '@/modules/treino'
 import { CurvaAprendizado } from '@/shared/design-system/graficos/CurvaAprendizado'
 import { useAtraso } from '@/shared/hooks/useAtraso'
 import { formatarData, formatarHora, formatarNumero } from '@/shared/lib/formatar'
 import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
 import { PaginaEstufasLadoALado } from './PaginaEstufasLadoALado'
-import { OQueEIsso } from '@/modules/glossario'
 
 /** /dev: no desktop, as estufas lado a lado; no celular, o resumo. */
 export function PaginaDev() {
   return useTelaLarga() ? <PaginaEstufasLadoALado /> : <PaginaResumoDev />
 }
 
-const IMPORTANTE: Evento['tipo'][] = ['erro', 'barrado', 'perturbacao']
+const IMPORTANTE: Evento['tipo'][] = ['erro', 'barrado']
 
 function PaginaResumoDev() {
   const estado = useEstadoTreino()
   const geracoes = useGeracoes()
   const estufas = useEstufas()
-  const agente = estufas.data?.find((e) => e.controlador.tipo === 'agente')
+  const agente = estufas.data?.findLast((e) => e.controlador.tipo === 'agente') // o campeão mais recente, como no Modelo
   const eventos = useEventos(agente?.id ?? '')
   const origem = useOrigemTreino()
   const erro = estado.error ?? geracoes.error
@@ -62,12 +61,9 @@ function PaginaResumoDev() {
             <Text weight="medium">{e.rodando ? 'O treino está rodando' : 'O treino está parado'}</Text>
           </HStack>
           <Text color="secondary">
-            {e.onde} · {origem === 'nuvem' ? 'ao vivo' : 'dados de exemplo'}
+            {e.onde} · {origem === 'nuvem' ? 'ao vivo' : 'recorte de uma execução real'}
           </Text>
-          <HStack gap={6}>
-            <Numero rotulo="fase" valor={`${e.faseAtual} de 6`} />
-            <Numero rotulo="geração" valor={formatarNumero(e.geracaoAtual)} />
-          </HStack>
+          <Numero rotulo="geração" valor={formatarNumero(e.geracaoAtual)} />
         </VStack>
       </Card>
       <Card>
@@ -75,7 +71,6 @@ function PaginaResumoDev() {
           <Numero rotulo="melhor nota (última geração)" valor={ultima ? formatarReaisCurto(ultima.melhor) : '—'} />
           <Numero rotulo="melhor de todas" valor={melhorDeTodas === null ? '—' : formatarReaisCurto(melhorDeTodas)} />
         </HStack>
-        <OQueEIsso id="nota" rotulo="nota = reais por ciclo" />
       </Card>
       {origem === 'nuvem' ? (
         // Treino de verdade: a curva das últimas gerações. (Os eventos vêm da
@@ -86,14 +81,7 @@ function PaginaResumoDev() {
               <Text type="label" color="secondary">
                 Últimas {Math.min(200, geracoes.data.length)} gerações
               </Text>
-              <CurvaAprendizado
-                geracoes={geracoes.data.slice(-200)}
-                fases={situacaoDasFases(e)
-                  .filter((f) => f.inicio !== undefined)
-                  .map((f) => ({ fase: f.numero, inicio: f.inicio!, fim: f.fim ?? ultima!.numero }))}
-                formatarNota={formatarReaisCurto}
-                altura={180}
-              />
+              <CurvaAprendizado geracoes={geracoes.data.slice(-200)} formatarNota={formatarReaisCurto} altura={180} />
             </VStack>
           </Card>
         )

@@ -102,3 +102,51 @@ ax.set_title("Começar com os atuadores quase desligados: ~R$ 400 melhor desde a
 ax.legend(fontsize=9)
 ax.grid(alpha=0.3)
 salvar(fig, "05-ensaios-comparados.png")
+
+# --- Passo 09: o que o modelo aprendeu, por geração -----------------------------
+# treino/reavaliar.py nas 3 execuções de 24/11: cada campeão salvo (e o da
+# geração 1, refeito) cultiva os 35 dias do clima da gravação (semente 12345),
+# o mesmo das regras fixas. Números do log da reavaliação (passo 09).
+GER = {
+    7: [1, 25, 50, 75, 100, 125, 150, 158],
+    8: [1, 25, 50, 75, 100, 125, 150],
+    9: [1, 25, 50, 75, 100, 125, 150, 158],
+}
+FORA = {
+    7: [90.5, 78.2, 52.4, 45.8, 57.3, 63.1, 53.6, 65.9],
+    8: [84.2, 83.3, 55.8, 71.9, 70.7, 47.6, 50.0],
+    9: [84.9, 81.0, 53.4, 49.7, 49.1, 45.5, 44.8, 49.3],
+}
+ENERGIA = {
+    7: [501.25, 598.24, 295.34, 487.85, 582.33, 453.87, 403.65, 371.44],
+    8: [459.49, 384.27, 581.63, 418.39, 451.46, 410.0, 387.3],
+    9: [526.5, 475.96, 451.09, 628.42, 398.73, 438.85, 392.34, 452.53],
+}
+MASSA = {
+    7: [243.3, 268.3, 267.0, 248.8, 243.7, 238.9, 242.8, 241.1],
+    8: [245.8, 264.8, 274.6, 251.4, 251.0, 241.9, 253.2],
+    9: [252.0, 273.1, 260.5, 257.2, 236.8, 250.8, 252.0, 246.6],
+}
+NOTA = {
+    7: [-619.0, 376.5, 878.8, 1012.7, 1037.2, 1037.3, 1056.8, 1076.7],
+    8: [-687.6, 524.7, 852.5, 997.0, 1044.8, 1056.6, 1062.1],
+    9: [-514.9, 393.3, 866.3, 976.2, 1015.9, 1072.7, 1072.2, 1080.2],
+}
+REGRAS = {"fora": 75.5, "energia": 156.89, "massa": 253.6, "nota": 420.1}
+fig, eixos = plt.subplots(2, 2, figsize=(11, 7), sharex=True)
+paineis = [
+    (eixos[0][0], FORA, "fora", "tempo fora da faixa (%)"),
+    (eixos[0][1], ENERGIA, "energia", "energia no ciclo (kWh)"),
+    (eixos[1][0], MASSA, "massa", "massa na colheita (g/pé)"),
+    (eixos[1][1], NOTA, "nota", "nota do ciclo (R$)"),
+]
+for ax, dados, chave, titulo in paineis:
+    for s, cor in zip((7, 8, 9), (AZUL, LARANJA, VERDE)):
+        ax.plot(GER[s], dados[s], "o-", color=cor, ms=4, label=f"semente {s}")
+    ax.axhline(REGRAS[chave], color=CINZA, ls="--", label="regras fixas")
+    ax.set_title(titulo, fontsize=11)
+eixos[1][0].set_xlabel("geração do campeão")
+eixos[1][1].set_xlabel("geração do campeão")
+eixos[0][0].legend(fontsize=9)
+fig.suptitle("O que o modelo aprendeu: os campeões salvos no clima da gravação", fontsize=12)
+salvar(fig, "09-aprendeu.png")

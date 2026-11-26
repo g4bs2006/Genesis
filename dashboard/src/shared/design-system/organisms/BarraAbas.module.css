@@ -53,7 +53,7 @@
 }
 
 .aba:focus-visible {
-  outline: 2px solid var(--focus-outline-color);
+  /* o contorno padrão do navegador (tokens do tema), por dentro da aba */
+  outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color);
   outline-offset: -4px;
-  border-radius: var(--radius-element);
 }

@@ -8,7 +8,6 @@ import {
   IconeAjustesCheio,
   IconeCiclo,
   IconeCicloCheio,
-  IconeComparar,
   IconeDinheiro,
   IconeDinheiroCheio,
   IconeEstufa,
@@ -29,12 +28,12 @@ export const navegacao = {
       { rota: '/historico', rotulo: 'Histórico', icone: IconeHistorico },
       { rota: '/ciclo', rotulo: 'Ciclo', icone: IconeCiclo },
       { rota: '/dinheiro', rotulo: 'Dinheiro', icone: IconeDinheiro },
-      { rota: '/agente-x-regras', rotulo: 'Agente × regras', icone: IconeComparar },
       { rota: '/ajustes', rotulo: 'Ajustes', icone: IconeAjustes },
     ],
     // no celular, a aba ativa ganha o ícone cheio (a cor sozinha é pouco)
     celular: [
       { rota: '/', rotulo: 'Agora', icone: IconeEstufa, iconeAtivo: IconeEstufaCheio },
+      { rota: '/historico', rotulo: 'Histórico', icone: IconeHistorico, iconeAtivo: IconeHistorico },
       { rota: '/ciclo', rotulo: 'Ciclo', icone: IconeCiclo, iconeAtivo: IconeCicloCheio },
       { rota: '/dinheiro', rotulo: 'Dinheiro', icone: IconeDinheiro, iconeAtivo: IconeDinheiroCheio },
       { rota: '/ajustes', rotulo: 'Ajustes', icone: IconeAjustes, iconeAtivo: IconeAjustesCheio },
@@ -46,6 +45,8 @@ export const navegacao = {
       { rota: '/dev/treino', rotulo: 'Treino e gerações', icone: IconeTreino },
       { rota: '/dev/modelo', rotulo: 'Modelo', icone: IconeRede },
       { rota: '/dev/gravacoes', rotulo: 'Gravações', icone: IconeGravacao },
+      // o que o modo Produtor mostra: por isso o ícone da estufa (o do Agora)
+      { rota: '/dev/vitrine', rotulo: 'Vitrine do produtor', icone: IconeEstufa },
     ],
     // no celular, o desenvolvedor só vê o resumo do treino (seção 6 do prompt)
     celular: [

@@ -33,7 +33,7 @@ describe('fraseDeEstado', () => {
   it('tudo bem', () => {
     expect(fraseDeEstado([passoBase], { tipo: 'agente', modeloId: 'g812' })).toEqual({
       titulo: 'Tudo na faixa',
-      apoio: 'O agente está no controle.',
+      apoio: 'O controle automático cuida da estufa.',
     })
   })
 
@@ -44,7 +44,7 @@ describe('fraseDeEstado', () => {
   it('um ponto de atenção, como no rascunho', () => {
     expect(fraseDeEstado([comPh(6.6), comPh(6.6)], { tipo: 'agente', modeloId: 'g812' })).toEqual({
       titulo: 'Quase tudo na faixa',
-      apoio: 'O agente está no controle. 1 ponto pede atenção.',
+      apoio: 'O controle automático cuida da estufa. 1 ponto pede atenção.',
     })
   })
 })
@@ -72,6 +72,6 @@ describe('alertaPrincipal', () => {
     const alerta = alertaPrincipal(passos)!
     expect(alerta.estado).toBe('atencao')
     expect(alerta.titulo).toBe('pH acima da faixa: 6,6 e subindo.')
-    expect(alerta.feito).toBe('O agente já dosou 4 ml de ácido há 20 min.')
+    expect(alerta.feito).toBe('O controle dosou 4 ml de ácido há 20 min.')
   })
 })

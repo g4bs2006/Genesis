@@ -16,15 +16,22 @@ export type Tema = 'sistema' | 'claro' | 'escuro'
 type Preferencias = {
   modo: Modo
   tema: Tema
-  /** Estufa aberta no modo Produtor (null = a primeira com agente) */
+  /**
+   * A gravação que alimenta o modo Produtor, escolhida pelo Desenvolvedor na
+   * Vitrine (null = o campeão mais recente). Fica só neste navegador: o banco
+   * não aceita escrita anônima, e assim continua.
+   */
   estufaId: string | null
+  /** passos de 10 min por segundo de tela na reprodução (null = o padrão, 1 h por segundo) */
+  velocidadeReproducao: number | null
   /** o tour do modo Desenvolvedor já foi visto (aparece uma vez só) */
   tourDevVisto: boolean
   /** barra lateral do desktop recolhida numa faixa só de ícones */
   barraRecolhida: boolean
   trocarModo: (modo: Modo) => void
   trocarTema: (tema: Tema) => void
-  escolherEstufa: (estufaId: string) => void
+  escolherEstufa: (estufaId: string | null) => void
+  trocarVelocidade: (passosPorSegundo: number) => void
   marcarTourDev: () => void
   recolherBarra: (recolhida: boolean) => void
 }
@@ -35,11 +42,13 @@ export const usePreferencias = create<Preferencias>()(
       modo: 'produtor',
       tema: 'sistema',
       estufaId: null,
+      velocidadeReproducao: null,
       tourDevVisto: false,
       barraRecolhida: false,
       trocarModo: (modo) => set({ modo }),
       trocarTema: (tema) => set({ tema }),
       escolherEstufa: (estufaId) => set({ estufaId }),
+      trocarVelocidade: (velocidadeReproducao) => set({ velocidadeReproducao }),
       marcarTourDev: () => set({ tourDevVisto: true }),
       recolherBarra: (barraRecolhida) => set({ barraRecolhida }),
     }),

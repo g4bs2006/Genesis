@@ -1,19 +1,48 @@
 import { expect, test } from '@playwright/test'
 
-test('produtor: abre no Agora com a frase de estado e o selo de dados de exemplo', async ({ page }) => {
+test('produtor: abre no Agora com a frase de estado e o selo da reprodução', async ({ page }) => {
   await page.goto('/')
-  // estufa 1 dos dados de exemplo: só o pH pede atenção
-  await expect(page.getByRole('heading', { level: 1, name: 'Quase tudo na faixa' })).toBeVisible()
-  await expect(page.getByText('1 ponto pede atenção')).toBeVisible()
-  await expect(page.getByText('estufa simulada · dados de exemplo')).toBeVisible()
+  // sem escolha na Vitrine: o campeão mais recente (controle automático)
+  await expect(page.getByRole('heading', { level: 1, name: /na faixa|saiu da faixa/ })).toBeVisible()
+  await expect(page.getByText(/^O controle automático cuida da estufa/)).toBeVisible()
+  await expect(page.getByText(/^ciclo gravado no simulador · 1 h por segundo/)).toBeVisible()
   await expect(page.getByText('Lucro previsto do ciclo')).toBeVisible()
+  // nada de jargão de treino no Produtor
+  await expect(page.getByText(/agente|geração/i)).toHaveCount(0)
 })
 
-test('ciclo: estágios, curva e histórico de alertas', async ({ page }) => {
+test('produtor: pausar a reprodução para o relógio', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Pausar' }).click()
+  await expect(page.getByText(/^ciclo gravado no simulador · pausado/)).toBeVisible()
+  await page.getByRole('button', { name: 'Continuar' }).click()
+  await expect(page.getByText(/^ciclo gravado no simulador · 1 h por segundo/)).toBeVisible()
+})
+
+test('vitrine: escolher as regras fixas muda o que o Produtor vê, e a escolha fica salva', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'a Vitrine é do desktop')
+  // só na primeira página: depois, a escolha da Vitrine fica no navegador
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('genesis:preferencias'))
+      localStorage.setItem('genesis:preferencias', JSON.stringify({ state: { tourDevVisto: true }, version: 0 }))
+  })
+  await page.goto('/dev/vitrine')
+  await page.getByRole('button', { name: /^Regras fixas/ }).click()
+  await page.goto('/')
+  await expect(page.getByText(/^O termostato cuida da estufa/)).toBeVisible()
+  await page.reload()
+  await expect(page.getByText(/^O termostato cuida da estufa/)).toBeVisible()
+})
+
+test('ciclo: estágios e a curva da gravação, sem o histórico de alertas', async ({ page }) => {
   await page.goto('/ciclo')
   await expect(page.getByRole('heading', { level: 1, name: 'Ciclo' })).toBeVisible()
   await expect(page.getByText('Crescimento rápido')).toBeVisible()
   await expect(page.getByRole('img', { name: /Curva de crescimento/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /alertas/i })).toHaveCount(0)
 })
 
 test('navega pelas abas (celular) ou pela barra lateral (desktop)', async ({ page, isMobile }) => {
@@ -25,54 +54,78 @@ test('navega pelas abas (celular) ou pela barra lateral (desktop)', async ({ pag
 })
 
 test('trocar para Desenvolvedor leva às estufas lado a lado', async ({ page, isMobile }) => {
-  await page.goto('/ajustes')
-  await page.getByRole('main').getByRole('radio', { name: 'Desenvolvedor' }).click()
+  // o seletor de modo mora na barra lateral (desktop) ou no topo da página (celular)
+  await page.goto('/')
+  await page.getByRole('radio', { name: 'Desenvolvedor' }).click()
   await expect(page).toHaveURL(/\/dev$/)
   if (!isMobile) await expect(page.getByRole('link', { name: 'Treino e gerações' })).toBeVisible()
 })
 
-test('desktop: Agora com gráficos e a comparação com as regras', async ({ page, isMobile }) => {
-  test.skip(isMobile, 'gráficos e comparação são do desktop')
+test('desktop: Agora com os gráficos das últimas 24 horas', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'gráficos são do desktop')
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Últimas 24 horas' })).toBeVisible()
-  await expect(page.getByText(/O agente rende R\$/)).toBeVisible()
+  // no lugar do antigo "Agente × regras": quando colher
+  await expect(page.getByText('Colheita', { exact: true })).toBeVisible()
   await page.getByRole('tab', { name: 'pH e EC' }).click()
   await expect(page.getByText('pH da solução')).toBeVisible()
 })
 
-test('histórico exporta CSV', async ({ page, isMobile }) => {
+test('histórico: período, alertas e CSV', async ({ page, isMobile }) => {
   test.skip(isMobile, 'histórico é do desktop')
   await page.goto('/historico')
+  await expect(page.getByRole('heading', { name: 'Alertas do período' })).toBeVisible()
+  await page.getByRole('radio', { name: 'Ciclo todo' }).click()
   const download = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Exportar CSV' }).click()
   expect((await download).suggestedFilename()).toMatch(/^genesis-.*\.csv$/)
 })
 
-test('dinheiro: lucro previsto e editar preço com vírgula', async ({ page }) => {
+test('dinheiro: a conta do ciclo, o equilíbrio e editar preço com vírgula', async ({ page }) => {
   await page.goto('/dinheiro')
   await expect(page.getByRole('heading', { level: 1, name: 'Dinheiro' })).toBeVisible()
-  await expect(page.getByText('Para onde vai o dinheiro da venda')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'A conta do ciclo' })).toBeVisible()
+  await expect(page.getByText(/^Abaixo de R\$\s?[\d,]+ o pé, você perde dinheiro\.$/)).toBeVisible()
   await page.getByRole('button', { name: 'Editar preços' }).click()
-  const medio = page.getByLabel('Preço médio')
-  await medio.fill('2,5')
-  await medio.press('Enter')
+  const alface = page.getByLabel('Alface')
+  await alface.fill('2,5')
+  await alface.press('Enter')
   await page.getByRole('button', { name: 'Salvar preços' }).click()
-  // o cenário médio passa a mostrar o preço novo
-  await expect(page.getByText(/R\$\s?2,50\/pé/)).toBeVisible()
+  // a linha do preço passa a mostrar o preço novo
+  await expect(page.getByText(/^R\$\s?2,50 o pé de 220 g/)).toBeVisible()
 })
 
-test('treino: currículo, curva de aprendizado e esquecimento', async ({ page, isMobile }) => {
+test('dinheiro: um lançamento sobrevive a recarregar a página', async ({ page }) => {
+  await page.goto('/dinheiro')
+  await page.getByLabel('Detalhe').fill('feira de sábado')
+  await page.getByLabel('Valor').fill('320,50')
+  await page.getByLabel('Valor').press('Tab')
+  await page.getByRole('button', { name: 'Lançar' }).click()
+  await expect(page.getByRole('cell', { name: 'feira de sábado' })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('cell', { name: 'feira de sábado' })).toBeVisible()
+  // e entra no "real" do previsto × real
+  // desktop: célula da tabela; celular: "real R$ 320,50" na lista
+  await expect(page.getByText(/^(real )?R\$\s?320,50$/).first()).toBeVisible()
+})
+
+test('treino: curva de aprendizado, sem currículo nem "esqueceu"', async ({ page, isMobile }) => {
   test.skip(isMobile, 'treino detalhado é do desktop')
   await page.goto('/dev/treino')
   await expect(page.getByRole('heading', { name: 'Curva de aprendizado' })).toBeVisible()
-  await expect(page.getByText('Esqueceu um pouco da fase 2')).toBeVisible()
-  await expect(page.getByText(/aprendendo agora/)).toBeVisible()
+  await expect(page.getByText('Currículo')).toHaveCount(0)
+  await expect(page.getByText('Ele esqueceu algo?')).toHaveCount(0)
 })
 
-test('glossário: busca sem acento', async ({ page }) => {
+test('limpeza: nada de "?", glossário nem Agente × regras', async ({ page }) => {
+  for (const rota of ['/', '/historico', '/ciclo', '/dinheiro', '/ajustes', '/dev/treino', '/dev/modelo']) {
+    await page.goto(rota)
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible()
+    await expect(page.getByRole('button', { name: /^O que é / })).toHaveCount(0)
+    await expect(page.getByText(/Agente × regras|Glossário|perturbaç/i)).toHaveCount(0)
+  }
   await page.goto('/glossario')
-  await page.getByPlaceholder('Buscar (ex.: VPD, mutação)').fill('mutacao')
-  await expect(page.getByText('Mutação', { exact: false }).first()).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Página não encontrada' })).toBeVisible()
 })
 
 test('tour do desenvolvedor aparece uma vez', async ({ page, isMobile }) => {
@@ -106,4 +159,36 @@ test('sol/lua alterna claro e escuro com um clique', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Usar tema claro' })).toBeVisible()
   await page.getByRole('button', { name: 'Usar tema claro' }).click()
   await expect(page.getByRole('button', { name: 'Usar tema escuro' })).toBeVisible()
+})
+
+test.describe('desenvolvedor', () => {
+  test.skip(({ isMobile }) => isMobile, 'as páginas detalhadas do Desenvolvedor são do desktop')
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() =>
+      localStorage.setItem('genesis:preferencias', JSON.stringify({ state: { tourDevVisto: true }, version: 0 })),
+    )
+  })
+
+  test('lado a lado: g1, intermediário, final, regras fixas e sem controle; dá para desligar uma', async ({ page }) => {
+    await page.goto('/dev')
+    for (const nome of ['Geração 1', 'Geração 75', 'Geração 158', 'Regras fixas', 'Sem controle'])
+      await expect(page.locator('section').getByText(nome, { exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Uma variável nas 5 estufas' })).toBeVisible()
+    await page.getByRole('button', { name: 'Sem controle' }).click()
+    await expect(page.getByRole('heading', { name: 'Uma variável nas 4 estufas' })).toBeVisible()
+  })
+
+  test('treino: o que o modelo aprendeu, por geração', async ({ page }) => {
+    await page.goto('/dev/treino')
+    await expect(page.getByRole('heading', { name: 'O que o modelo aprendeu' })).toBeVisible()
+    for (const medida of ['Tempo fora da faixa', 'Energia no ciclo', 'Massa na colheita', 'Nota no ciclo gravado'])
+      await expect(page.getByRole('img', { name: new RegExp(`^${medida} do campeão`) })).toBeVisible()
+  })
+
+  test('modelo: o que pesou em português e os acertos e erros', async ({ page }) => {
+    await page.goto('/dev/modelo')
+    await expect(page.getByText(/^A rede pede .* em \d+% agora\.$/)).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Acertos e erros' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Saiu da faixa: \d+$/ })).toBeVisible()
+  })
 })

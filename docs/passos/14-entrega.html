@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>14 · Entrega · Genesis</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+  <div class="olho">Passo 14 · Entrega · 25/11/2026</div>
+  <h1>Entrega: do branch à produção</h1>
+  <p class="resumo">As sete fases da rodada "dashboard só com dado real" foram juntas num PR para a <code>main</code> (branch <code>dashboard-dados-reais</code>), com um commit por fase. Antes do push, tudo foi rodado de novo; o CI do GitHub repete a verificação, e o merge publica no Vercel.</p>
+
+  <h2>O que entra</h2>
+  <table>
+    <tr><th>Passo</th><th>Commit</th><th>O quê</th></tr>
+    <tr><td><a href="08-limpeza.html">08</a></td><td><code>74072da</code></td><td>Limpeza: "?", Glossário, Currículo, perturbações, Agente × regras do Produtor e simulador de brinquedo fora; foco do navegador; grades na largura toda</td></tr>
+    <tr><td><a href="09-dados-reais.html">09</a></td><td><code>2dd6282</code></td><td>Regras fixas, "sem controle", massa por dia e resumo do ciclo; as 3 execuções reavaliadas e enviadas</td></tr>
+    <tr><td><a href="10-produtor-gravacao.html">10</a></td><td><code>4421a0a</code></td><td>O Produtor reproduz uma gravação real; Vitrine do produtor; Agora, Histórico e Ciclo</td></tr>
+    <tr><td><a href="11-dinheiro.html">11</a></td><td><code>e0206e1</code></td><td>Dinheiro como planilha</td></tr>
+    <tr><td><a href="12-desenvolvedor.html">12</a></td><td><code>d55d5ba</code></td><td>Lado a lado com N estufas, o que o modelo aprendeu, Modelo</td></tr>
+    <tr><td><a href="13-revisao-visual.html">13</a></td><td><code>fd0b256</code></td><td>Correções da revisão visual</td></tr>
+  </table>
+  <p>Mais este passo: o diário (<code>docs/diario.md</code>) e a tabela de Etapas do <code>docs/plano.md</code> (Neuroevolução, Dashboard, Financeiro e Gravações).</p>
+
+  <h2>A verificação antes do push</h2>
+  <table>
+    <tr><th>Comando (em <code>dashboard/</code>, salvo indicado)</th><th>Resultado</th></tr>
+    <tr><td><code>npm run typecheck</code></td><td>sem erros</td></tr>
+    <tr><td><code>npm run lint</code></td><td>sem problemas</td></tr>
+    <tr><td><code>npm run format:check</code></td><td>tudo formatado</td></tr>
+    <tr><td><code>npm test</code></td><td>71 testes passando</td></tr>
+    <tr><td><code>npm run e2e</code></td><td>33 passando, 25 pulados (as capturas, que só rodam com <code>CAPTURAS</code>, e os testes só de desktop rodando no celular)</td></tr>
+    <tr><td><code>npm run build</code></td><td>ok</td></tr>
+    <tr><td><code>npx astryx doctor --built dist</code></td><td>14 ok, 0 falhas, 2 avisos que já existiam (pacote de tema e o nome <code>astryx</code> no PATH)</td></tr>
+    <tr><td>raiz: <code>.venv\Scripts\python.exe -m pytest treino controle simulador</code></td><td>30 passando</td></tr>
+    <tr><td><code>node dashboard/scripts/validar-treino.mjs</code> nas 3 execuções (treino + reavaliação)</td><td>as 3 passam</td></tr>
+  </table>
+
+  <h2>Decisões</h2>
+  <div class="decisao">
+    <div class="rotulo">Decisão · um PR, sete commits</div>
+    <p>Cada fase terminou verde e tem o seu commit, então o histórico conta a ordem (e dá para voltar uma fase sem as outras). O PR junta tudo porque as fases dependem umas das outras: o Produtor (10) precisa dos dados (09), e o Dinheiro (11) e o Desenvolvedor (12), do Produtor.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · o que não foi mexido</div>
+    <p>A configuração do Vercel e do GitHub, o schema do Supabase fora do <code>genesis</code>, a RLS, a evolução, a nota, o simulador e a segurança: nada disso mudou (regras do Gabriel). O <code>treino/saidas/</code> não foi apagado nem sobrescrito: a reavaliação escreveu em <code>treino/reavaliacoes/</code>.</p>
+  </div>
+
+  <h2>O que deu errado ou surpreendeu</h2>
+  <div class="erro">
+    <p><strong>Sem acesso ao banco desta máquina.</strong> O plano previa uma migração (três colunas em <code>genesis.gravacoes</code>). O conector do Supabase e o CLI estão logados na conta do trabalho, que não enxerga o projeto PequiDev. O desenho mudou para um índice no Storage (passo 09), que a conta do treino já podia escrever. Nenhuma migração ficou pendente no repositório.</p>
+  </div>
+
+  <h2>Como reproduzir</h2>
+  <pre><code>cd dashboard
+npm run typecheck &amp;&amp; npm run lint &amp;&amp; npm run format:check &amp;&amp; npm test &amp;&amp; npm run e2e &amp;&amp; npm run build
+npx astryx doctor --built dist
+cd ..
+.venv\Scripts\python.exe -m pytest treino controle simulador</code></pre>
+
+  <h2>Em aberto</h2>
+  <ul>
+    <li>A migração com colunas próprias, quando houver acesso ao PequiDev (o índice no Storage funciona sem ela).</li>
+    <li>Escolher a execução (semente 7, 8 ou 9) no Desenvolvedor e na Vitrine.</li>
+    <li>Lançamentos por ciclo; preços e lançamentos no banco, com login.</li>
+    <li>A nota valoriza conforto da planta mais que a conta de luz (o campeão gasta 2,4 a 4 vezes a energia das regras): tema da próxima rodada de treino.</li>
+    <li>Os itens baixos da revisão visual (passo 13).</li>
+  </ul>
+
+  <h2>Links</h2>
+  <ul>
+    <li>Branch: <code>dashboard-dados-reais</code>. O PR e o deploy ficam no resumo da entrega ao Gabriel.</li>
+    <li>Decisões novas: <a href="../decisoes/0007-produtor-alimentado-por-gravacao.md">0007</a> e <a href="../decisoes/0008-dinheiro-como-planilha.md">0008</a>.</li>
+  </ul>
+</main>
+</body>
+</html>

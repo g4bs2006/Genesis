@@ -21,7 +21,7 @@ class NuvemFalsa:
     def gravar(self, tabela, linhas, chave):
         self.tabelas.setdefault(tabela, []).extend(linhas if isinstance(linhas, list) else [linhas])
 
-    def enviar_arquivo(self, caminho, conteudo):
+    def enviar_arquivo(self, caminho, conteudo, cache_s=3600):
         self.arquivos[caminho] = conteudo
 
 
@@ -64,6 +64,35 @@ class TestSincronizador(unittest.TestCase):
         self.assertIn("fase1-semente7/g1.json", self.nuvem.arquivos)
         linha = self.nuvem.tabelas["gravacoes"][0]
         self.assertEqual((linha["modelo_id"], linha["arquivo"]), ("m1", "fase1-semente7/g1.json"))
+        # o índice inteiro também vai, com os campos que a tabela não tem
+        self.assertEqual(json.loads(self.nuvem.arquivos["fase1-semente7/indice.json"])[0]["id"], "g1")
+
+    def test_pasta_do_treino_nao_apaga_o_que_a_reavaliacao_mandou(self):
+        raiz = Path(tempfile.mkdtemp())
+        pasta = raiz / "saidas" / "fase1-semente7"
+        sinc = Sincronizador(pasta, self.nuvem)
+        escrever_json(pasta / "config.json", {"populacao": 8})
+        passo_demo(pasta, 1, "2026-11-24T20:00:00-03:00", [])
+        resumo = {"id": "g1", "semente": 3, "modeloId": "m1", "titulo": "t", "criadaEm": "2026-11-24T20:00:00-03:00",
+                  "passos": 0}
+        escrever_json(pasta / "gravacoes" / "g1.json", {"id": "g1", "passos": []})
+        escrever_json(pasta / "gravacoes" / "indice.json", [resumo])
+        escrever_json(raiz / "reavaliacoes" / "fase1-semente7" / "gravacoes" / "indice.json", [resumo])
+        feito = sinc.uma_volta()
+        self.assertNotIn("fase1-semente7/g1.json", self.nuvem.arquivos)
+        self.assertTrue(any("pulada" in f for f in feito))
+
+    def test_pasta_de_reavaliacao_manda_so_gravacoes_e_o_indice_proprio(self):
+        pasta = Path(tempfile.mkdtemp()) / "fase1-semente7"
+        sinc = Sincronizador(pasta, self.nuvem, indice_na_nuvem="indice-reavaliacao.json")
+        escrever_json(pasta / "gravacoes" / "g1.json", {"id": "g1", "passos": []})
+        escrever_json(pasta / "gravacoes" / "indice.json", [{"id": "g1", "semente": 3, "modeloId": "regras-fixas",
+                      "titulo": "Regras fixas", "criadaEm": "2026-11-24T20:00:00-03:00", "passos": 0,
+                      "controlador": "regras", "geracao": None}])
+        sinc.uma_volta()
+        self.assertNotIn("execucoes", self.nuvem.tabelas)  # sem estado.json: a execução já existe
+        self.assertIn("fase1-semente7/indice-reavaliacao.json", self.nuvem.arquivos)
+        self.assertNotIn("fase1-semente7/indice.json", self.nuvem.arquivos)
 
     def test_treino_quieto_demais_vira_parado(self):
         passo_demo(self.pasta, 1, "2026-11-24T20:00:00-03:00", self.geracoes)

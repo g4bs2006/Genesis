@@ -3,7 +3,7 @@
  * Documentado em docs/contrato-dados.md.
  */
 import { z } from 'zod'
-import { Passo } from '@/modules/estufa/dominio'
+import { Passo, ResumoCiclo } from '@/modules/estufa/dominio'
 
 export const FaseCurriculo = z.union([
   z.literal(1),
@@ -38,6 +38,14 @@ export const Modelo = z.object({
 })
 export type Modelo = z.infer<typeof Modelo>
 
+/** Quem controlou a estufa na gravação: um campeão, as regras fixas ou ninguém. */
+export const ControladorGravado = z.enum(['agente', 'regras', 'nada'])
+export type ControladorGravado = z.infer<typeof ControladorGravado>
+
+/** O resumo do ciclo gravado (medido no treino, controle/metricas.py) e a nota em R$. */
+export const ResumoDaGravacao = ResumoCiclo.extend({ nota: z.number() })
+export type ResumoDaGravacao = z.infer<typeof ResumoDaGravacao>
+
 /**
  * Gravação de um ciclo: a semente do clima, o modelo e cada passo.
  * As ações vêm gravadas (a reprodução não recalcula a rede: GPU e navegador
@@ -46,8 +54,12 @@ export type Modelo = z.infer<typeof Modelo>
 export const Gravacao = z.object({
   id: z.string(),
   semente: z.number().int(),
-  modeloId: z.string(),
+  modeloId: z.string(), // nas regras e em "sem controle": 'regras-fixas' e 'sem-controle'
   passos: z.array(Passo),
+  // Novos no passo 09 (opcionais: as gravações antigas não têm)
+  controlador: ControladorGravado.optional(), // ausente = 'agente'
+  massaPorDia: z.array(z.number().min(0)).optional(), // g/pé: [0] no transplante, [d] no fim do dia d
+  resumo: ResumoDaGravacao.optional(),
 })
 export type Gravacao = z.infer<typeof Gravacao>
 
@@ -59,6 +71,10 @@ export const ResumoGravacao = z.object({
   titulo: z.string(),
   criadaEm: z.iso.datetime({ offset: true }),
   passos: z.number().int().min(0),
+  // Novos no passo 09 (opcionais: as gravações antigas não têm)
+  controlador: ControladorGravado.optional(),
+  geracao: z.number().int().min(0).nullable().optional(), // a geração do campeão; null nas réguas
+  resumo: ResumoDaGravacao.optional(),
 })
 export type ResumoGravacao = z.infer<typeof ResumoGravacao>
 

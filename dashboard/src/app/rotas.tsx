@@ -3,7 +3,7 @@ import type { ComponentType } from 'react'
 import { BarraProgresso } from '@/shared/design-system/atoms/BarraProgresso'
 import { Moldura } from './Moldura'
 import { PaginaAjustes } from './PaginaAjustes'
-import { PaginaEsboco } from './PaginaEsboco'
+import { PaginaNaoEncontrada } from './PaginaNaoEncontrada'
 
 /**
  * Mapa de rotas: cada endereço (URL) aponta para uma página.
@@ -26,7 +26,6 @@ export const roteador = createBrowserRouter([
       { path: '/historico', ...pagina(() => import('./composicoes/PaginaHistorico'), 'PaginaHistorico') },
       { path: '/ciclo', ...pagina(() => import('./composicoes/PaginaCiclo'), 'PaginaCiclo') },
       { path: '/dinheiro', ...pagina(() => import('./composicoes/PaginaDinheiro'), 'PaginaDinheiro') },
-      { path: '/agente-x-regras', ...pagina(() => import('./composicoes/PaginaAgenteRegras'), 'PaginaAgenteRegras') },
       { path: '/ajustes', element: <PaginaAjustes /> },
       { path: '/dev', ...pagina(() => import('./composicoes/PaginaResumoDev'), 'PaginaDev') },
       {
@@ -36,13 +35,13 @@ export const roteador = createBrowserRouter([
         ...pagina(() => import('@/modules/treino/presentation/PaginaTreino'), 'PaginaTreino'),
       },
       { path: '/dev/modelo', ...pagina(() => import('./composicoes/PaginaModelo'), 'PaginaModelo') },
-      { path: '/glossario', ...pagina(() => import('@/modules/glossario'), 'PaginaGlossario') },
       { path: '/dev/gravacoes', ...pagina(() => import('./composicoes/PaginaGravacoes'), 'PaginaGravacoes') },
+      { path: '/dev/vitrine', ...pagina(() => import('./composicoes/PaginaVitrine'), 'PaginaVitrine') },
       {
         path: '/laboratorio/alface',
         ...pagina(() => import('@/modules/alface'), 'PaginaLaboratorioAlface'),
       },
-      { path: '*', element: <PaginaEsboco titulo="Página não encontrada" fase={0} /> },
+      { path: '*', element: <PaginaNaoEncontrada /> },
     ],
   },
   // O visor fica fora da Moldura: sem barra lateral nem abas

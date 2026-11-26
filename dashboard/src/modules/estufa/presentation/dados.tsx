@@ -27,12 +27,22 @@ function useDependencias(): Dependencias {
 
 export function useEstufas() {
   const { fonte } = useDependencias()
+  const cliente = useQueryClient()
+  // A reprodução avisa quando o dia do ciclo e a massa mudam: o cache recebe a
+  // lista nova e quem usa as estufas redesenha (2 vezes por segundo, no máximo).
+  useEffect(() => fonte.assinarEstufas?.((lista) => cliente.setQueryData(['estufas'], lista)), [fonte, cliente])
   return useQuery({ queryKey: ['estufas'], queryFn: () => fonte.listarEstufas() })
 }
 
+/** Os eventos até agora; com o relógio andando, a lista é pedida de novo a cada 5 s. */
 export function useEventos(estufaId: string) {
-  const { fonte } = useDependencias()
-  return useQuery({ queryKey: ['eventos', estufaId], queryFn: () => fonte.eventos(estufaId) })
+  const { fonte, controle } = useDependencias()
+  return useQuery({
+    queryKey: ['eventos', estufaId],
+    enabled: !!estufaId,
+    queryFn: () => fonte.eventos(estufaId),
+    refetchInterval: controle ? 5000 : false,
+  })
 }
 
 /** Os resumos de várias estufas de uma vez (comparação lado a lado). */
@@ -45,7 +55,7 @@ export function useResumos(estufaIds: string[]) {
 
 export function useResumoCiclo(estufaId: string) {
   const { fonte } = useDependencias()
-  return useQuery({ queryKey: ['resumo', estufaId], queryFn: () => fonte.resumoCiclo(estufaId) })
+  return useQuery({ queryKey: ['resumo', estufaId], enabled: !!estufaId, queryFn: () => fonte.resumoCiclo(estufaId) })
 }
 
 /** O passo mais recente, ao vivo. `undefined` até chegar o primeiro. */
@@ -108,6 +118,9 @@ export function useJanela(estufaId: string, duracaoMs = DIA_MS) {
 
 function acumular(e: EstadoJanela, passo: Passo, duracaoMs: number): EstadoJanela {
   if (!e.ancora) return { ...e, ancora: passo.leitura.instante, atual: passo }
+  // o relógio voltou (a reprodução recomeçou o ciclo): a janela começa de novo daqui
+  if (e.atual && passo.leitura.instante < e.atual.leitura.instante)
+    return { estufaId: e.estufaId, ancora: passo.leitura.instante, atual: passo, novos: [] }
   const repetido = e.novos.at(-1)?.leitura.instante === passo.leitura.instante
   if (passo.leitura.instante <= e.ancora || repetido) return { ...e, atual: passo }
   const limite = new Date(passo.leitura.instante).getTime() - duracaoMs
@@ -118,7 +131,7 @@ function acumular(e: EstadoJanela, passo: Passo, duracaoMs: number): EstadoJanel
 type EstadoJanela = { estufaId: string; ancora?: string; atual?: Passo; novos: Passo[] }
 const janelaVazia = (estufaId: string): EstadoJanela => ({ estufaId, novos: [] })
 
-/** Relógio da simulação (null quando a estufa é real). */
+/** Relógio da reprodução (null quando a estufa é real). */
 export function useRelogio(): { estado: EstadoRelogio | null; controle: ControleSimulacao | null } {
   const { controle } = useDependencias()
   const [estado, setEstado] = useState<EstadoRelogio | null>(() => controle?.relogio() ?? null)
@@ -127,11 +140,13 @@ export function useRelogio(): { estado: EstadoRelogio | null; controle: Controle
 }
 
 /**
- * A estufa aberta no modo Produtor: a escolhida na barra lateral, ou a
- * primeira controlada pelo agente. `undefined` enquanto a lista carrega.
+ * A estufa do modo Produtor: a gravação escolhida pelo Desenvolvedor na
+ * Vitrine, ou, sem escolha, o campeão mais recente (o último agente da lista,
+ * que vem da geração mais antiga para a mais nova). `undefined` enquanto a
+ * lista carrega.
  */
 export function useEstufaAtual(): Estufa | undefined {
   const { data } = useEstufas()
   const escolhida = usePreferencias((p) => p.estufaId)
-  return data?.find((e) => e.id === escolhida) ?? data?.find((e) => e.controlador.tipo === 'agente') ?? data?.[0]
+  return data?.find((e) => e.id === escolhida) ?? data?.findLast((e) => e.controlador.tipo === 'agente') ?? data?.[0]
 }

@@ -98,15 +98,6 @@ export const [IconeDinheiro, IconeDinheiroCheio] = par((c) => (
   </>
 ))
 
-/** Agente × regras: a balança, os dois controladores no mesmo prato. */
-export const [IconeComparar, IconeCompararCheio] = par((c) => (
-  <>
-    <path d="M12 4v16M8.5 20h7M5 7h14" />
-    <path d="M2.5 13a2.5 2.5 0 0 0 5 0L5 7Z" fill={corpo(c)} />
-    <path d="M16.5 13a2.5 2.5 0 0 0 5 0L19 7Z" fill={corpo(c)} />
-  </>
-))
-
 /** Ajustes: os controles deslizantes (o que se regula). */
 export const [IconeAjustes, IconeAjustesCheio] = par((c) => (
   <>

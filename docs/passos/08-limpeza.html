@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>08 · Limpeza do dashboard · Genesis</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+  <div class="olho">Passo 08 · Dashboard · 25/11/2026</div>
+  <h1>Limpeza: só o que existe de verdade</h1>
+  <p class="resumo">Primeira das sete fases da rodada "dashboard só com dado real". Saíram os "?", o Glossário, o Currículo, o "Ele esqueceu algo?", as perturbações, a página Agente × regras do Produtor e o simulador de brinquedo. Ajustes virou uma página simples, o foco voltou a ser o do navegador e as grades passaram a ocupar a largura toda. Saldo: 74 arquivos mexidos, 2.995 linhas a menos e 170 a mais.</p>
+
+  <h2>Antes e depois</h2>
+  <figure>
+    <img class="grafico" src="../revisao-visual/fase-13/desktop-claro-agora.png" alt="Agora antes: com o bloco Agente × regras fixas no fim">
+    <figcaption>Antes (passo 07): o Agora terminava no bloco "Agente × regras fixas", e cada card tinha um "?".</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-08/desktop-claro-agora.png" alt="Agora depois: sem o bloco e sem os ?">
+    <figcaption>Depois: sem o bloco e sem os "?". O lugar do bloco recebe, no passo 10, um dado útil ao produtor. Repare que a barra lateral não tem mais "Agente × regras".</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/fase-13/desktop-claro-ajustes.png" alt="Ajustes antes: estufa, preços, glossário, tema, modo e instalar">
+    <figcaption>Antes: Ajustes juntava estufa, preços, glossário, tema, modo e instalar o app, numa coluna de 560 px com a direita vazia.</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-08/desktop-claro-ajustes.png" alt="Ajustes depois: um aviso de que os ajustes vão chegar">
+    <figcaption>Depois: um aviso só, na largura toda.</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-08/celular-claro-agora.png" alt="Agora no celular, com o seletor de modo no topo" style="max-width:320px">
+    <figcaption>Celular: o seletor Produtor | Desenvolvedor saiu de Ajustes e foi para o topo, ao lado do sol/lua.</figcaption>
+  </figure>
+  <p>Todas as capturas deste passo (tema claro, desktop e celular, todas as rotas): <code>docs/revisao-visual/passo-08/</code>.</p>
+
+  <h2>O que saiu e por quê</h2>
+  <p>Tudo o que sai nesta lista foi <strong>decisão do Gabriel</strong> (pedido de 25/11/2026). O critério dele: a tela mostra o que existe e funciona hoje; o que é explicação vai para a apresentação, e o que é futuro não aparece.</p>
+  <table>
+    <tr><th>Item</th><th>Onde estava</th><th>Por que saiu</th></tr>
+    <tr><td>Os "?" (<code>OQueEIsso</code>, <code>InfoTip</code>) e o módulo <code>glossario</code> com a página <code>/glossario</code></td><td>cards, gráficos, Treino, Modelo, Dinheiro</td><td>Poluíam a tela. A explicação de cada termo fica nestas páginas de passo e na apresentação.</td></tr>
+    <tr><td>Bloco "Currículo" e <code>curriculo.ts</code></td><td>Treino</td><td>O treino só tem a fase 1. Mostrar 6 fases, 5 delas vazias, é mostrar o futuro.</td></tr>
+    <tr><td>"Ele esqueceu algo?"</td><td>Treino</td><td>Depende de várias fases treinadas. Hoje não tem o que medir.</td></tr>
+    <tr><td>"Injetar perturbação", "Como lidou com cada perturbação", botões "Escolher o clima" e "+ Estufa"</td><td>Estufas lado a lado, Modelo</td><td>Só funcionavam no simulador de brinquedo, que saiu, ou eram promessa ("chega com o simulador do backend").</td></tr>
+    <tr><td>Página Agente × regras do Produtor (e <code>ComparacaoAgenteRegras</code>)</td><td>barra do Produtor, Agora, Dinheiro</td><td>O produtor não sabe o que é "agente" nem "regras fixas". A comparação continua no modo Desenvolvedor (Estufas lado a lado).</td></tr>
+    <tr><td>Simulador de brinquedo (<code>infrastructure/simuladorBrinquedo/</code>, 8 arquivos)</td><td><code>npm run dev</code></td><td>Inventava números (só simulava a temperatura e preenchia o resto com valor de exemplo). A estufa do Produtor vai passar a reproduzir uma gravação real do treino (passo 10).</td></tr>
+    <tr><td>Fase 6 do resumo do celular ("fase 1 de 6") e "Mistura de fases" na configuração</td><td>Desenvolvedor</td><td>Restos do currículo.</td></tr>
+  </table>
+
+  <h2>Decisões deste passo</h2>
+  <div class="decisao">
+    <div class="rotulo">Decisão · o seletor de modo no celular foi para o topo</div>
+    <p>O Gabriel tirou "modo" de Ajustes. No desktop o seletor já estava no rodapé da barra lateral, mas no celular Ajustes era o único lugar para trocar de modo. Sem ele, o celular ficaria preso no Produtor. Pus o seletor no topo de cada página, à esquerda do sol/lua, onde já havia uma faixa livre. A casca do celular (<code>CascaCelular</code>) ganhou um espaço <code>topo</code>, que o app preenche: a casca continua sem saber o que é "modo". Alternativa descartada: uma aba a mais na barra de baixo, que já tem 4 abas e ficaria apertada.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · "instalar o app" só no celular</div>
+    <p>A regra do Gabriel permitia manter o "instalar app" só no celular. Mantive, porque o app em tela cheia no celular é o jeito de mostrar o Visor e o Agora na apresentação. No desktop, Ajustes mostra só o aviso.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · o foco padrão do navegador, pelo tema</div>
+    <p>O anel verde e arredondado vinha dos tokens do Astryx (<code>--focus-outline-color</code> no verde-pinho, estilo <code>solid</code>, afastado 3 px). Troquei os tokens no tema (<code>genesisTheme.ts</code> → <code>npm run tema</code>): estilo <code>auto</code> (o contorno nativo), cor <code>-webkit-focus-ring-color</code> (a do Chrome e do Safari) e afastamento 0. Mudar pelo tema, e não com CSS solto em cada componente, é a regra do Astryx (<code>dashboard/AGENTS.md</code>), e pega todos os componentes de uma vez. O foco continua visível: só mudou de cara. A barra de abas do celular, que é nossa, usa os mesmos tokens.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · grades que ocupam a largura</div>
+    <p>A causa do espaço vazio à direita era uma só, em vários lugares: grades com <code>auto-fill</code> (o navegador cria todas as colunas que cabem, mesmo vazias). Exemplo: 4 números com largura mínima de 160 px numa área de 1.100 px viram 6 colunas, 2 vazias à direita. Com <code>auto-fit</code> as colunas vazias somem e as cheias esticam. No Astryx é <code>columns={{ minWidth, repeat: 'fit' }}</code>; nos CSS das Gravações e das Estufas lado a lado, <code>repeat(auto-fit, …)</code>. Ajustes perdeu a largura máxima de 560 px.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · a estufa usa os dados de exemplo até o passo 10</div>
+    <p>Sem o simulador de brinquedo, o <code>npm run dev</code> passa a mostrar a estufa dos dados de exemplo (<code>estufas.json</code>), com o selo "dados de exemplo" à vista. É provisório: o arquivo é inventado e sai no passo 10, quando a estufa passa a reproduzir uma gravação real. Fazer as duas coisas de uma vez deixaria este passo grande demais para conferir.</p>
+  </div>
+
+  <h2>Números</h2>
+  <table>
+    <tr><th>O que</th><th>Valor</th><th>Fonte</th></tr>
+    <tr><td>Arquivos mexidos</td><td>74</td><td><code>git diff --shortstat</code> do commit</td></tr>
+    <tr><td>Linhas apagadas / acrescentadas</td><td>2.995 / 170</td><td>idem (inclui as capturas novas como arquivos)</td></tr>
+    <tr><td>Testes unitários</td><td>81 passando (12 arquivos)</td><td><code>npm test</code>; saíram os testes do glossário, do currículo e do simulador</td></tr>
+    <tr><td>Testes e2e</td><td>25 passando, 21 pulados (capturas e testes só de desktop rodando no celular)</td><td><code>npm run e2e</code></td></tr>
+  </table>
+
+  <h2>O que deu errado ou surpreendeu</h2>
+  <div class="erro">
+    <p><strong>A captura da rota "/" virou uma pasta.</strong> No Git Bash, o texto <code>/</code> numa variável de ambiente é convertido num caminho do Windows (<code>C:/Program Files/Git/</code>) antes de chegar ao Node. A captura do Agora saiu num lugar estranho. Correção: rodar com <code>MSYS_NO_PATHCONV=1</code>, agora anotado no próprio <code>capturas.spec.ts</code>.</p>
+  </div>
+  <div class="erro">
+    <p><strong>O tour do Desenvolvedor tampava as capturas.</strong> O diálogo de boas-vindas aparece na primeira visita e saía em cima da página. As capturas agora marcam o tour como visto antes de abrir a página.</p>
+  </div>
+  <p>O que ainda falta e ficou anotado para os próximos passos: a barra lateral do Produtor ainda lista as estufas com o rótulo "agente", e a frase do Agora diz "O agente está no controle". As duas saem no passo 10, junto com a troca da fonte de dados.</p>
+
+  <h2>Como reproduzir</h2>
+  <pre><code>cd dashboard
+npm run typecheck &amp;&amp; npm run lint &amp;&amp; npm run format:check
+npm test
+npm run e2e
+MSYS_NO_PATHCONV=1 CAPTURAS=passo-08 ROTAS="/,/historico,/ciclo,/dinheiro,/ajustes,/dev,/dev/treino,/dev/modelo,/dev/gravacoes" npx playwright test capturas -g light</code></pre>
+
+  <h2>Em aberto</h2>
+  <ul>
+    <li>Passo 09: o treino grava também as regras fixas e "sem controle" no clima da gravação, e as métricas por geração.</li>
+    <li>Passo 10: a estufa do Produtor reproduz uma gravação real (sai o <code>estufas.json</code> inventado e o rótulo "agente" da barra).</li>
+    <li><code>vantagemDoAgente</code> em <code>dinheiro/domain/contas.ts</code> ficou sem uso na tela; sai com a repaginação do Dinheiro (passo 11).</li>
+  </ul>
+
+  <h2>Links</h2>
+  <ul>
+    <li>Pedido e regras: <code>CLAUDE.md</code>, <code>.claude/rules/documentar-cada-passo.md</code>.</li>
+    <li>Rodada visual anterior: <a href="07-visual.html">passo 07</a> e <a href="../decisoes/0006-visual-proprio.md">decisão 0006</a>.</li>
+    <li>Arquivos: <code>dashboard/src/app/PaginaAjustes.tsx</code>, <code>dashboard/src/shared/design-system/templates/CascaCelular.tsx</code>, <code>dashboard/src/shared/design-system/tema/genesisTheme.ts</code>, <code>dashboard/e2e/moldura.spec.ts</code>.</li>
+  </ul>
+</main>
+</body>
+</html>

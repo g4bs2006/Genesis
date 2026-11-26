@@ -1,30 +1,45 @@
 /**
- * Adaptador da porta RepositorioPrecos que guarda os preços no próprio
- * navegador (localStorage), até existir um banco.
+ * Adaptadores das portas RepositorioPrecos e RepositorioLancamentos que
+ * guardam tudo no próprio navegador (localStorage), até existir login e banco.
  */
-import { Precos } from '../../domain/contrato'
-import type { RepositorioPrecos } from '../../application/portas'
+import { z } from 'zod'
+import { Precos, PrecosAntigos } from '../../domain/contrato'
+import { Lancamento } from '../../domain/lancamentos'
+import type { RepositorioLancamentos, RepositorioPrecos } from '../../application/portas'
 
 export const CHAVE_PRECOS = 'genesis:precos'
+export const CHAVE_LANCAMENTOS = 'genesis:lancamentos'
 
 /**
- * Preços de partida, para o produtor ajustar na tela de Ajustes.
- * VALORES DE REFERÊNCIA, A CONFIRMAR (ordem de grandeza, não cotação do dia):
- * - alface por pé: CEAGESP / Conab Prohort, alface crespa hidropônica no atacado
- *   (pé baixo, médio e alto conforme a época do ano);
- * - tarifa: ANEEL, tarifa residencial/rural média com impostos, em R$/kWh;
- * - nutriente, ácido, muda: preço de varejo de insumos para hidroponia;
- * - água: tarifa de concessionária estadual por m³;
- * - fixos: equipamento amortizado e mão de obra rateados por ciclo de 35 dias.
+ * Preços de partida, para o produtor trocar pelos seus na página Dinheiro.
+ * VALORES DE REFERÊNCIA (ordem de grandeza, não cotação do dia; a mesma régua
+ * que a nota do treino usa, controle/metricas.py):
+ * - alface: R$ 2,00 o pé de 220 g;
+ * - energia: R$ 0,85/kWh, tarifa média com impostos;
+ * - água: R$ 8/m³, tarifa de concessionária;
+ * - muda: R$ 0,15;
+ * - adubo e embalagem: 0 até o produtor informar (a simulação não dosa adubo);
+ * - mão de obra e outros: R$ 180 por ciclo de 35 dias.
  */
 export const PRECOS_PADRAO: Precos = {
-  alfacePorPe: { baixo: 1.2, medio: 2.0, alto: 3.0 },
+  alfacePorPe: 2.0,
   tarifaKwh: 0.85,
-  nutrientePorKg: 18,
-  acidoPorL: 25,
   aguaPorM3: 8,
   mudaPorUnidade: 0.15,
-  fixosPorCiclo: 180,
+  aduboPorCiclo: 0,
+  embalagemPorPe: 0,
+  outrosPorCiclo: 180,
+}
+
+/** Ler o que está salvo sem nunca quebrar a tela: inválido ou ausente vira null. */
+function ler(armazenamento: Storage, chave: string): unknown {
+  try {
+    const salvo = armazenamento.getItem(chave)
+    return salvo === null ? null : JSON.parse(salvo)
+  } catch {
+    // JSON corrompido ou navegador sem acesso ao armazenamento (aba privada)
+    return null
+  }
 }
 
 /**
@@ -35,20 +50,50 @@ export const PRECOS_PADRAO: Precos = {
 export function criarRepositorioPrecosLocal(armazenamento: Storage = localStorage): RepositorioPrecos {
   return {
     async obter() {
-      try {
-        const salvo = armazenamento.getItem(CHAVE_PRECOS)
-        if (salvo === null) return PRECOS_PADRAO
-        const conferido = Precos.safeParse(JSON.parse(salvo))
-        // inválido: volta aos padrões em vez de quebrar a tela de Dinheiro
-        return conferido.success ? conferido.data : PRECOS_PADRAO
-      } catch {
-        // JSON corrompido ou navegador sem acesso ao armazenamento (aba privada)
-        return PRECOS_PADRAO
+      const salvo = ler(armazenamento, CHAVE_PRECOS)
+      const atual = Precos.safeParse(salvo)
+      if (atual.success) return atual.data
+      // preços salvos antes do passo 11: o preço médio e os fixos continuam valendo
+      const antigo = PrecosAntigos.safeParse(salvo)
+      if (antigo.success) {
+        const a = antigo.data
+        return {
+          ...PRECOS_PADRAO,
+          alfacePorPe: a.alfacePorPe.medio,
+          tarifaKwh: a.tarifaKwh,
+          aguaPorM3: a.aguaPorM3,
+          mudaPorUnidade: a.mudaPorUnidade,
+          outrosPorCiclo: a.fixosPorCiclo,
+        }
       }
+      return PRECOS_PADRAO
     },
     async salvar(precos) {
       // confere antes de gravar; se falhar (preço negativo, quota cheia), a promessa rejeita e a tela avisa
       armazenamento.setItem(CHAVE_PRECOS, JSON.stringify(Precos.parse(precos)))
+    },
+  }
+}
+
+export function criarRepositorioLancamentosLocal(armazenamento: Storage = localStorage): RepositorioLancamentos {
+  // um lançamento estragado não apaga os outros: só ele fica de fora
+  const todos = (): Lancamento[] => {
+    const salvo = ler(armazenamento, CHAVE_LANCAMENTOS)
+    if (!Array.isArray(salvo)) return []
+    return salvo.flatMap((l) => {
+      const r = Lancamento.safeParse(l)
+      return r.success ? [r.data] : []
+    })
+  }
+  const gravar = (lista: Lancamento[]) =>
+    armazenamento.setItem(CHAVE_LANCAMENTOS, JSON.stringify(z.array(Lancamento).parse(lista)))
+  return {
+    listar: async () => todos(),
+    async adicionar(lancamento) {
+      gravar([...todos(), Lancamento.parse(lancamento)])
+    },
+    async remover(id) {
+      gravar(todos().filter((l) => l.id !== id))
     },
   }
 }

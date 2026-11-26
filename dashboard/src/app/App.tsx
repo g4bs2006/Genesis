@@ -35,7 +35,7 @@ export function App() {
             {/* cada módulo recebe aqui o adaptador escolhido em dependencias.ts */}
             <ProvedorEstufa fonte={d.fonteEstufa} controle={d.controleSimulacao}>
               <ProvedorTreino treino={d.fonteTreino} gravacoes={d.fonteGravacoes} origem={d.origemTreino}>
-                <ProvedorDinheiro precos={d.repositorioPrecos}>
+                <ProvedorDinheiro precos={d.repositorioPrecos} lancamentos={d.repositorioLancamentos}>
                   <RouterProvider router={roteador} />
                 </ProvedorDinheiro>
               </ProvedorTreino>

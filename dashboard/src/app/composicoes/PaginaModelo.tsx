@@ -1,35 +1,24 @@
 /**
  * Desenvolvedor · Modelo: a rede neural do campeão aberta por dentro. Mostra
  * o que entra, o que acende lá dentro, o que sai, o que mais pesou numa
- * decisão e como o agente se saiu nas perturbações. Junta treino (os pesos) e
+ * decisão e os acertos e erros. Junta treino (os pesos) e
  * estufa (as leituras e os eventos): por isso mora em composicoes.
  */
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ParentSize } from '@visx/responsive'
-import { Badge } from '@astryxdesign/core/Badge'
 import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
-import { OQueEIsso } from '@/modules/glossario'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 import { Selector } from '@astryxdesign/core/Selector'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { Slider } from '@astryxdesign/core/Slider'
-import { Table } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { ToggleButton } from '@astryxdesign/core/ToggleButton'
 import { VStack } from '@astryxdesign/core/VStack'
-import {
-  ListaEventos,
-  useEstufas,
-  useEventos,
-  useJanela,
-  type Estufa,
-  type Evento,
-  type Perturbacao,
-} from '@/modules/estufa'
+import { ListaEventos, useEstufas, useEventos, useJanela, type Estufa, type Evento } from '@/modules/estufa'
 import {
   ENTRADAS,
   SAIDAS,
@@ -45,8 +34,7 @@ import {
 import { DiagramaRede } from '@/shared/design-system/graficos/DiagramaRede'
 import { rotuloEixo } from '@/shared/design-system/graficos/estilo'
 import { useAtraso } from '@/shared/hooks/useAtraso'
-import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
-import { formatarHora, formatarNumero } from '@/shared/lib/formatar'
+import { formatarNumero } from '@/shared/lib/formatar'
 
 export function PaginaModelo() {
   const modelos = useModelos()
@@ -58,14 +46,14 @@ export function PaginaModelo() {
       <VStack gap={5} paddingBlock={6}>
         <Skeleton height={64} radius={2} />
         <Skeleton height={660} radius={3} index={1} />
-        <Grid columns={{ minWidth: 420 }} gap={4}>
+        <Grid columns={{ minWidth: 420, repeat: 'fit' }} gap={4}>
           <Skeleton height={420} radius={3} index={2} />
           <Skeleton height={420} radius={3} index={3} />
         </Grid>
         <Skeleton height={360} radius={3} index={4} />
       </VStack>
     ) : null
-  const campeoes = campeoesPorFase(modelos.data ?? [])
+  const campeoes = [...(modelos.data ?? [])].sort((a, b) => a.geracao - b.geracao)
   if (campeoes.length === 0 || !estufas.data?.length)
     return (
       <VStack gap={2} paddingBlock={6}>
@@ -78,24 +66,15 @@ export function PaginaModelo() {
   return <Conteudo campeoes={campeoes} estufas={estufas.data} />
 }
 
-/** O campeão de cada fase: o de maior geração entre os salvos naquela fase. */
-function campeoesPorFase(modelos: Modelo[]): Modelo[] {
-  const porFase = new Map<number, Modelo>()
-  for (const m of modelos) if (m.geracao >= (porFase.get(m.fase)?.geracao ?? -1)) porFase.set(m.fase, m)
-  return [...porFase.values()].sort((a, b) => a.fase - b.fase)
-}
-
 function Conteudo({ campeoes, estufas }: { campeoes: Modelo[]; estufas: Estufa[] }) {
   const [id, setId] = useState(campeoes.at(-1)!.id)
-  const largo = useTelaLarga()
   const modelo = campeoes.find((m) => m.id === id) ?? campeoes.at(-1)!
-  // a estufa que roda este modelo; sem ela, a estufa principal do agente
+  // a gravação deste campeão; sem ela, a do campeão mais recente
   const agentes = estufas.filter((e) => e.controlador.tipo === 'agente')
   const estufa =
     agentes.find((e) => e.controlador.tipo === 'agente' && e.controlador.modeloId === modelo.id) ??
-    agentes[0] ??
+    agentes.at(-1) ??
     estufas[0]!
-  const regras = estufas.find((e) => e.controlador.tipo === 'regras')
   const rodaEste = estufa.controlador.tipo === 'agente' && estufa.controlador.modeloId === modelo.id
 
   return (
@@ -104,30 +83,20 @@ function Conteudo({ campeoes, estufas }: { campeoes: Modelo[]; estufas: Estufa[]
         <VStack gap={1}>
           <Heading level={1}>Modelo</Heading>
           <Text color="secondary">
-            Rede {modelo.arquitetura.join(' → ')} · {modelo.pesos.length} pesos · seguindo {estufa.nome}
-            {!rodaEste && ' (que roda outro modelo)'}
+            Rede {modelo.arquitetura.join(' → ')} · {modelo.pesos.length} pesos ·{' '}
+            {rodaEste ? 'seguindo a gravação dele' : `sem gravação própria: seguindo ${estufa.nome}`}
           </Text>
         </VStack>
-        {largo ? (
-          <SegmentedControl label="Campeão" value={modelo.id} onChange={setId}>
-            {campeoes.map((m) => (
-              <SegmentedControlItem key={m.id} value={m.id} label={`Fase ${m.fase} · g ${m.geracao}`} />
-            ))}
-          </SegmentedControl>
-        ) : (
-          // estreito: as fases lado a lado cortariam a geração
-          <Selector
-            label="Campeão"
-            isLabelHidden
-            value={modelo.id}
-            onChange={(v) => v && setId(v)}
-            options={campeoes.map((m) => ({ value: m.id, label: `Fase ${m.fase} · g ${m.geracao}` }))}
-          />
-        )}
+        <Selector
+          label="Campeão"
+          value={modelo.id}
+          onChange={(v) => v && setId(v)}
+          options={campeoes.map((m) => ({ value: m.id, label: `Geração ${m.geracao}` }))}
+        />
       </HStack>
 
-      <RedePorDentro key={estufa.id} modelo={modelo} estufa={estufa} aoLado={<AcertosErros estufa={estufa} />} />
-      <Perturbacoes modelo={modelo} estufa={estufa} regras={regras} />
+      <RedePorDentro key={estufa.id} modelo={modelo} estufa={estufa} />
+      <AcertosErros estufa={estufa} />
     </VStack>
   )
 }
@@ -172,8 +141,8 @@ const CONTROLES: {
   },
 ]
 
-/** O diagrama em cima; embaixo, "o que mais pesou" (usa as mesmas entradas) ao lado de `aoLado`. */
-function RedePorDentro({ modelo, estufa, aoLado }: { modelo: Modelo; estufa: Estufa; aoLado: ReactNode }) {
+/** O diagrama em cima; embaixo, "o que mais pesou" (usa as mesmas entradas). */
+function RedePorDentro({ modelo, estufa }: { modelo: Modelo; estufa: Estufa }) {
   const { passos } = useJanela(estufa.id)
   const seguidos = valoresBrutos(passos, estufa.diaDoCiclo)
   // null: segue a estufa ao vivo; um objeto: as entradas congeladas que o usuário está mexendo
@@ -205,7 +174,6 @@ function RedePorDentro({ modelo, estufa, aoLado }: { modelo: Modelo; estufa: Est
             </Text>
           </VStack>
         </Card>
-        {aoLado}
       </>
     )
 
@@ -236,7 +204,7 @@ function RedePorDentro({ modelo, estufa, aoLado }: { modelo: Modelo; estufa: Est
               : `As leituras de ${estufa.nome} entram à esquerda e viram as 8 ações à direita, ao vivo.`}
           </Text>
           {manual && (
-            <Grid columns={{ minWidth: 200 }} gap={3}>
+            <Grid columns={{ minWidth: 200, repeat: 'fit' }} gap={3}>
               {CONTROLES.map((c) => (
                 <Slider
                   key={c.chave}
@@ -263,46 +231,33 @@ function RedePorDentro({ modelo, estufa, aoLado }: { modelo: Modelo; estufa: Est
           ) : esboco ? (
             <Skeleton height={520} radius={2} />
           ) : null}
-          <HStack gap={4} wrap="wrap">
-            <OQueEIsso id="sinalNeuronio" rotulo="ativação: cor da bolinha" />
-            <OQueEIsso id="peso" rotulo="peso: as linhas (só os 15% sinais mais fortes)" />
-            <OQueEIsso id="tanh" rotulo="tanh nas camadas do meio" />
-            <OQueEIsso id="sigmoide" rotulo="sigmoide nas saídas" />
-          </HStack>
+          <HStack gap={4} wrap="wrap"></HStack>
         </VStack>
       </Card>
 
-      <Grid columns={{ minWidth: 420 }} gap={4}>
-        <Card>
-          <VStack gap={3}>
-            <HStack justify="between" align="center" wrap="wrap" gap={2}>
-              <HStack gap={1} align="center">
-                <Heading level={2}>O que mais pesou nesta decisão</Heading>
-                <OQueEIsso id="atribuicaoEntrada" />
-              </HStack>
-              <Selector
-                label="Saída"
-                isLabelHidden
-                size="md"
-                value={String(saida)}
-                onChange={(v) => setSaida(Number(v ?? 0))}
-                options={SAIDAS.map((s, i) => ({ value: String(i), label: s.rotulo }))}
-              />
-            </HStack>
-            {contribuicoes ? (
-              <>
-                <Text color="secondary" maxLines={1}>
-                  {SAIDAS[saida]!.rotulo} em {Math.round((saidas[saida] ?? 0) * 100)}% · {frasePeso(contribuicoes)}
-                </Text>
-                <BarrasAtribuicao valores={contribuicoes} />
-              </>
-            ) : esboco ? (
-              <Skeleton height={260} radius={2} />
-            ) : null}
-          </VStack>
-        </Card>
-        {aoLado}
-      </Grid>
+      <Card>
+        <VStack gap={3}>
+          <HStack justify="between" align="center" wrap="wrap" gap={2}>
+            <Heading level={2}>O que mais pesou nesta decisão</Heading>
+            <Selector
+              label="Decisão"
+              isLabelHidden
+              size="md"
+              value={String(saida)}
+              onChange={(v) => setSaida(Number(v ?? 0))}
+              options={SAIDAS.map((s, i) => ({ value: String(i), label: s.rotulo }))}
+            />
+          </HStack>
+          {contribuicoes ? (
+            <Grid columns={{ minWidth: 320, repeat: 'fit' }} gap={4}>
+              <FrasePeso saida={SAIDAS[saida]!.rotulo} valor={saidas[saida] ?? 0} contribuicoes={contribuicoes} />
+              <BarrasAtribuicao valores={contribuicoes} />
+            </Grid>
+          ) : esboco ? (
+            <Skeleton height={260} radius={2} />
+          ) : null}
+        </VStack>
+      </Card>
     </>
   )
 }
@@ -312,14 +267,36 @@ const nomeEntrada = (i: number) => {
   return e ? `${e.rotulo} (${e.grupo})` : `entrada ${i + 1}`
 }
 
-function frasePeso(valores: number[]): string {
-  const ordem = valores.map((v, i) => ({ v, i }))
-  const sobe = ordem.reduce((a, b) => (b.v > a.v ? b : a))
-  const desce = ordem.reduce((a, b) => (b.v < a.v ? b : a))
-  const partes = []
-  if (sobe.v > 0.005) partes.push(`↑ ${nomeEntrada(sobe.i)}`)
-  if (desce.v < -0.005) partes.push(`↓ ${nomeEntrada(desce.i)}`)
-  return partes.join(' · ') || 'nenhuma entrada sozinha mudou muito esta saída'
+/**
+ * A decisão em português: quanto a rede pede agora e quais entradas mais
+ * empurraram para ligar e para desligar (em pontos percentuais da saída:
+ * quanto ela mudaria se a entrada estivesse no meio da sua faixa).
+ */
+function FrasePeso({ saida, valor, contribuicoes }: { saida: string; valor: number; contribuicoes: number[] }) {
+  const ordem = contribuicoes.map((v, i) => ({ v, i }))
+  const sobe = ordem.filter((o) => o.v > 0.005).sort((a, b) => b.v - a.v)[0]
+  const desce = ordem.filter((o) => o.v < -0.005).sort((a, b) => a.v - b.v)[0]
+  return (
+    <VStack gap={2}>
+      <Text size="xl" weight="medium">
+        A rede pede {saida.toLowerCase()} em {Math.round(valor * 100)}% agora.
+      </Text>
+      <Text>
+        {sobe
+          ? `Quem mais empurrou para ligar: ${nomeEntrada(sobe.i)} (${pontos(sobe.v)}).`
+          : 'Nenhuma entrada sozinha empurrou para ligar.'}
+      </Text>
+      <Text>
+        {desce
+          ? `Quem mais empurrou para desligar: ${nomeEntrada(desce.i)} (${pontos(desce.v)}).`
+          : 'Nenhuma entrada sozinha empurrou para desligar.'}
+      </Text>
+      <Text type="supporting" color="secondary">
+        Nas barras, as 10 entradas que mais pesaram: laranja empurra para ligar, azul para desligar. p.p. = pontos
+        percentuais da saída: quanto ela mudaria com aquela entrada no meio da faixa dela.
+      </Text>
+    </VStack>
+  )
 }
 
 const LINHAS_BARRAS = 10
@@ -387,12 +364,17 @@ function BarrasAtribuicao({ valores }: { valores: number[] }) {
 const pontos = (v: number) => `${v >= 0 ? '+' : '−'}${formatarNumero(Math.abs(v) * 100, 1)} p.p.`
 
 const TIPOS: { tipo: Evento['tipo']; rotulo: string }[] = [
-  { tipo: 'acerto', rotulo: 'Acertos' },
-  { tipo: 'erro', rotulo: 'Erros' },
-  { tipo: 'barrado', rotulo: 'Barrados' },
-  { tipo: 'perturbacao', rotulo: 'Perturbações' },
+  { tipo: 'erro', rotulo: 'Saiu da faixa' },
+  { tipo: 'acerto', rotulo: 'Voltou para a faixa' },
+  { tipo: 'barrado', rotulo: 'Segurança barrou' },
 ]
 
+/**
+ * Acertos e erros da gravação deste campeão, do transplante até o passo de
+ * agora: quantas vezes algo saiu da faixa (erro), voltou (acerto) e a
+ * segurança barrou uma ação. Cada número filtra a lista; cada linha abre a
+ * gravação naquele passo.
+ */
 function AcertosErros({ estufa }: { estufa: Estufa }) {
   const eventos = useEventos(estufa.id)
   const navegar = useNavigate()
@@ -405,163 +387,37 @@ function AcertosErros({ estufa }: { estufa: Estufa }) {
       return novo
     })
   const filtrados = eventos.data?.filter((e) => tipos.has(e.tipo))
+  const quantos = (tipo: Evento['tipo']) => eventos.data?.filter((e) => e.tipo === tipo).length ?? 0
 
   return (
     <Card>
       <VStack gap={3}>
-        <Heading level={2}>Acertos e erros</Heading>
-        <HStack gap={2} wrap="wrap">
+        <VStack gap={0.5}>
+          <Heading level={2}>Acertos e erros</Heading>
+          <Text type="supporting" color="secondary">
+            Na gravação deste campeão, do transplante até agora. Toque num número para filtrar e numa linha para ver o
+            momento na gravação.
+          </Text>
+        </VStack>
+        <Grid columns={{ minWidth: 180, repeat: 'fit' }} gap={2}>
           {TIPOS.map((t) => (
             <ToggleButton
               key={t.tipo}
-              size="sm"
-              label={`${t.rotulo} · ${eventos.data?.filter((e) => e.tipo === t.tipo).length ?? 0}`}
+              label={`${t.rotulo}: ${quantos(t.tipo)}`}
               isPressed={tipos.has(t.tipo)}
               onPressedChange={(ligado) => alternar(t.tipo, ligado)}
             >
-              {`${t.rotulo} · ${eventos.data?.filter((e) => e.tipo === t.tipo).length ?? 0}`}
+              {`${t.rotulo}: ${quantos(t.tipo)}`}
             </ToggleButton>
           ))}
-        </HStack>
-        <Text type="supporting" color="secondary">
-          Toque num evento para vê-lo no replay.
-        </Text>
+        </Grid>
         <ListaEventos
           eventos={filtrados}
-          vazio="Nenhum evento destes tipos."
-          aoEscolher={(e) => navegar(`/dev/gravacoes?evento=${encodeURIComponent(e.instante)}`)}
+          limite={40}
+          vazio="Nada disso aconteceu até agora."
+          aoEscolher={(e) => navegar(`/dev/gravacoes?gravacoes=${encodeURIComponent(estufa.id)}&t=${e.passo ?? 0}`)}
         />
       </VStack>
     </Card>
-  )
-}
-
-/** As 6 perturbações, a palavra que as acha no título do evento e a fase do currículo que as ensina. */
-const PERTURBACOES_INFO: { id: Perturbacao; nome: string; chave: string; fase: number }[] = [
-  { id: 'ondaDeCalor', nome: 'Onda de calor', chave: 'calor', fase: 1 },
-  { id: 'phDescalibra', nome: 'Sensor de pH descalibra', chave: 'ph', fase: 5 },
-  { id: 'bombaTrava', nome: 'Bomba trava', chave: 'bomba', fase: 6 },
-  { id: 'quedaDeEnergia', nome: 'Queda de energia', chave: 'energia', fase: 6 },
-  { id: 'ruidoSensores', nome: 'Ruído nos sensores', chave: 'ruído', fase: 4 },
-  { id: 'tarifaDePico', nome: 'Tarifa de pico', chave: 'tarifa', fase: 3 },
-]
-
-/** quanto tempo depois da perturbação ainda conta como "reação" a ela */
-const JANELA_REACAO_MS = 3 * 60 * 60 * 1000
-
-type LinhaPerturbacao = {
-  id: Perturbacao
-  nome: string
-  fase: number
-  treinado: boolean
-  quando?: string
-  fez: string
-  errosAgente?: number
-  errosRegras?: number
-}
-
-function Perturbacoes({ modelo, estufa, regras }: { modelo: Modelo; estufa: Estufa; regras: Estufa | undefined }) {
-  const doAgente = useEventos(estufa.id)
-  // sem estufa de regras, repete a consulta do agente (já está no cache) e ignora o resultado
-  const dasRegras = useEventos(regras?.id ?? estufa.id)
-  const esboco = useAtraso(!doAgente.data)
-
-  const linhas: LinhaPerturbacao[] = PERTURBACOES_INFO.map((p) => {
-    const treinado = modelo.fase >= p.fase
-    const ocorrencia = (doAgente.data ?? [])
-      .filter((e) => e.tipo === 'perturbacao' && e.titulo.toLowerCase().includes(p.chave))
-      .sort((a, b) => b.instante.localeCompare(a.instante))[0]
-    if (!ocorrencia) return { ...p, treinado, fez: 'Ainda não aconteceu nesta estufa.' }
-    const inicio = Date.parse(ocorrencia.instante)
-    const naJanela = (e: Evento) => {
-      const t = Date.parse(e.instante)
-      return e.tipo !== 'perturbacao' && t >= inicio && t <= inicio + JANELA_REACAO_MS
-    }
-    const reacao = (doAgente.data ?? []).filter(naJanela).sort((a, b) => a.instante.localeCompare(b.instante))
-    return {
-      ...p,
-      treinado,
-      quando: ocorrencia.instante,
-      fez: reacao[0]?.titulo ?? 'Nada fora do normal nas 3 horas seguintes.',
-      errosAgente: reacao.filter((e) => e.tipo === 'erro').length,
-      errosRegras:
-        regras && dasRegras.data ? dasRegras.data.filter((e) => naJanela(e) && e.tipo === 'erro').length : undefined,
-    }
-  })
-
-  return (
-    <Card>
-      <VStack gap={3}>
-        <Heading level={2}>Como lidou com cada perturbação</Heading>
-        <Text type="supporting" color="secondary">
-          A primeira reação de {estufa.nome} nas 3 horas seguintes e os erros contra as regras fixas no mesmo período.
-        </Text>
-        {!doAgente.data ? (
-          esboco ? (
-            <Skeleton height={300} radius={2} />
-          ) : null
-        ) : (
-          <Table
-            data={linhas}
-            idKey="id"
-            density="compact"
-            columns={[
-              {
-                key: 'nome',
-                header: 'Perturbação',
-                renderCell: (l) => (
-                  <VStack gap={0.5}>
-                    <Text weight="medium">{l.nome}</Text>
-                    {l.treinado ? (
-                      <Text type="supporting" color="secondary">
-                        treinada na fase {l.fase}
-                      </Text>
-                    ) : (
-                      // o erro continua aparecendo nas outras colunas: o aviso explica, não esconde
-                      <Badge variant="warning" label={`ainda não treinado para isto (fase ${l.fase})`} />
-                    )}
-                  </VStack>
-                ),
-              },
-              {
-                key: 'fez',
-                header: 'O que o agente fez',
-                renderCell: (l) => (
-                  <VStack gap={0.5}>
-                    <Text>{l.fez}</Text>
-                    {l.quando && (
-                      <Text type="supporting" color="secondary">
-                        perturbação às {formatarHora(l.quando)}
-                      </Text>
-                    )}
-                  </VStack>
-                ),
-              },
-              { key: 'resultado', header: 'Resultado × regras', renderCell: (l) => <Resultado linha={l} /> },
-            ]}
-          />
-        )}
-      </VStack>
-    </Card>
-  )
-}
-
-function Resultado({ linha }: { linha: LinhaPerturbacao }) {
-  if (linha.errosAgente === undefined) return <Text color="secondary">—</Text>
-  const erros = (n: number) => `${n} ${n === 1 ? 'erro' : 'erros'}`
-  if (linha.errosRegras === undefined) return <Text>{erros(linha.errosAgente)}</Text>
-  const [variante, frase] =
-    linha.errosAgente < linha.errosRegras
-      ? (['success', 'melhor que as regras'] as const)
-      : linha.errosAgente > linha.errosRegras
-        ? (['error', 'pior que as regras'] as const)
-        : (['neutral', 'igual às regras'] as const)
-  return (
-    <VStack gap={0.5}>
-      <Badge variant={variante} label={frase} />
-      <Text type="supporting" color="secondary">
-        agente {erros(linha.errosAgente)} · regras {erros(linha.errosRegras)}
-      </Text>
-    </VStack>
   )
 }

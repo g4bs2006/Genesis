@@ -1,11 +1,10 @@
-import { massaEsperada } from '@/modules/estufa/dominio'
 import { escolherDesenho } from './escolherDesenho'
 
 const saudavel = { turgor: 1, clorose: 0, necrose: 0 }
 
 describe('escolherDesenho', () => {
   it('a massa escolhe o estágio mais próximo', () => {
-    expect(escolherDesenho({ massa: massaEsperada(5), ...saudavel })).toBe('dia-05')
+    expect(escolherDesenho({ massa: 29, ...saudavel })).toBe('dia-05')
     expect(escolherDesenho({ massa: 182, ...saudavel })).toBe('dia-20')
     expect(escolherDesenho({ massa: 245, ...saudavel })).toBe('dia-35')
   })

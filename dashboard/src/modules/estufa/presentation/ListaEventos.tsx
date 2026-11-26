@@ -7,11 +7,11 @@ import { useAtraso } from '@/shared/hooks/useAtraso'
 import { formatarData, formatarHora } from '@/shared/lib/formatar'
 import type { Evento } from '../domain/contrato'
 
-const SELO_EVENTO: Record<Evento['tipo'], { rotulo: string; variante: 'success' | 'error' | 'warning' | 'info' }> = {
-  acerto: { rotulo: 'acerto', variante: 'success' },
-  erro: { rotulo: 'erro', variante: 'error' },
-  barrado: { rotulo: 'barrado', variante: 'warning' },
-  perturbacao: { rotulo: 'perturbação', variante: 'info' },
+// rótulos de produtor: o que aconteceu, não o jargão do treino
+const SELO_EVENTO: Record<Evento['tipo'], { rotulo: string; variante: 'success' | 'error' | 'warning' }> = {
+  acerto: { rotulo: 'voltou', variante: 'success' },
+  erro: { rotulo: 'fora', variante: 'error' },
+  barrado: { rotulo: 'segurança', variante: 'warning' },
 }
 
 type Props = {
@@ -22,7 +22,7 @@ type Props = {
   vazio?: string
 }
 
-/** Linha do tempo de eventos: o que o controlador acertou, errou, o que foi barrado e as perturbações. */
+/** Linha do tempo de eventos: o que saiu da faixa, o que voltou e o que a segurança barrou. */
 export function ListaEventos({ eventos, limite = 20, aoEscolher, vazio = 'Nada aconteceu ainda.' }: Props) {
   const esboco = useAtraso(!eventos)
   if (!eventos)
