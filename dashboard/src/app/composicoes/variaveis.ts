@@ -1,19 +1,6 @@
 /** Como cada variável aparece na tela: número formatado, faixa e o selo "exemplo". */
 import { FAIXAS, valorExibido, type Passo, type Variavel } from '@/modules/estufa'
-import type { IdTermo } from '@/modules/glossario'
 import { formatarNumero } from '@/shared/lib/formatar'
-
-/** Qual termo do glossário explica cada variável (o "o que é isso?"). */
-export const TERMO_DA_VARIAVEL: Partial<Record<Variavel, IdTermo>> = {
-  vpd: 'vpd',
-  umidade: 'umidadeRelativa',
-  co2: 'co2',
-  luz: 'ppfd',
-  ph: 'ph',
-  ec: 'ec',
-  temperaturaAgua: 'temperaturaAgua',
-  nivel: 'reservatorio',
-}
 
 const CAMINHO: Record<Variavel, string> = {
   temperatura: 'ar.temperatura',

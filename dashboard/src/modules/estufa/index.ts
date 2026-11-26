@@ -16,4 +16,3 @@ export { ListaEstufasLateral } from './presentation/ListaEstufasLateral'
 export { ListaEventos } from './presentation/ListaEventos'
 // Adaptadores (só app/dependencias.ts deve usar)
 export { criarFonteEstufaExemplo } from './infrastructure/dadosExemplo'
-export { criarSimuladorBrinquedo } from './infrastructure/simuladorBrinquedo'

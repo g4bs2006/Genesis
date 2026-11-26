@@ -1,35 +1,24 @@
 /**
  * Desenvolvedor · Modelo: a rede neural do campeão aberta por dentro. Mostra
  * o que entra, o que acende lá dentro, o que sai, o que mais pesou numa
- * decisão e como o agente se saiu nas perturbações. Junta treino (os pesos) e
+ * decisão e os acertos e erros. Junta treino (os pesos) e
  * estufa (as leituras e os eventos): por isso mora em composicoes.
  */
 import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ParentSize } from '@visx/responsive'
-import { Badge } from '@astryxdesign/core/Badge'
 import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
-import { OQueEIsso } from '@/modules/glossario'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 import { Selector } from '@astryxdesign/core/Selector'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { Slider } from '@astryxdesign/core/Slider'
-import { Table } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { ToggleButton } from '@astryxdesign/core/ToggleButton'
 import { VStack } from '@astryxdesign/core/VStack'
-import {
-  ListaEventos,
-  useEstufas,
-  useEventos,
-  useJanela,
-  type Estufa,
-  type Evento,
-  type Perturbacao,
-} from '@/modules/estufa'
+import { ListaEventos, useEstufas, useEventos, useJanela, type Estufa, type Evento } from '@/modules/estufa'
 import {
   ENTRADAS,
   SAIDAS,
@@ -46,7 +35,7 @@ import { DiagramaRede } from '@/shared/design-system/graficos/DiagramaRede'
 import { rotuloEixo } from '@/shared/design-system/graficos/estilo'
 import { useAtraso } from '@/shared/hooks/useAtraso'
 import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
-import { formatarHora, formatarNumero } from '@/shared/lib/formatar'
+import { formatarNumero } from '@/shared/lib/formatar'
 
 export function PaginaModelo() {
   const modelos = useModelos()
@@ -58,7 +47,7 @@ export function PaginaModelo() {
       <VStack gap={5} paddingBlock={6}>
         <Skeleton height={64} radius={2} />
         <Skeleton height={660} radius={3} index={1} />
-        <Grid columns={{ minWidth: 420 }} gap={4}>
+        <Grid columns={{ minWidth: 420, repeat: 'fit' }} gap={4}>
           <Skeleton height={420} radius={3} index={2} />
           <Skeleton height={420} radius={3} index={3} />
         </Grid>
@@ -95,7 +84,6 @@ function Conteudo({ campeoes, estufas }: { campeoes: Modelo[]; estufas: Estufa[]
     agentes.find((e) => e.controlador.tipo === 'agente' && e.controlador.modeloId === modelo.id) ??
     agentes[0] ??
     estufas[0]!
-  const regras = estufas.find((e) => e.controlador.tipo === 'regras')
   const rodaEste = estufa.controlador.tipo === 'agente' && estufa.controlador.modeloId === modelo.id
 
   return (
@@ -127,7 +115,6 @@ function Conteudo({ campeoes, estufas }: { campeoes: Modelo[]; estufas: Estufa[]
       </HStack>
 
       <RedePorDentro key={estufa.id} modelo={modelo} estufa={estufa} aoLado={<AcertosErros estufa={estufa} />} />
-      <Perturbacoes modelo={modelo} estufa={estufa} regras={regras} />
     </VStack>
   )
 }
@@ -236,7 +223,7 @@ function RedePorDentro({ modelo, estufa, aoLado }: { modelo: Modelo; estufa: Est
               : `As leituras de ${estufa.nome} entram à esquerda e viram as 8 ações à direita, ao vivo.`}
           </Text>
           {manual && (
-            <Grid columns={{ minWidth: 200 }} gap={3}>
+            <Grid columns={{ minWidth: 200, repeat: 'fit' }} gap={3}>
               {CONTROLES.map((c) => (
                 <Slider
                   key={c.chave}
@@ -263,22 +250,16 @@ function RedePorDentro({ modelo, estufa, aoLado }: { modelo: Modelo; estufa: Est
           ) : esboco ? (
             <Skeleton height={520} radius={2} />
           ) : null}
-          <HStack gap={4} wrap="wrap">
-            <OQueEIsso id="sinalNeuronio" rotulo="ativação: cor da bolinha" />
-            <OQueEIsso id="peso" rotulo="peso: as linhas (só os 15% sinais mais fortes)" />
-            <OQueEIsso id="tanh" rotulo="tanh nas camadas do meio" />
-            <OQueEIsso id="sigmoide" rotulo="sigmoide nas saídas" />
-          </HStack>
+          <HStack gap={4} wrap="wrap"></HStack>
         </VStack>
       </Card>
 
-      <Grid columns={{ minWidth: 420 }} gap={4}>
+      <Grid columns={{ minWidth: 420, repeat: 'fit' }} gap={4}>
         <Card>
           <VStack gap={3}>
             <HStack justify="between" align="center" wrap="wrap" gap={2}>
               <HStack gap={1} align="center">
                 <Heading level={2}>O que mais pesou nesta decisão</Heading>
-                <OQueEIsso id="atribuicaoEntrada" />
               </HStack>
               <Selector
                 label="Saída"
@@ -390,7 +371,6 @@ const TIPOS: { tipo: Evento['tipo']; rotulo: string }[] = [
   { tipo: 'acerto', rotulo: 'Acertos' },
   { tipo: 'erro', rotulo: 'Erros' },
   { tipo: 'barrado', rotulo: 'Barrados' },
-  { tipo: 'perturbacao', rotulo: 'Perturbações' },
 ]
 
 function AcertosErros({ estufa }: { estufa: Estufa }) {
@@ -433,135 +413,5 @@ function AcertosErros({ estufa }: { estufa: Estufa }) {
         />
       </VStack>
     </Card>
-  )
-}
-
-/** As 6 perturbações, a palavra que as acha no título do evento e a fase do currículo que as ensina. */
-const PERTURBACOES_INFO: { id: Perturbacao; nome: string; chave: string; fase: number }[] = [
-  { id: 'ondaDeCalor', nome: 'Onda de calor', chave: 'calor', fase: 1 },
-  { id: 'phDescalibra', nome: 'Sensor de pH descalibra', chave: 'ph', fase: 5 },
-  { id: 'bombaTrava', nome: 'Bomba trava', chave: 'bomba', fase: 6 },
-  { id: 'quedaDeEnergia', nome: 'Queda de energia', chave: 'energia', fase: 6 },
-  { id: 'ruidoSensores', nome: 'Ruído nos sensores', chave: 'ruído', fase: 4 },
-  { id: 'tarifaDePico', nome: 'Tarifa de pico', chave: 'tarifa', fase: 3 },
-]
-
-/** quanto tempo depois da perturbação ainda conta como "reação" a ela */
-const JANELA_REACAO_MS = 3 * 60 * 60 * 1000
-
-type LinhaPerturbacao = {
-  id: Perturbacao
-  nome: string
-  fase: number
-  treinado: boolean
-  quando?: string
-  fez: string
-  errosAgente?: number
-  errosRegras?: number
-}
-
-function Perturbacoes({ modelo, estufa, regras }: { modelo: Modelo; estufa: Estufa; regras: Estufa | undefined }) {
-  const doAgente = useEventos(estufa.id)
-  // sem estufa de regras, repete a consulta do agente (já está no cache) e ignora o resultado
-  const dasRegras = useEventos(regras?.id ?? estufa.id)
-  const esboco = useAtraso(!doAgente.data)
-
-  const linhas: LinhaPerturbacao[] = PERTURBACOES_INFO.map((p) => {
-    const treinado = modelo.fase >= p.fase
-    const ocorrencia = (doAgente.data ?? [])
-      .filter((e) => e.tipo === 'perturbacao' && e.titulo.toLowerCase().includes(p.chave))
-      .sort((a, b) => b.instante.localeCompare(a.instante))[0]
-    if (!ocorrencia) return { ...p, treinado, fez: 'Ainda não aconteceu nesta estufa.' }
-    const inicio = Date.parse(ocorrencia.instante)
-    const naJanela = (e: Evento) => {
-      const t = Date.parse(e.instante)
-      return e.tipo !== 'perturbacao' && t >= inicio && t <= inicio + JANELA_REACAO_MS
-    }
-    const reacao = (doAgente.data ?? []).filter(naJanela).sort((a, b) => a.instante.localeCompare(b.instante))
-    return {
-      ...p,
-      treinado,
-      quando: ocorrencia.instante,
-      fez: reacao[0]?.titulo ?? 'Nada fora do normal nas 3 horas seguintes.',
-      errosAgente: reacao.filter((e) => e.tipo === 'erro').length,
-      errosRegras:
-        regras && dasRegras.data ? dasRegras.data.filter((e) => naJanela(e) && e.tipo === 'erro').length : undefined,
-    }
-  })
-
-  return (
-    <Card>
-      <VStack gap={3}>
-        <Heading level={2}>Como lidou com cada perturbação</Heading>
-        <Text type="supporting" color="secondary">
-          A primeira reação de {estufa.nome} nas 3 horas seguintes e os erros contra as regras fixas no mesmo período.
-        </Text>
-        {!doAgente.data ? (
-          esboco ? (
-            <Skeleton height={300} radius={2} />
-          ) : null
-        ) : (
-          <Table
-            data={linhas}
-            idKey="id"
-            density="compact"
-            columns={[
-              {
-                key: 'nome',
-                header: 'Perturbação',
-                renderCell: (l) => (
-                  <VStack gap={0.5}>
-                    <Text weight="medium">{l.nome}</Text>
-                    {l.treinado ? (
-                      <Text type="supporting" color="secondary">
-                        treinada na fase {l.fase}
-                      </Text>
-                    ) : (
-                      // o erro continua aparecendo nas outras colunas: o aviso explica, não esconde
-                      <Badge variant="warning" label={`ainda não treinado para isto (fase ${l.fase})`} />
-                    )}
-                  </VStack>
-                ),
-              },
-              {
-                key: 'fez',
-                header: 'O que o agente fez',
-                renderCell: (l) => (
-                  <VStack gap={0.5}>
-                    <Text>{l.fez}</Text>
-                    {l.quando && (
-                      <Text type="supporting" color="secondary">
-                        perturbação às {formatarHora(l.quando)}
-                      </Text>
-                    )}
-                  </VStack>
-                ),
-              },
-              { key: 'resultado', header: 'Resultado × regras', renderCell: (l) => <Resultado linha={l} /> },
-            ]}
-          />
-        )}
-      </VStack>
-    </Card>
-  )
-}
-
-function Resultado({ linha }: { linha: LinhaPerturbacao }) {
-  if (linha.errosAgente === undefined) return <Text color="secondary">—</Text>
-  const erros = (n: number) => `${n} ${n === 1 ? 'erro' : 'erros'}`
-  if (linha.errosRegras === undefined) return <Text>{erros(linha.errosAgente)}</Text>
-  const [variante, frase] =
-    linha.errosAgente < linha.errosRegras
-      ? (['success', 'melhor que as regras'] as const)
-      : linha.errosAgente > linha.errosRegras
-        ? (['error', 'pior que as regras'] as const)
-        : (['neutral', 'igual às regras'] as const)
-  return (
-    <VStack gap={0.5}>
-      <Badge variant={variante} label={frase} />
-      <Text type="supporting" color="secondary">
-        agente {erros(linha.errosAgente)} · regras {erros(linha.errosRegras)}
-      </Text>
-    </VStack>
   )
 }

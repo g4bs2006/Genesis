@@ -96,8 +96,12 @@ export const genesisTheme = defineTheme({
     '--color-on-accent': ['#FFFFFF', '#0E1A15'],
     '--color-accent-muted': ['rgb(31 107 87 / 0.09)', 'rgb(124 207 175 / 0.12)'],
     '--color-icon-accent': m(destaque),
-    // anel de foco no próprio destaque: passa 3:1 contra a página nos dois temas (WCAG 1.4.11)
-    '--focus-outline-color': m(destaque),
+    // Foco: o contorno padrão do navegador, não o anel verde arredondado
+    // (decisão do Gabriel, passo 08). "auto" é o estilo nativo; a cor
+    // -webkit-focus-ring-color é a do Chrome/Safari. O foco continua visível.
+    '--focus-outline-color': '-webkit-focus-ring-color',
+    '--focus-outline-style': 'auto',
+    '--focus-outline-offset': '0px',
     // fundo das dicas (tooltip): quase preto esverdeado no claro, quase branco no escuro
     '--color-background-inverted': ['#16201B', '#E9EEEA'],
 

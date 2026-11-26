@@ -25,17 +25,17 @@ test('navega pelas abas (celular) ou pela barra lateral (desktop)', async ({ pag
 })
 
 test('trocar para Desenvolvedor leva às estufas lado a lado', async ({ page, isMobile }) => {
-  await page.goto('/ajustes')
-  await page.getByRole('main').getByRole('radio', { name: 'Desenvolvedor' }).click()
+  // o seletor de modo mora na barra lateral (desktop) ou no topo da página (celular)
+  await page.goto('/')
+  await page.getByRole('radio', { name: 'Desenvolvedor' }).click()
   await expect(page).toHaveURL(/\/dev$/)
   if (!isMobile) await expect(page.getByRole('link', { name: 'Treino e gerações' })).toBeVisible()
 })
 
-test('desktop: Agora com gráficos e a comparação com as regras', async ({ page, isMobile }) => {
-  test.skip(isMobile, 'gráficos e comparação são do desktop')
+test('desktop: Agora com os gráficos das últimas 24 horas', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'gráficos são do desktop')
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Últimas 24 horas' })).toBeVisible()
-  await expect(page.getByText(/O agente rende R\$/)).toBeVisible()
   await page.getByRole('tab', { name: 'pH e EC' }).click()
   await expect(page.getByText('pH da solução')).toBeVisible()
 })
@@ -61,18 +61,23 @@ test('dinheiro: lucro previsto e editar preço com vírgula', async ({ page }) =
   await expect(page.getByText(/R\$\s?2,50\/pé/)).toBeVisible()
 })
 
-test('treino: currículo, curva de aprendizado e esquecimento', async ({ page, isMobile }) => {
+test('treino: curva de aprendizado, sem currículo nem "esqueceu"', async ({ page, isMobile }) => {
   test.skip(isMobile, 'treino detalhado é do desktop')
   await page.goto('/dev/treino')
   await expect(page.getByRole('heading', { name: 'Curva de aprendizado' })).toBeVisible()
-  await expect(page.getByText('Esqueceu um pouco da fase 2')).toBeVisible()
-  await expect(page.getByText(/aprendendo agora/)).toBeVisible()
+  await expect(page.getByText('Currículo')).toHaveCount(0)
+  await expect(page.getByText('Ele esqueceu algo?')).toHaveCount(0)
 })
 
-test('glossário: busca sem acento', async ({ page }) => {
+test('limpeza: nada de "?", glossário nem Agente × regras', async ({ page }) => {
+  for (const rota of ['/', '/historico', '/ciclo', '/dinheiro', '/ajustes', '/dev/treino', '/dev/modelo']) {
+    await page.goto(rota)
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible()
+    await expect(page.getByRole('button', { name: /^O que é / })).toHaveCount(0)
+    await expect(page.getByText(/Agente × regras|Glossário|perturbaç/i)).toHaveCount(0)
+  }
   await page.goto('/glossario')
-  await page.getByPlaceholder('Buscar (ex.: VPD, mutação)').fill('mutacao')
-  await expect(page.getByText('Mutação', { exact: false }).first()).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Página não encontrada' })).toBeVisible()
 })
 
 test('tour do desenvolvedor aparece uma vez', async ({ page, isMobile }) => {

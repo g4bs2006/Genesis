@@ -8,7 +8,6 @@ import {
   IconeAjustesCheio,
   IconeCiclo,
   IconeCicloCheio,
-  IconeComparar,
   IconeDinheiro,
   IconeDinheiroCheio,
   IconeEstufa,
@@ -29,7 +28,6 @@ export const navegacao = {
       { rota: '/historico', rotulo: 'Histórico', icone: IconeHistorico },
       { rota: '/ciclo', rotulo: 'Ciclo', icone: IconeCiclo },
       { rota: '/dinheiro', rotulo: 'Dinheiro', icone: IconeDinheiro },
-      { rota: '/agente-x-regras', rotulo: 'Agente × regras', icone: IconeComparar },
       { rota: '/ajustes', rotulo: 'Ajustes', icone: IconeAjustes },
     ],
     // no celular, a aba ativa ganha o ícone cheio (a cor sozinha é pouco)

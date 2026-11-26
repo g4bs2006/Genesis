@@ -3,7 +3,6 @@ import { HStack } from '@astryxdesign/core/HStack'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import type { Passo } from '@/modules/estufa'
-import { OQueEIsso } from '@/modules/glossario'
 import { camadas, SAIDAS, type Modelo } from '@/modules/treino'
 import { DiagramaRede } from '@/shared/design-system/graficos/DiagramaRede'
 import { formatarNumero } from '@/shared/lib/formatar'
@@ -78,7 +77,6 @@ const Desenho = memo(function Desenho({ modelo, passos, passo }: { modelo: Model
         <Text type="supporting" color="secondary">
           rede · ilustração
         </Text>
-        <OQueEIsso id="redeRecalculada" />
       </HStack>
       <DiagramaRede
         compacto

@@ -45,7 +45,7 @@ export function Moldura() {
   // título da aba do navegador acompanha a página (e o leitor de tela anuncia)
   useEffect(() => {
     const item = [...navegacao.produtor.desktop, ...navegacao.desenvolvedor.desktop].find((i) => i.rota === pathname)
-    const extra: Record<string, string> = { '/glossario': 'Glossário', '/laboratorio/alface': 'Laboratório da alface' }
+    const extra: Record<string, string> = { '/laboratorio/alface': 'Laboratório da alface' }
     const nome = item?.rotulo ?? extra[pathname]
     document.title = nome ? `${nome} · Genesis` : 'Genesis'
   }, [pathname])
@@ -67,7 +67,15 @@ export function Moldura() {
     </>
   )
 
-  if (!largo) return <CascaCelular abas={navegacao[modo].celular}>{conteudo}</CascaCelular>
+  if (!largo)
+    return (
+      <CascaCelular
+        abas={navegacao[modo].celular}
+        topo={<SeletorModo valor={modo} aoTrocar={aoTrocarModo} tamanho="md" />}
+      >
+        {conteudo}
+      </CascaCelular>
+    )
 
   return (
     <CascaDesktop

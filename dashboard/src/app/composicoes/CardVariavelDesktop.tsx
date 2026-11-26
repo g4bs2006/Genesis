@@ -2,8 +2,7 @@ import { memo } from 'react'
 import { CardVariavel } from '@/shared/design-system/molecules/CardVariavel'
 import { Sparkline } from '@/shared/design-system/graficos/Sparkline'
 import { estadoConfirmadoDoGrupo, FAIXAS, valorDe, valorExibido, type Passo, type Variavel } from '@/modules/estufa'
-import { OQueEIsso } from '@/modules/glossario'
-import { ehExemplo, faixaTexto, formatarVariavel, TERMO_DA_VARIAVEL } from './variaveis'
+import { ehExemplo, faixaTexto, formatarVariavel } from './variaveis'
 
 /**
  * Card do desktop: valor, faixa e sparkline de 24 h (cinza; colorida só fora
@@ -30,10 +29,6 @@ export const CardVariavelDesktop = memo(function CardVariavelDesktop({
     : f.apoio
   return (
     <CardVariavel
-      dica={(() => {
-        const t = TERMO_DA_VARIAVEL[v] ?? (segunda ? TERMO_DA_VARIAVEL[segunda] : undefined)
-        return t ? <OQueEIsso id={t} /> : undefined
-      })()}
       nome={f.nome}
       valor={formatarVariavel(v, valorDe(passo.leitura, v))}
       unidade={unidade(v)}

@@ -26,7 +26,6 @@ export const roteador = createBrowserRouter([
       { path: '/historico', ...pagina(() => import('./composicoes/PaginaHistorico'), 'PaginaHistorico') },
       { path: '/ciclo', ...pagina(() => import('./composicoes/PaginaCiclo'), 'PaginaCiclo') },
       { path: '/dinheiro', ...pagina(() => import('./composicoes/PaginaDinheiro'), 'PaginaDinheiro') },
-      { path: '/agente-x-regras', ...pagina(() => import('./composicoes/PaginaAgenteRegras'), 'PaginaAgenteRegras') },
       { path: '/ajustes', element: <PaginaAjustes /> },
       { path: '/dev', ...pagina(() => import('./composicoes/PaginaResumoDev'), 'PaginaDev') },
       {
@@ -36,7 +35,6 @@ export const roteador = createBrowserRouter([
         ...pagina(() => import('@/modules/treino/presentation/PaginaTreino'), 'PaginaTreino'),
       },
       { path: '/dev/modelo', ...pagina(() => import('./composicoes/PaginaModelo'), 'PaginaModelo') },
-      { path: '/glossario', ...pagina(() => import('@/modules/glossario'), 'PaginaGlossario') },
       { path: '/dev/gravacoes', ...pagina(() => import('./composicoes/PaginaGravacoes'), 'PaginaGravacoes') },
       {
         path: '/laboratorio/alface',

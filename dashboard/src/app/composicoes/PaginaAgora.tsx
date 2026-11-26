@@ -32,7 +32,6 @@ import { formatarHora } from '@/shared/lib/formatar'
 import { origemDosDados } from '../dependencias'
 import { CardGrupo } from './CardGrupo'
 import { CardVariavelDesktop } from './CardVariavelDesktop'
-import { ComparacaoAgenteRegras } from './ComparacaoAgenteRegras'
 import { GraficosAbas } from './GraficosAbas'
 import { CurvaCrescimento } from '@/shared/design-system/graficos/CurvaCrescimento'
 import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
@@ -66,7 +65,7 @@ function Agora({ estufa }: { estufa: Estufa }) {
   )
 }
 
-/** Desktop: tudo do celular e mais os gráficos e a comparação com as regras fixas. */
+/** Desktop: tudo do celular e mais os gráficos das últimas 24 horas. */
 function AgoraDesktop({ estufa, passos, atual }: { estufa: Estufa; passos: Passo[]; atual: Passo }) {
   const resumo = useResumoCiclo(estufa.id)
   return (
@@ -102,12 +101,6 @@ function AgoraDesktop({ estufa, passos, atual }: { estufa: Estufa; passos: Passo
         <VStack gap={3}>
           <Heading level={2}>Últimas 24 horas</Heading>
           <GraficosAbas passos={passos} />
-        </VStack>
-      </Card>
-      <Card>
-        <VStack gap={3}>
-          <Heading level={2}>Agente × regras fixas</Heading>
-          <ComparacaoAgenteRegras />
         </VStack>
       </Card>
     </VStack>

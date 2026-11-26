@@ -5,9 +5,9 @@
  * e nunca sabem se quem responde é o simulador, o treino ou a estufa real.
  * Aqui se escolhe o "adaptador" (a peça que implementa a porta):
  *
- *   npm run demo  -> dadosExemplo (JSON fixo e coerente; também nos testes e2e)
- *   npm run dev   -> simuladorBrinquedo (estufa de brinquedo num Web Worker)
- *   depois        -> estufa real por MQTT (backend)
+ *   estufa -> dadosExemplo (JSON fixo; também nos testes e2e). O simulador de
+ *             brinquedo saiu (passo 08): a estufa passa a reproduzir uma
+ *             gravação real do treino (passo 10).
  *
  * O treino e as gravações vêm do Supabase (o treino de verdade, rodando no PC)
  * quando as duas variáveis VITE_SUPABASE_* existem (no Vercel e no
@@ -15,7 +15,7 @@
  * com o selo "dados de exemplo" na tela.
  */
 import { createClient } from '@supabase/supabase-js'
-import { criarFonteEstufaExemplo, criarSimuladorBrinquedo } from '@/modules/estufa'
+import { criarFonteEstufaExemplo } from '@/modules/estufa'
 import { criarFonteGravacoesExemplo, criarFonteTreinoExemplo, criarFonteTreinoSupabase } from '@/modules/treino'
 import { criarRepositorioPrecosLocal } from '@/modules/dinheiro'
 
@@ -41,13 +41,11 @@ const treinoSupabase = treinoNaNuvem
 
 export const origemTreino: 'exemplo' | 'nuvem' = treinoSupabase ? 'nuvem' : 'exemplo'
 
-export const origemDosDados: 'exemplo' | 'simulada' = demo ? 'exemplo' : 'simulada'
-
-const simulador = demo ? null : criarSimuladorBrinquedo()
+export const origemDosDados: 'exemplo' | 'simulada' = 'exemplo'
 
 export const dependencias = {
-  fonteEstufa: demo ? criarFonteEstufaExemplo() : simulador!,
-  controleSimulacao: simulador,
+  fonteEstufa: criarFonteEstufaExemplo(),
+  controleSimulacao: null,
   fonteTreino: treinoSupabase ?? criarFonteTreinoExemplo(),
   fonteGravacoes: treinoSupabase ?? criarFonteGravacoesExemplo(),
   origemTreino,

@@ -9,7 +9,6 @@ import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
-import { Link } from '@astryxdesign/core/Link'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { Text } from '@astryxdesign/core/Text'
@@ -26,12 +25,10 @@ import {
   projecao,
   resultadoDoCiclo,
   usePrecos,
-  vantagemDoAgente,
   type Cenario,
   type Precos,
 } from '@/modules/dinheiro'
-import { useEstufaAtual, useEstufas, useResumoCiclo, type Estufa, type ResumoCiclo } from '@/modules/estufa'
-import { OQueEIsso } from '@/modules/glossario'
+import { useEstufaAtual, useResumoCiclo, type Estufa, type ResumoCiclo } from '@/modules/estufa'
 import { BarraEmpilhada } from '@/shared/design-system/graficos/BarraEmpilhada'
 import { SeloDados } from '@/shared/design-system/molecules/SeloDados'
 import { useAtraso } from '@/shared/hooks/useAtraso'
@@ -127,7 +124,7 @@ function Dinheiro({
           {formatarReais(precos.alfacePorPe[cenario])}/pé)
         </Text>
         {/* largura mínima: no celular "por ano" desce para a linha de baixo em vez de sair do card */}
-        <Grid columns={{ minWidth: 140 }} gap={3}>
+        <Grid columns={{ minWidth: 140, repeat: 'fit' }} gap={3}>
           {(
             [
               ['por ciclo', p.ciclo],
@@ -187,10 +184,7 @@ function Dinheiro({
         <Equilibrio estufa={estufa} resumo={resumo} precos={precos} cenario={cenario} />
       </Grid>
       {barra}
-      <Grid columns={2} gap={4}>
-        <Cenarios estufa={estufa} resumo={resumo} precos={precos} />
-        <VantagemAgente estufa={estufa} precos={precos} cenario={cenario} />
-      </Grid>
+      <Cenarios estufa={estufa} resumo={resumo} precos={precos} />
       <Suposicoes />
     </VStack>
   )
@@ -202,7 +196,6 @@ function Cenarios({ estufa, resumo, precos }: { estufa: Estufa; resumo: ResumoCi
       <VStack gap={2}>
         <HStack gap={1} align="center">
           <Heading level={2}>Cenários de preço</Heading>
-          <OQueEIsso id="cenarioPreco" />
         </HStack>
         <Grid columns={3} gap={3}>
           {(['baixo', 'medio', 'alto'] as const).map((c) => {
@@ -244,7 +237,6 @@ function Equilibrio({
       <VStack gap={2}>
         <HStack gap={1} align="center">
           <Heading level={2}>Ponto de equilíbrio</Heading>
-          <OQueEIsso id="pontoEquilibrio" />
         </HStack>
         <Text color="secondary">Abaixo disto, a estufa não se paga.</Text>
         <Grid columns={2} gap={3}>
@@ -270,31 +262,6 @@ function Equilibrio({
   )
 }
 
-function VantagemAgente({ estufa, precos, cenario }: { estufa: Estufa; precos: Precos; cenario: Cenario }) {
-  const estufas = useEstufas()
-  const regras = estufas.data?.find((e) => e.controlador.tipo === 'regras')
-  const ra = useResumoCiclo(estufa.id)
-  const rr = useResumoCiclo(regras?.id ?? '')
-  if (estufa.controlador.tipo !== 'agente' || !regras || !ra.data || !rr.data) return null
-  const ganho = vantagemDoAgente(ra.data, rr.data, estufa.plantas, precos, cenario)
-  return (
-    <Card>
-      <VStack gap={2}>
-        <Heading level={2}>Quanto o agente ganha</Heading>
-        <Text size="3xl" weight="medium" hasTabularNumbers>
-          {ganho >= 0 ? '+' : '−'}
-          {formatarReaisCurto(Math.abs(ganho))}
-        </Text>
-        <Text color="secondary">
-          por ciclo, contra as regras fixas no mesmo clima (
-          {formatarReaisCurto(projecao(ganho, estufa.diasDoCiclo).ano)} por ano).
-        </Text>
-        <Link href="/agente-x-regras">Ver a comparação</Link>
-      </VStack>
-    </Card>
-  )
-}
-
 /** As contas assumem coisas: elas ficam à vista, para ninguém tomar a projeção por promessa. */
 function Suposicoes() {
   return (
@@ -302,7 +269,6 @@ function Suposicoes() {
       <VStack gap={1}>
         <HStack gap={1} align="center">
           <Text weight="medium">Como a conta é feita</Text>
-          <OQueEIsso id="suposicoesConta" />
         </HStack>
         <Text type="supporting" color="secondary">
           Preço por pé de uma cabeça de {MASSA_COMERCIAL_G} g (bônus até 10%); abaixo de {MASSA_MINIMA_VENDA_G} g não

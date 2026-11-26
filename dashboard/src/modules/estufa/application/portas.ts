@@ -3,7 +3,7 @@
  * Quem implementa (adaptador) fica em infrastructure/; quem escolhe o
  * adaptador é só src/app/dependencias.ts.
  */
-import type { Estufa, Evento, Passo, Perturbacao, ResumoCiclo } from '../domain/contrato'
+import type { Estufa, Evento, Passo, ResumoCiclo } from '../domain/contrato'
 
 export interface FonteEstufa {
   listarEstufas(): Promise<Estufa[]>
@@ -21,7 +21,7 @@ export interface FonteEstufa {
 export type EstadoRelogio = { pausado: boolean; velocidade: number; instante: string }
 
 /**
- * Só existe quando a estufa é simulada: o relógio e as perturbações.
+ * Só existe quando a estufa é simulada (ou reproduzida): o relógio.
  * A estufa real não tem pausa (dependencias.ts devolve null).
  */
 export interface ControleSimulacao {
@@ -31,6 +31,4 @@ export interface ControleSimulacao {
   continuar(): void
   /** Quantos passos de 10 min por segundo de tela (1 = um passo por segundo) */
   acelerar(velocidade: number): void
-  pular(minutos: number): void
-  injetar(perturbacao: Perturbacao): void
 }

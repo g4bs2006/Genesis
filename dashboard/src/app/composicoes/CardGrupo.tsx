@@ -8,8 +8,7 @@ import {
   type Passo,
   type Variavel,
 } from '@/modules/estufa'
-import { OQueEIsso } from '@/modules/glossario'
-import { ehExemplo, faixaTexto, formatarVariavel, TERMO_DA_VARIAVEL } from './variaveis'
+import { ehExemplo, faixaTexto, formatarVariavel } from './variaveis'
 
 const SETA = { subindo: '↑', caindo: '↓', estavel: '' } as const
 
@@ -25,10 +24,6 @@ export function CardGrupo({ grupo, passo, passos }: { grupo: Grupo; passo: Passo
     : grupo.apoio
   return (
     <CardVariavel
-      dica={(() => {
-        const t = TERMO_DA_VARIAVEL[principal] ?? (secundaria ? TERMO_DA_VARIAVEL[secundaria] : undefined)
-        return t ? <OQueEIsso id={t} /> : undefined
-      })()}
       tamanho="compacto"
       nome={grupo.nome}
       valor={formatarVariavel(principal, valorDe(passo.leitura, principal))}

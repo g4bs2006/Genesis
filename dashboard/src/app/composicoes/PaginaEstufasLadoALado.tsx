@@ -4,11 +4,8 @@
  * Junta estufa, alface e dinheiro: por isso mora em composicoes.
  */
 import { useCallback, useEffect, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { Badge } from '@astryxdesign/core/Badge'
-import { Button } from '@astryxdesign/core/Button'
 import { Card } from '@astryxdesign/core/Card'
-import { Grid } from '@astryxdesign/core/Grid'
 import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
@@ -19,17 +16,14 @@ import { AlfaceImagem, aparenciaMedia, descreverPlanta } from '@/modules/alface'
 import { formatarReaisCurto, resultadoDoCiclo, usePrecos } from '@/modules/dinheiro'
 import {
   FAIXAS,
-  PERTURBACOES,
   useEstufas,
   useJanela,
-  useRelogio,
   useResumos,
   valorDe,
   valorExibido,
   type Controlador,
   type Estufa,
   type Passo,
-  type Perturbacao,
   type ResumoCiclo,
   type Variavel,
 } from '@/modules/estufa'
@@ -40,21 +34,12 @@ import { useAtraso } from '@/shared/hooks/useAtraso'
 import { formatarData, formatarHora, formatarNumero } from '@/shared/lib/formatar'
 import { origemDosDados } from '../dependencias'
 import css from './PaginaEstufasLadoALado.module.css'
-import { OQueEIsso } from '@/modules/glossario'
 
 const NOME_CONTROLADOR: Record<Controlador['tipo'], string> = {
   agente: 'agente',
   regras: 'regras fixas',
   pid: 'PID',
   nada: 'sem controle',
-}
-const NOME_PERTURBACAO: Record<Perturbacao, string> = {
-  ondaDeCalor: 'Onda de calor',
-  phDescalibra: 'Sensor de pH descalibra',
-  bombaTrava: 'Bomba trava',
-  quedaDeEnergia: 'Queda de energia',
-  ruidoSensores: 'Ruído nos sensores',
-  tarifaDePico: 'Tarifa de pico',
 }
 const VARIAVEIS_COMPARADAS: Variavel[] = ['temperatura', 'umidade', 'ph', 'ec', 'temperaturaAgua']
 
@@ -68,8 +53,6 @@ export function PaginaEstufasLadoALado() {
 function LadoALado({ estufas }: { estufas: Estufa[] }) {
   const resumos = useResumos(estufas.map((e) => e.id))
   const precos = usePrecos()
-  const { estado: relogio, controle } = useRelogio()
-  const cliente = useQueryClient()
   const [variavel, setVariavel] = useState<Variavel>('temperatura')
   const [instante, setInstante] = useState<number | null>(null)
   const [passos, setPassos] = useState<Record<string, Passo[]>>({})
@@ -84,14 +67,6 @@ function LadoALado({ estufas }: { estufas: Estufa[] }) {
     .map((e, i) => ({ e, i, lucro: lucro(i) }))
     .sort((a, b) => (b.lucro ?? -Infinity) - (a.lucro ?? -Infinity))
 
-  const injetar = (p: Perturbacao) => {
-    controle?.injetar(p)
-    // a perturbação vira Evento em todas as estufas: a lista precisa recarregar
-    setTimeout(() => cliente.invalidateQueries({ queryKey: ['eventos'] }), 300)
-  }
-  const acelerado = (relogio?.velocidade ?? 1) > 1
-  const semSimulador = 'Disponível com o simulador (npm run dev)'
-  const semBackend = 'Chega com o simulador do backend (clima do INMET e estufas novas)'
   const primeiroPasso = Object.values(passos)[0]?.at(-1)
 
   return (
@@ -111,24 +86,7 @@ function LadoALado({ estufas }: { estufas: Estufa[] }) {
             />
           </HStack>
         </VStack>
-        <HStack gap={2} wrap="wrap">
-          <Button label="Escolher o clima" isDisabled tooltip={semBackend} />
-          <Button label="+ Estufa" isDisabled tooltip={semBackend} />
-          <Button
-            label={acelerado ? 'Voltar ao normal' : 'Rodar ciclo acelerado'}
-            variant="primary"
-            isDisabled={!controle}
-            tooltip={semSimulador}
-            onClick={() => controle?.acelerar(acelerado ? 1 : 60)}
-          />
-        </HStack>
       </HStack>
-      {/* botão apagado sem motivo parece defeito: uma linha diz por quê (a dica não abre em botão desabilitado) */}
-      {!controle && (
-        <Text type="supporting" color="secondary">
-          Botões apagados: o clima, as estufas e as perturbações precisam do simulador (npm run dev).
-        </Text>
-      )}
 
       <section className={css.cartoes}>
         {ordem.map(({ e, i }, posicao) => (
@@ -178,36 +136,15 @@ function LadoALado({ estufas }: { estufas: Estufa[] }) {
         </VStack>
       </Card>
 
-      <Grid columns={2} gap={4}>
-        <Card>
-          <VStack gap={2}>
-            <Heading level={2}>Onde cada um erra</Heading>
-            <Text type="supporting" color="secondary">
-              % do tempo fora da faixa, por variável e por controlador.
-            </Text>
-            <MapaDeErros estufas={estufas} resumos={resumos.map((r) => r.data)} />
-          </VStack>
-        </Card>
-        <Card>
-          <VStack gap={2}>
-            <HStack gap={1} align="center">
-              <Heading level={2}>Injetar perturbação</Heading>
-              <OQueEIsso id="perturbacao" />
-            </HStack>
-            <Grid columns={2} gap={2}>
-              {PERTURBACOES.map((p) => (
-                <Button
-                  key={p}
-                  label={NOME_PERTURBACAO[p]}
-                  isDisabled={!controle}
-                  tooltip={semSimulador}
-                  onClick={() => injetar(p)}
-                />
-              ))}
-            </Grid>
-          </VStack>
-        </Card>
-      </Grid>
+      <Card>
+        <VStack gap={2}>
+          <Heading level={2}>Onde cada um erra</Heading>
+          <Text type="supporting" color="secondary">
+            % do tempo fora da faixa, por variável e por controlador.
+          </Text>
+          <MapaDeErros estufas={estufas} resumos={resumos.map((r) => r.data)} />
+        </VStack>
+      </Card>
     </VStack>
   )
 }

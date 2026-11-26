@@ -40,7 +40,6 @@ import {
   type ResumoGravacao,
 } from '@/modules/treino'
 import { useAtraso } from '@/shared/hooks/useAtraso'
-import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
 import { formatarData, formatarHora, formatarNumero } from '@/shared/lib/formatar'
 import { MiniRede } from './MiniRede'
 import css from './PaginaGravacoes.module.css'
@@ -61,7 +60,6 @@ import {
   VELOCIDADES,
   type EventoGravacao,
 } from './reproducao'
-import { OQueEIsso } from '@/modules/glossario'
 
 export function PaginaGravacoes() {
   const lista = useGravacoes()
@@ -80,7 +78,6 @@ function rotuloDoPasso(passos: readonly Passo[], i: number): string {
 }
 
 function Reproducao({ resumos }: { resumos: ResumoGravacao[] }) {
-  const largo = useTelaLarga()
   const [busca] = useSearchParams()
   // os parâmetros só valem na chegada (link copiado ou pulo vindo da página Modelo)
   const [inicial] = useState(() => {
@@ -198,7 +195,6 @@ function Reproducao({ resumos }: { resumos: ResumoGravacao[] }) {
       <VStack gap={1}>
         <HStack gap={1} align="center">
           <Heading level={1}>Gravações</Heading>
-          <OQueEIsso id="gravacao" />
         </HStack>
         <Text color="secondary">Escolha até {MAXIMO_LADO_A_LADO} ciclos gravados para ver no mesmo relógio.</Text>
       </VStack>
@@ -290,8 +286,6 @@ function Reproducao({ resumos }: { resumos: ResumoGravacao[] }) {
                   onClick={() => void copiarLink()}
                 />
               </HStack>
-              {/* atalhos de teclado não servem no celular */}
-              {largo && <OQueEIsso id="replay" rotulo="atalhos do teclado" />}
             </VStack>
           </Card>
 

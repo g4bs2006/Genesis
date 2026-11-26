@@ -135,14 +135,3 @@ export const ResumoCiclo = z.object({
   barradas: z.number().int().min(0),
 })
 export type ResumoCiclo = z.infer<typeof ResumoCiclo>
-
-/** Perturbações que o desenvolvedor injeta em todas as estufas ao mesmo tempo. */
-export const PERTURBACOES = [
-  'ondaDeCalor',
-  'phDescalibra',
-  'bombaTrava',
-  'quedaDeEnergia',
-  'ruidoSensores',
-  'tarifaDePico',
-] as const
-export type Perturbacao = (typeof PERTURBACOES)[number]

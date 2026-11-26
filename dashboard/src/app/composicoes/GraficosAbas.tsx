@@ -7,7 +7,6 @@ import type { Passo } from '@/modules/estufa'
 import { GraficoSerie } from '@/shared/design-system/graficos/GraficoSerie'
 import { formatarData, formatarHora } from '@/shared/lib/formatar'
 import { abasDoHistorico } from './series'
-import { OQueEIsso } from '@/modules/glossario'
 
 /** Os gráficos com abas (Temperatura · pH e EC · Água · Luz e CO₂). Usado no Agora e no Histórico. */
 export function GraficosAbas({ passos, altura = 200 }: { passos: Passo[]; altura?: number }) {
@@ -50,10 +49,7 @@ export function GraficosAbas({ passos, altura = 200 }: { passos: Passo[]; altura
           </VStack>
         ))}
       </VStack>
-      <HStack gap={4} wrap="wrap">
-        <OQueEIsso id="faixaBoa" rotulo="faixa verde: onde a alface fica bem" />
-        <OQueEIsso id="faixaAcoes" rotulo="embaixo: as ações do controlador" />
-      </HStack>
+      <HStack gap={4} wrap="wrap"></HStack>
     </VStack>
   )
 }
