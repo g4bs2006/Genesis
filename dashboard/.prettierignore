@@ -5,3 +5,5 @@ test-results
 src/shared/design-system/tema/genesis.*
 AGENTS.md
 scripts/_*
+# recortes de gravações reais (scripts/gerar-dados-exemplo.mjs), JSON numa linha
+src/modules/treino/infrastructure/dadosExemplo/*.json

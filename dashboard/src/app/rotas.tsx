@@ -3,7 +3,7 @@ import type { ComponentType } from 'react'
 import { BarraProgresso } from '@/shared/design-system/atoms/BarraProgresso'
 import { Moldura } from './Moldura'
 import { PaginaAjustes } from './PaginaAjustes'
-import { PaginaEsboco } from './PaginaEsboco'
+import { PaginaNaoEncontrada } from './PaginaNaoEncontrada'
 
 /**
  * Mapa de rotas: cada endereço (URL) aponta para uma página.
@@ -36,11 +36,12 @@ export const roteador = createBrowserRouter([
       },
       { path: '/dev/modelo', ...pagina(() => import('./composicoes/PaginaModelo'), 'PaginaModelo') },
       { path: '/dev/gravacoes', ...pagina(() => import('./composicoes/PaginaGravacoes'), 'PaginaGravacoes') },
+      { path: '/dev/vitrine', ...pagina(() => import('./composicoes/PaginaVitrine'), 'PaginaVitrine') },
       {
         path: '/laboratorio/alface',
         ...pagina(() => import('@/modules/alface'), 'PaginaLaboratorioAlface'),
       },
-      { path: '*', element: <PaginaEsboco titulo="Página não encontrada" fase={0} /> },
+      { path: '*', element: <PaginaNaoEncontrada /> },
     ],
   },
   // O visor fica fora da Moldura: sem barra lateral nem abas

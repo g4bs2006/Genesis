@@ -24,7 +24,7 @@ import {
   estadoDoGrupo,
   FAIXAS,
   GRUPOS_CELULAR,
-  massaEsperada,
+  massaNoDia,
   valorDe,
   valorExibido,
   type EstadoVariavel,
@@ -339,7 +339,11 @@ const Painel = memo(function Painel({
             <Text color="secondary">Não deu para carregar esta gravação.</Text>
           ) : gravacao ? (
             <>
-              <Instante passos={gravacao.passos} passo={Math.min(passo, gravacao.passos.length - 1)} />
+              <Instante
+                passos={gravacao.passos}
+                massaPorDia={gravacao.massaPorDia}
+                passo={Math.min(passo, gravacao.passos.length - 1)}
+              />
               <MiniRede modelo={modelo} passos={gravacao.passos} passo={Math.min(passo, gravacao.passos.length - 1)} />
             </>
           ) : (
@@ -351,15 +355,16 @@ const Painel = memo(function Painel({
   )
 })
 
-function Instante({ passos, passo }: { passos: Passo[]; passo: number }) {
+function Instante({ passos, massaPorDia, passo }: { passos: Passo[]; massaPorDia?: number[]; passo: number }) {
   const atual = passos[passo]
   if (!atual) return null
   const dia = diaDoPasso(passos, passo)
-  // Estimativa: a gravação não traz a massa da planta, então usamos a curva de
-  // crescimento esperada para o dia do ciclo (massaEsperada). A cara da planta
+  // A massa vem da gravação (massaPorDia, desde o passo 09). A cara da planta
   // (murcha, amarela, queimada) vem das leituras gravadas dos últimos 6 passos.
+  // Gravação antiga, sem massa: o desenho fica sem tamanho (0 g), nada inventado.
   const recentes = passos.slice(Math.max(0, passo - 5), passo + 1).map((p) => p.leitura)
-  const parametros = aparenciaMedia(recentes, massaEsperada(dia))
+  const massa = massaPorDia ? massaNoDia(massaPorDia, dia) : 0
+  const parametros = aparenciaMedia(recentes, massa)
   const { acoes } = atual
 
   return (
@@ -367,7 +372,11 @@ function Instante({ passos, passo }: { passos: Passo[]; passo: number }) {
       <Text className={css.relogio} color="secondary">
         {rotuloDoPasso(passos, passo)}
       </Text>
-      <AlfaceImagem parametros={parametros} rotulo={`${descreverPlanta(parametros)} (massa estimada)`} largura={160} />
+      <AlfaceImagem
+        parametros={parametros}
+        rotulo={massaPorDia ? `${descreverPlanta(parametros)}, ${Math.round(massa)} g` : descreverPlanta(parametros)}
+        largura={160}
+      />
       <span className={css.medidores}>
         {GRUPOS_CELULAR.map((g) => (
           <Medidor key={g.id} grupo={g} passo={atual} />

@@ -44,6 +44,8 @@ export const navegacao = {
       { rota: '/dev/treino', rotulo: 'Treino e gerações', icone: IconeTreino },
       { rota: '/dev/modelo', rotulo: 'Modelo', icone: IconeRede },
       { rota: '/dev/gravacoes', rotulo: 'Gravações', icone: IconeGravacao },
+      // o que o modo Produtor mostra: por isso o ícone da estufa (o do Agora)
+      { rota: '/dev/vitrine', rotulo: 'Vitrine do produtor', icone: IconeEstufa },
     ],
     // no celular, o desenvolvedor só vê o resumo do treino (seção 6 do prompt)
     celular: [

@@ -23,8 +23,9 @@ const PASSOS = [
       'Treino mostra a evolução geração a geração. Modelo abre a rede por dentro: quais entradas pesaram em cada decisão.',
   },
   {
-    titulo: 'Gravações',
-    texto: 'Gravações reproduz um ciclo inteiro acelerado, com as ações gravadas no treino.',
+    titulo: 'Gravações e a Vitrine',
+    texto:
+      'Gravações reproduz um ciclo inteiro acelerado, com as ações gravadas no treino. Na Vitrine do produtor você escolhe qual gravação o modo Produtor mostra, e em que velocidade.',
   },
 ]
 

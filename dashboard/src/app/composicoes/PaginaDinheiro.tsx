@@ -30,11 +30,10 @@ import {
 } from '@/modules/dinheiro'
 import { useEstufaAtual, useResumoCiclo, type Estufa, type ResumoCiclo } from '@/modules/estufa'
 import { BarraEmpilhada } from '@/shared/design-system/graficos/BarraEmpilhada'
-import { SeloDados } from '@/shared/design-system/molecules/SeloDados'
 import { useAtraso } from '@/shared/hooks/useAtraso'
 import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
 import { formatarNumero } from '@/shared/lib/formatar'
-import { origemDosDados } from '../dependencias'
+import { ControleReproducao } from './ControleReproducao'
 
 const COR_FATIA: Record<string, string> = {
   energia: 'var(--serie-amarelo)',
@@ -87,7 +86,7 @@ function Dinheiro({
   const topo = (
     <HStack justify="between" align="end" wrap="wrap" gap={3}>
       <VStack gap={1}>
-        {origemDosDados === 'exemplo' && <SeloDados origem="exemplo" />}
+        <ControleReproducao />
         <Heading level={1}>Dinheiro</Heading>
         <Text color="secondary">
           {estufa.nome} · {estufa.plantas} pés · ciclo de {estufa.diasDoCiclo} dias

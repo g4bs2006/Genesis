@@ -1,19 +1,48 @@
 import { expect, test } from '@playwright/test'
 
-test('produtor: abre no Agora com a frase de estado e o selo de dados de exemplo', async ({ page }) => {
+test('produtor: abre no Agora com a frase de estado e o selo da reprodução', async ({ page }) => {
   await page.goto('/')
-  // estufa 1 dos dados de exemplo: só o pH pede atenção
-  await expect(page.getByRole('heading', { level: 1, name: 'Quase tudo na faixa' })).toBeVisible()
-  await expect(page.getByText('1 ponto pede atenção')).toBeVisible()
-  await expect(page.getByText('estufa simulada · dados de exemplo')).toBeVisible()
+  // sem escolha na Vitrine: o campeão mais recente (controle automático)
+  await expect(page.getByRole('heading', { level: 1, name: /na faixa|saiu da faixa/ })).toBeVisible()
+  await expect(page.getByText(/^O controle automático cuida da estufa/)).toBeVisible()
+  await expect(page.getByText(/^ciclo gravado no simulador · 1 h por segundo/)).toBeVisible()
   await expect(page.getByText('Lucro previsto do ciclo')).toBeVisible()
+  // nada de jargão de treino no Produtor
+  await expect(page.getByText(/agente|geração/i)).toHaveCount(0)
 })
 
-test('ciclo: estágios, curva e histórico de alertas', async ({ page }) => {
+test('produtor: pausar a reprodução para o relógio', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Pausar' }).click()
+  await expect(page.getByText(/^ciclo gravado no simulador · pausado/)).toBeVisible()
+  await page.getByRole('button', { name: 'Continuar' }).click()
+  await expect(page.getByText(/^ciclo gravado no simulador · 1 h por segundo/)).toBeVisible()
+})
+
+test('vitrine: escolher as regras fixas muda o que o Produtor vê, e a escolha fica salva', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'a Vitrine é do desktop')
+  // só na primeira página: depois, a escolha da Vitrine fica no navegador
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('genesis:preferencias'))
+      localStorage.setItem('genesis:preferencias', JSON.stringify({ state: { tourDevVisto: true }, version: 0 }))
+  })
+  await page.goto('/dev/vitrine')
+  await page.getByRole('button', { name: /^Regras fixas/ }).click()
+  await page.goto('/')
+  await expect(page.getByText(/^O termostato cuida da estufa/)).toBeVisible()
+  await page.reload()
+  await expect(page.getByText(/^O termostato cuida da estufa/)).toBeVisible()
+})
+
+test('ciclo: estágios e a curva da gravação, sem o histórico de alertas', async ({ page }) => {
   await page.goto('/ciclo')
   await expect(page.getByRole('heading', { level: 1, name: 'Ciclo' })).toBeVisible()
   await expect(page.getByText('Crescimento rápido')).toBeVisible()
   await expect(page.getByRole('img', { name: /Curva de crescimento/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /alertas/i })).toHaveCount(0)
 })
 
 test('navega pelas abas (celular) ou pela barra lateral (desktop)', async ({ page, isMobile }) => {
@@ -36,13 +65,17 @@ test('desktop: Agora com os gráficos das últimas 24 horas', async ({ page, isM
   test.skip(isMobile, 'gráficos são do desktop')
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Últimas 24 horas' })).toBeVisible()
+  // no lugar do antigo "Agente × regras": quando colher
+  await expect(page.getByText('Colheita', { exact: true })).toBeVisible()
   await page.getByRole('tab', { name: 'pH e EC' }).click()
   await expect(page.getByText('pH da solução')).toBeVisible()
 })
 
-test('histórico exporta CSV', async ({ page, isMobile }) => {
+test('histórico: período, alertas e CSV', async ({ page, isMobile }) => {
   test.skip(isMobile, 'histórico é do desktop')
   await page.goto('/historico')
+  await expect(page.getByRole('heading', { name: 'Alertas do período' })).toBeVisible()
+  await page.getByRole('radio', { name: 'Ciclo todo' }).click()
   const download = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Exportar CSV' }).click()
   expect((await download).suggestedFilename()).toMatch(/^genesis-.*\.csv$/)

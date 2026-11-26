@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Tab, TabList } from '@astryxdesign/core/TabList'
 import { Text } from '@astryxdesign/core/Text'
-import { HStack } from '@astryxdesign/core/HStack'
 import { VStack } from '@astryxdesign/core/VStack'
 import type { Passo } from '@/modules/estufa'
 import { GraficoSerie } from '@/shared/design-system/graficos/GraficoSerie'
@@ -41,7 +40,9 @@ export function GraficosAbas({ passos, altura = 200 }: { passos: Passo[]; altura
               series={p.series}
               faixa={p.faixa}
               acoes={p.acoes}
-              altura={atual.paineis.length > 1 ? altura * 0.5 : altura}
+              marcas={p.marcas}
+              // cada gráfico com a altura inteira: pH e EC não ficam espremidos em meia altura
+              altura={altura}
               rotulo={`${p.titulo} no período, com a faixa boa e as ações do controlador`}
               formatarValor={p.formatarValor}
               formatarTempo={formatarTempo}
@@ -49,7 +50,11 @@ export function GraficosAbas({ passos, altura = 200 }: { passos: Passo[]; altura
           </VStack>
         ))}
       </VStack>
-      <HStack gap={4} wrap="wrap"></HStack>
+      {atual.paineis.some((p) => p.marcas.length > 0) && (
+        <Text type="supporting" color="secondary">
+          ▲ ligou · ▼ desligou, na cor de cada equipamento (as faixas embaixo do gráfico mostram a força)
+        </Text>
+      )}
     </VStack>
   )
 }

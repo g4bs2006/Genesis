@@ -1,1 +1,0 @@
-export { criarFonteEstufaExemplo } from './fonteEstufaExemplo'

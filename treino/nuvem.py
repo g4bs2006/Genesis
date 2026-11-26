@@ -344,6 +344,12 @@ class Sincronizador:
             arq = p / "gravacoes" / f"{resumo['id']}.json"
             if not self._mudou(arq):
                 continue
+            if resumo["id"] in self._reavaliadas():
+                # A reavaliação (treino/reavaliar.py) já mandou esta gravação com a
+                # massa e o resumo; a versão antiga desta pasta não pode apagá-la.
+                self._marcar(arq)
+                feito.append(f"gravação {resumo['id']} pulada (a reavaliação mandou uma versão mais completa)")
+                continue
             no_bucket = f"{self.execucao_id}/{resumo['id']}.json"
             self.nuvem.enviar_arquivo(no_bucket, arq.read_bytes())
             self.nuvem.gravar("gravacoes", linha_gravacao(self.execucao_id, resumo, no_bucket), "execucao_id,id")
@@ -359,6 +365,16 @@ class Sincronizador:
             self._marcar(indice_arq)
             feito.append(f"índice ({len(indice)} gravações)")
         return feito
+
+    def _reavaliadas(self) -> set[str]:
+        """
+        Ids que treino/reavaliacoes/<execucao>/ já tem (vazio na própria pasta da
+        reavaliação). treino/saidas/<execucao> -> treino/reavaliacoes/<execucao>.
+        """
+        if self.indice_na_nuvem != "indice.json":
+            return set()
+        outra = ler_json(self.pasta.parent.parent / "reavaliacoes" / self.pasta.name / "gravacoes" / "indice.json")
+        return {r["id"] for r in outra or []}
 
     def _precisa_marcar_parado(self, estado_arq: Path) -> bool:
         if not estado_arq.exists():

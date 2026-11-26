@@ -3,14 +3,14 @@ import { HStack } from '@astryxdesign/core/HStack'
 import { ProgressBar } from '@astryxdesign/core/ProgressBar'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
-import { massaEsperada, type Estufa, type Leitura } from '@/modules/estufa/dominio'
+import type { Estufa, Leitura } from '@/modules/estufa/dominio'
 import { formatarData, formatarNumero } from '@/shared/lib/formatar'
 import { aparenciaMedia, descreverPlanta } from '../domain/estadoDaPlanta'
 import { AlfaceImagem } from './AlfaceImagem'
 
 const DIA_MS = 24 * 60 * 60 * 1000
 
-/** A alface da estufa: o desenho, o dia do ciclo, a massa contra a meta e a colheita prevista. */
+/** A alface da estufa: o desenho, o dia do ciclo, a massa de agora e a da colheita, e a data da colheita. */
 export function CardAlface({
   estufa,
   leitura,
@@ -27,7 +27,8 @@ export function CardAlface({
   recentes?: Leitura[]
 }) {
   const parametros = aparenciaMedia(recentes?.length ? recentes : [leitura], estufa.massaPorPe)
-  const meta = massaEsperada(estufa.diaDoCiclo)
+  // a massa na colheita só aparece quando a fonte conhece o ciclo inteiro (a gravação conhece)
+  const naColheita = estufa.massaPorDia?.at(-1)
   const faltam = Math.max(0, Math.ceil(estufa.diasDoCiclo - estufa.diaDoCiclo))
   const colheita = new Date(new Date(leitura.instante).getTime() + faltam * DIA_MS).toISOString()
   const dia = Math.floor(estufa.diaDoCiclo)
@@ -55,7 +56,7 @@ export function CardAlface({
           {formatarNumero(estufa.massaPorPe)} g
         </Text>
         <Text type="supporting" color="secondary" hasTabularNumbers>
-          por pé · meta de hoje {formatarNumero(meta)} g
+          por pé{naColheita !== undefined && ` · na colheita ${formatarNumero(naColheita)} g`}
         </Text>
       </HStack>
     </VStack>

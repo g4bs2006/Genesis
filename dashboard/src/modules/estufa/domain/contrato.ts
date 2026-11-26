@@ -102,15 +102,24 @@ export const Estufa = z.object({
   plantas: z.number().int().positive(),
   diaDoCiclo: z.number().min(0),
   diasDoCiclo: z.number().positive(),
-  massaPorPe: z.number().min(0), // gramas por pé, estimada
+  massaPorPe: z.number().min(0), // gramas por pé agora
+  /**
+   * A massa por pé no fim de cada dia do ciclo ([0] = transplante), quando a
+   * fonte conhece o ciclo inteiro (a reprodução de uma gravação conhece). A
+   * estufa real não manda: aí a tela mostra só a massa de agora.
+   */
+  massaPorDia: z.array(z.number().min(0)).optional(),
 })
 export type Estufa = z.infer<typeof Estufa>
 
-/** Eventos para "o que acertou ou errou". */
+/**
+ * O que aconteceu de importante: uma variável saiu da faixa (erro), voltou
+ * para ela (acerto) ou a segurança barrou uma ação (barrado).
+ */
 export const Evento = z.object({
   estufaId: z.string(),
   instante: Instante,
-  tipo: z.enum(['acerto', 'erro', 'barrado', 'perturbacao']),
+  tipo: z.enum(['acerto', 'erro', 'barrado']),
   titulo: z.string(),
   detalhe: z.string(),
   variavel: z.string().optional(),

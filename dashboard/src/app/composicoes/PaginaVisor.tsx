@@ -11,7 +11,6 @@ import {
   estadoConfirmadoDoGrupo,
   FAIXAS,
   GRUPOS_CELULAR,
-  massaEsperada,
   useEstufaAtual,
   useJanela,
   valorDe,
@@ -28,9 +27,8 @@ import { useAlertaEstavel } from './useAlertaEstavel'
 import { ehExemplo, faixaTexto, formatarVariavel } from './variaveis'
 import css from './PaginaVisor.module.css'
 
-const MINUTO = 60_000
 /** sem leitura nova por mais que isto (relógio da parede): avisa e esmaece os números */
-const PARADO_MS = 2 * MINUTO
+const PARADO_MS = 2 * 60_000
 const ROTULO_ESTADO = { ok: 'na faixa', atencao: 'pede atenção', risco: 'fora da faixa' } as const
 
 export function PaginaVisor() {
@@ -41,7 +39,6 @@ export function PaginaVisor() {
 
 function Visor({ estufa }: { estufa: Estufa }) {
   const { passos, atual } = useJanela(estufa.id)
-  const agora = useRelogioParede()
   const parado = useParado(atual?.leitura.instante)
   if (!atual) return <EsbocoVisor />
   const faltam = Math.max(0, Math.ceil(estufa.diasDoCiclo - estufa.diaDoCiclo))
@@ -50,18 +47,20 @@ function Visor({ estufa }: { estufa: Estufa }) {
     estufa.massaPorPe,
   )
   return (
-    <section className={`${css.tela} surgir`} data-parado={parado} aria-label={`Visor da ${estufa.nome}`}>
+    <section className={`${css.tela} surgir`} data-parado={parado} aria-label="Visor da estufa">
       <header className={css.topo}>
         <hgroup className={css.titulo}>
-          <h1 className={css.nome}>{estufa.nome}</h1>
+          {/* o nome da gravação ("Geração 158") é do Desenvolvedor; aqui é só a estufa */}
+          <h1 className={css.nome}>Estufa de alface</h1>
           <p className={css.ciclo}>
             Dia {Math.floor(estufa.diaDoCiclo)} de {estufa.diasDoCiclo} ·{' '}
             {faltam === 0 ? 'colheita hoje' : `colheita em ${faltam} ${faltam === 1 ? 'dia' : 'dias'}`}
           </p>
         </hgroup>
         <p className={css.relogioBloco}>
-          <time className={css.relogio} dateTime={new Date(agora).toISOString()}>
-            {formatarHora(new Date(agora).toISOString())}
+          {/* o relógio da reprodução: a hora do ciclo gravado que está na tela */}
+          <time className={css.relogio} dateTime={atual.leitura.instante}>
+            {formatarHora(atual.leitura.instante)}
           </time>
           {parado && (
             <span className={css.parado} role="status">
@@ -78,7 +77,9 @@ function Visor({ estufa }: { estufa: Estufa }) {
         <figcaption className={css.massa}>
           <span className={css.valor}>{formatarNumero(estufa.massaPorPe)}</span>
           <span className={css.unidade}>g por pé</span>
-          <span className={css.meta}>meta de hoje {formatarNumero(massaEsperada(estufa.diaDoCiclo))} g</span>
+          {estufa.massaPorDia && (
+            <span className={css.meta}>na colheita {formatarNumero(estufa.massaPorDia.at(-1)!)} g</span>
+          )}
         </figcaption>
       </figure>
 
@@ -101,7 +102,7 @@ function CardVisor({ grupo, passo, passos }: { grupo: Grupo; passo: Passo; passo
     <article className={css.card} data-estado={estado} aria-label={`${grupo.nome}, ${ROTULO_ESTADO[estado]}`}>
       <p className={css.cardTopo}>
         <span className={css.cardNome}>{grupo.nome}</span>
-        {grupo.variaveis.some((v) => ehExemplo(passo, v)) && <span className={css.exemplo}>exemplo</span>}
+        {grupo.variaveis.some((v) => ehExemplo(passo, v)) && <span className={css.exemplo}>fixo</span>}
         <span className={css.bolinha} data-estado={estado} aria-hidden />
       </p>
       <p className={css.cardValor}>
@@ -160,26 +161,6 @@ function FaixaAlerta({ passos }: { passos: Passo[] }) {
       )}
     </footer>
   )
-}
-
-/** Hora da parede, virando a cada minuto; volta da rede (evento online) também redesenha. */
-function useRelogioParede(): number {
-  const [agora, setAgora] = useState(Date.now)
-  useEffect(() => {
-    let t = 0
-    const virar = () => {
-      setAgora(Date.now())
-      t = window.setTimeout(virar, MINUTO - (Date.now() % MINUTO))
-    }
-    t = window.setTimeout(virar, MINUTO - (Date.now() % MINUTO))
-    const voltou = () => setAgora(Date.now())
-    window.addEventListener('online', voltou)
-    return () => {
-      window.clearTimeout(t)
-      window.removeEventListener('online', voltou)
-    }
-  }, [])
-  return agora
 }
 
 /** `true` quando a leitura `instante` ficou mais de 2 min (de parede) sem ser substituída. */

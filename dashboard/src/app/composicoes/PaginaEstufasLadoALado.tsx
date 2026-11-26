@@ -32,7 +32,6 @@ import { GraficoSerie } from '@/shared/design-system/graficos/GraficoSerie'
 import { MapaCalor } from '@/shared/design-system/graficos/MapaCalor'
 import { useAtraso } from '@/shared/hooks/useAtraso'
 import { formatarData, formatarHora, formatarNumero } from '@/shared/lib/formatar'
-import { origemDosDados } from '../dependencias'
 import css from './PaginaEstufasLadoALado.module.css'
 
 const NOME_CONTROLADOR: Record<Controlador['tipo'], string> = {
@@ -80,10 +79,7 @@ function LadoALado({ estufas }: { estufas: Estufa[] }) {
               {primeiroPasso &&
                 ` · ${formatarData(primeiroPasso.leitura.instante)} ${formatarHora(primeiroPasso.leitura.instante)}`}
             </Text>
-            <Badge
-              variant="neutral"
-              label={origemDosDados === 'exemplo' ? 'clima de exemplo' : 'simulador de brinquedo'}
-            />
+            <Badge variant="neutral" label="gravações do treino" />
           </HStack>
         </VStack>
       </HStack>

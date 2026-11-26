@@ -5,8 +5,13 @@
  * (dias 5, 12, 20, 28 e 35) e 3 estados de estresse na planta crescida.
  * A massa escolhe o estágio mais próximo; o pior estresse escolhe o estado.
  */
-import { massaEsperada } from '@/modules/estufa/dominio'
 
+/**
+ * A massa típica (g/pé) da planta de cada desenho. Só escolhe a figura, nunca
+ * aparece como número na tela. São os valores da curva de referência usada
+ * para gerar os desenhos (dias 5, 12, 20, 28 e 35 do rascunho).
+ */
+const MASSA_DO_DESENHO = { 5: 29, 12: 73, 20: 153, 28: 218, 35: 245 } as const
 export type ParametrosAlface = {
   /** massa fresca por pé, em gramas */
   massa: number
@@ -32,6 +37,6 @@ export function escolherDesenho(p: ParametrosAlface): NomeDesenho {
   }
   let melhor: (typeof ESTAGIOS_DESENHO)[number] = 5
   for (const dia of ESTAGIOS_DESENHO)
-    if (Math.abs(massaEsperada(dia) - p.massa) < Math.abs(massaEsperada(melhor) - p.massa)) melhor = dia
+    if (Math.abs(MASSA_DO_DESENHO[dia] - p.massa) < Math.abs(MASSA_DO_DESENHO[melhor] - p.massa)) melhor = dia
   return `dia-${String(melhor).padStart(2, '0')}` as NomeDesenho
 }

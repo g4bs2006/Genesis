@@ -15,7 +15,13 @@ type Linha = Record<string, unknown>
 function clienteFalso(tabelas: Record<string, Linha[]>) {
   const pedidos: string[] = []
   const cliente = {
-    storage: { from: () => ({ getPublicUrl: (caminho: string) => ({ data: { publicUrl: `nuvem/${caminho}` } }) }) },
+    storage: {
+      from: () => ({
+        getPublicUrl: (caminho: string) => ({ data: { publicUrl: `nuvem/${caminho}` } }),
+        // os dois índices existem no bucket falso
+        list: async () => ({ data: [{ name: 'indice.json' }, { name: 'indice-reavaliacao.json' }], error: null }),
+      }),
+    },
     from(tabela: string) {
       let linhas = [...(tabelas[tabela] ?? [])]
       const consulta = {

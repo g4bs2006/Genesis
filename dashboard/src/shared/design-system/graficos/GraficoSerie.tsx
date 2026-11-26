@@ -14,12 +14,16 @@ export type PontoSerie = { t: number; v: number }
 export type Serie = { nome: string; cor: string; pontos: PontoSerie[]; tracejada?: boolean }
 /** Uma trilha de ação embaixo do gráfico: intensidade (0..1, em tons) ou doses (pontos) */
 export type TrilhaAcao = { nome: string; tipo: 'intensidade' | 'pontos'; pontos: PontoSerie[]; cor: string }
+/** Um equipamento que ligou (▲) ou desligou (▼) neste instante: marca vertical no gráfico */
+export type MarcaAcao = { t: number; nome: string; cor: string; liga: boolean }
 
 type Props = {
   series: Serie[]
   /** a faixa boa, sombreada atrás das linhas */
   faixa?: [number, number]
   acoes?: TrilhaAcao[]
+  /** quando cada equipamento ligou e desligou (marcas em cima do gráfico) */
+  marcas?: MarcaAcao[]
   altura?: number
   rotulo: string
   formatarValor: (v: number) => string
@@ -54,6 +58,7 @@ function Desenho({
   series,
   faixa,
   acoes = [],
+  marcas = [],
   altura = 240,
   rotulo,
   formatarValor,
@@ -63,7 +68,8 @@ function Desenho({
   largura,
 }: Props & { largura: number }) {
   const [sobre, setSobre] = useState<number | null>(null)
-  const m = { topo: 12, direita: 12, baixo: 24, esquerda: 88 }
+  // com marcas, o topo ganha espaço para os triângulos de liga/desliga
+  const m = { topo: marcas.length ? 20 : 12, direita: 12, baixo: 24, esquerda: 88 }
   const w = Math.max(10, largura - m.esquerda - m.direita)
   const h = altura - m.topo - m.baixo
   const todos = series.flatMap((s) => s.pontos)
@@ -74,11 +80,16 @@ function Desenho({
   const valores = [...todos.map((p) => p.v), ...(faixa ?? [])]
   const min = Math.min(...valores)
   const max = Math.max(...valores)
-  const folga = (max - min) * 0.08 || 1
+  // A escala é a da faixa boa (e dos valores), com folga: nada de 0 ao máximo.
+  // Com valor parado (o pH da fase 1 é fixo), a folga de 1/4 da faixa evita o
+  // gráfico espremido numa linha colada na borda.
+  const folga = Math.max((max - min) * 0.08, faixa ? (faixa[1] - faixa[0]) * 0.25 : 0) || 1
   const x = scaleTime({ domain: [t0, t1], range: [0, w] })
   const y = scaleLinear({ domain: [min - folga, max + folga], range: [h, 0], nice: true })
   const passoX = w / Math.max(1, (series[0]?.pontos.length ?? 2) - 1)
   const marcado = instante ?? sobre
+  const pontos0 = series[0]?.pontos ?? []
+  const meioPasso = pontos0.length > 1 ? (pontos0[1]!.t - pontos0[0]!.t) / 2 : 5 * 60_000
   // série ainda sem passos (estufa carregando) fica fora da leitura do ponteiro
   const comPontos = series.filter((s) => s.pontos.length > 0)
 
@@ -127,7 +138,7 @@ function Desenho({
         {series.map((s) => (
           <LinePath
             key={s.nome}
-            data={s.pontos}
+            data={amostrar(s.pontos, w)}
             x={(p) => x(p.t)}
             y={(p) => y(p.v)}
             curve={curveMonotoneX}
@@ -137,6 +148,22 @@ function Desenho({
             opacity={s.tracejada ? 0.75 : 1}
           />
         ))}
+        {/* liga/desliga dos equipamentos: linha fina e o triângulo no topo */}
+        {marcas
+          .filter((k) => k.t >= t0 && k.t <= t1)
+          .map((k) => (
+            <g key={`${k.nome}-${k.t}`} aria-hidden>
+              <line x1={x(k.t)} x2={x(k.t)} y1={0} y2={h} stroke={k.cor} strokeOpacity={0.45} strokeDasharray="1 3" />
+              <path
+                d={
+                  k.liga
+                    ? `M${x(k.t) - 4},${-4} L${x(k.t) + 4},${-4} L${x(k.t)},${-11} Z`
+                    : `M${x(k.t) - 4},${-11} L${x(k.t) + 4},${-11} L${x(k.t)},${-4} Z`
+                }
+                fill={k.cor}
+              />
+            </g>
+          ))}
         {faixa && (
           // a faixa boa é a referência do gráfico: tem nome, não só cor
           <text
@@ -227,11 +254,17 @@ function Desenho({
             largura={w}
             altura={h}
             titulo={formatarTempo(marcado)}
-            linhas={comPontos.map((s) => ({
-              texto: `${series.length > 1 ? `${s.nome} ` : ''}${formatarValor(maisPerto(s.pontos, marcado).v)}`,
-              cor: series.length > 1 ? s.cor : undefined,
-              tracejada: s.tracejada,
-            }))}
+            linhas={[
+              ...comPontos.map((s) => ({
+                texto: `${series.length > 1 ? `${s.nome} ` : ''}${formatarValor(maisPerto(s.pontos, marcado).v)}`,
+                cor: series.length > 1 ? s.cor : undefined,
+                tracejada: s.tracejada,
+              })),
+              // o que ligou ou desligou perto do ponteiro (até meio passo de distância)
+              ...marcas
+                .filter((k) => Math.abs(k.t - marcado) <= meioPasso)
+                .map((k) => ({ texto: `${k.nome} ${k.liga ? 'ligou' : 'desligou'}`, cor: k.cor })),
+            ]}
           />
         )}
         <rect
@@ -247,6 +280,16 @@ function Desenho({
       </Group>
     </svg>
   )
+}
+
+/**
+ * Mais pontos que pixels (o ciclo inteiro tem 5040 passos): desenha um a cada
+ * poucos, sempre com o último. O balão continua lendo a série inteira.
+ */
+function amostrar(pontos: PontoSerie[], largura: number): PontoSerie[] {
+  const passo = Math.floor(pontos.length / Math.max(1, largura))
+  if (passo <= 1) return pontos
+  return pontos.filter((_, i) => i % passo === 0 || i === pontos.length - 1)
 }
 
 /**

@@ -1,9 +1,9 @@
 /**
  * Agora (Produtor). Junta três módulos (estufa, alface, dinheiro), por isso
  * mora em app/composicoes: módulo não importa tela de outro módulo.
- * Celular: só o crucial. Desktop (Fase 4): cards com sparkline e gráficos.
+ * Celular: só o crucial. Desktop: cards com sparkline, a colheita e os gráficos.
+ * Os dados são a reprodução de uma gravação real (decisão 0007).
  */
-import { Badge } from '@astryxdesign/core/Badge'
 import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Heading } from '@astryxdesign/core/Heading'
@@ -16,7 +16,7 @@ import { LucroPrevisto } from '@/modules/dinheiro'
 import {
   fraseDeEstado,
   GRUPOS_CELULAR,
-  curvaDeCrescimento,
+  curvaDoCiclo,
   useEstufaAtual,
   VARIAVEIS_DESKTOP,
   useJanela,
@@ -25,11 +25,10 @@ import {
   type Passo,
 } from '@/modules/estufa'
 import { CardAlerta } from '@/shared/design-system/organisms/CardAlerta'
-import { SeloDados } from '@/shared/design-system/molecules/SeloDados'
 import { useAtraso } from '@/shared/hooks/useAtraso'
 import { useAlertaEstavel } from './useAlertaEstavel'
-import { formatarHora } from '@/shared/lib/formatar'
-import { origemDosDados } from '../dependencias'
+import { formatarData, formatarHora, formatarNumero } from '@/shared/lib/formatar'
+import { ControleReproducao } from './ControleReproducao'
 import { CardGrupo } from './CardGrupo'
 import { CardVariavelDesktop } from './CardVariavelDesktop'
 import { GraficosAbas } from './GraficosAbas'
@@ -80,11 +79,13 @@ function AgoraDesktop({ estufa, passos, atual }: { estufa: Estufa; passos: Passo
           leitura={atual.leitura}
           recentes={passos.slice(-6).map((p) => p.leitura)}
           rodape={
-            <CurvaCrescimento
-              curva={curvaDeCrescimento(estufa.diasDoCiclo)}
-              hoje={estufa.diaDoCiclo}
-              massaHoje={estufa.massaPorPe}
-            />
+            estufa.massaPorDia && (
+              <CurvaCrescimento
+                curva={curvaDoCiclo(estufa.massaPorDia)}
+                hoje={estufa.diaDoCiclo}
+                massaHoje={estufa.massaPorPe}
+              />
+            )
           }
         />
         <VStack gap={3}>
@@ -94,30 +95,63 @@ function AgoraDesktop({ estufa, passos, atual }: { estufa: Estufa; passos: Passo
             ))}
           </section>
           <Alerta passos={passos} />
-          <LucroPrevisto resumo={resumo.data} plantas={estufa.plantas} />
+          <section className={css.dupla}>
+            <Colheita estufa={estufa} passo={atual} />
+            <LucroPrevisto resumo={resumo.data} plantas={estufa.plantas} />
+          </section>
         </VStack>
       </section>
       <Card>
         <VStack gap={3}>
           <Heading level={2}>Últimas 24 horas</Heading>
-          <GraficosAbas passos={passos} />
+          <GraficosAbas passos={passos} altura={300} />
         </VStack>
       </Card>
     </VStack>
   )
 }
 
-function Cabecalho({ estufa, passo }: { estufa: Estufa; passo: Passo }) {
+/** O nome da estufa fica de fora: no Produtor ela é "a estufa", não "Geração 158". */
+function Cabecalho({ passo }: { estufa: Estufa; passo: Passo }) {
   return (
-    <HStack justify="between" align="center" gap={2}>
-      <HStack gap={2} align="center">
-        <Text weight="medium">{estufa.nome}</Text>
-        {estufa.origem === 'simulada' && <Badge variant="neutral" label="simulada" />}
-      </HStack>
+    <HStack justify="between" align="center" gap={2} wrap="wrap">
+      <ControleReproducao />
       <Text type="code" color="secondary">
-        {formatarHora(passo.leitura.instante)}
+        {formatarData(passo.leitura.instante)} {formatarHora(passo.leitura.instante)}
       </Text>
     </HStack>
+  )
+}
+
+const DIA_MS = 24 * 60 * 60 * 1000
+
+/**
+ * No lugar do antigo "Agente × regras fixas" (decisão do Gabriel: o produtor
+ * não sabe o que é agente): quando colher e quanto vai sair. Escolhi isto e não
+ * o gasto de energia e água do dia porque é a primeira pergunta de quem cultiva
+ * ("quando colho, quanto vou ter para vender") e o gasto já está no Dinheiro.
+ * A massa na colheita é a que a gravação mediu no dia 35.
+ */
+function Colheita({ estufa, passo }: { estufa: Estufa; passo: Passo }) {
+  const faltam = Math.max(0, Math.ceil(estufa.diasDoCiclo - estufa.diaDoCiclo))
+  const data = new Date(Date.parse(passo.leitura.instante) + faltam * DIA_MS).toISOString()
+  const massa = estufa.massaPorDia?.at(-1)
+  return (
+    <Card className="surgir">
+      <VStack gap={1}>
+        <Text type="label" color="secondary">
+          Colheita
+        </Text>
+        <Text size="3xl" weight="medium" hasTabularNumbers>
+          {faltam === 0 ? 'hoje' : `em ${faltam} ${faltam === 1 ? 'dia' : 'dias'}`}
+        </Text>
+        <Text type="supporting" color="secondary" hasTabularNumbers>
+          {formatarData(data)}
+          {massa !== undefined &&
+            ` · ${formatarNumero(massa)} g por pé · ${formatarNumero((massa * estufa.plantas) / 1000)} kg nos ${estufa.plantas} pés`}
+        </Text>
+      </VStack>
+    </Card>
   )
 }
 
@@ -125,7 +159,6 @@ function Frase({ estufa, passos }: { estufa: Estufa; passos: Passo[] }) {
   const { titulo, apoio } = fraseDeEstado(passos, estufa.controlador)
   return (
     <VStack gap={1}>
-      {origemDosDados === 'exemplo' && <SeloDados origem="exemplo" />}
       <Heading level={1}>{titulo}</Heading>
       <Text color="secondary">{apoio}</Text>
     </VStack>

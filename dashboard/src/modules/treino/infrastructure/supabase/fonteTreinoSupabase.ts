@@ -112,7 +112,10 @@ export function criarFonteTreinoSupabase(
   /** Os campos do passo 09 de cada gravação, por id (vazio se a execução não mandou índice). */
   async function extrasDosIndices(execucaoId: string): Promise<Map<string, ResumoGravacao>> {
     const extras = new Map<string, ResumoGravacao>()
-    for (const nome of INDICES_NA_NUVEM) {
+    // pergunta antes quais índices existem: pedir um que não existe vira erro 400 no console
+    const { data: arquivos } = await cliente.storage.from(BUCKET_GRAVACOES).list(execucaoId, { search: 'indice' })
+    const existem = new Set((arquivos ?? []).map((a) => a.name))
+    for (const nome of INDICES_NA_NUVEM.filter((n) => existem.has(n))) {
       const lido = z.array(ResumoGravacao).safeParse(await baixarJson(urlPublica(`${execucaoId}/${nome}`)))
       if (lido.success) for (const g of lido.data) extras.set(g.id, g)
     }

@@ -67,6 +67,21 @@ class TestSincronizador(unittest.TestCase):
         # o índice inteiro também vai, com os campos que a tabela não tem
         self.assertEqual(json.loads(self.nuvem.arquivos["fase1-semente7/indice.json"])[0]["id"], "g1")
 
+    def test_pasta_do_treino_nao_apaga_o_que_a_reavaliacao_mandou(self):
+        raiz = Path(tempfile.mkdtemp())
+        pasta = raiz / "saidas" / "fase1-semente7"
+        sinc = Sincronizador(pasta, self.nuvem)
+        escrever_json(pasta / "config.json", {"populacao": 8})
+        passo_demo(pasta, 1, "2026-11-24T20:00:00-03:00", [])
+        resumo = {"id": "g1", "semente": 3, "modeloId": "m1", "titulo": "t", "criadaEm": "2026-11-24T20:00:00-03:00",
+                  "passos": 0}
+        escrever_json(pasta / "gravacoes" / "g1.json", {"id": "g1", "passos": []})
+        escrever_json(pasta / "gravacoes" / "indice.json", [resumo])
+        escrever_json(raiz / "reavaliacoes" / "fase1-semente7" / "gravacoes" / "indice.json", [resumo])
+        feito = sinc.uma_volta()
+        self.assertNotIn("fase1-semente7/g1.json", self.nuvem.arquivos)
+        self.assertTrue(any("pulada" in f for f in feito))
+
     def test_pasta_de_reavaliacao_manda_so_gravacoes_e_o_indice_proprio(self):
         pasta = Path(tempfile.mkdtemp()) / "fase1-semente7"
         sinc = Sincronizador(pasta, self.nuvem, indice_na_nuvem="indice-reavaliacao.json")

@@ -7,7 +7,6 @@ import { BotaoTema } from '@/shared/design-system/molecules/BotaoTema'
 import { BarraProgresso } from '@/shared/design-system/atoms/BarraProgresso'
 import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
 import { usePreferencias, type Modo } from '@/shared/stores/preferencias'
-import { ListaEstufasLateral } from '@/modules/estufa'
 import { CardTreinoLateral } from '@/modules/treino'
 import { navegacao } from './navegacao'
 import { TourDev } from './TourDev'
@@ -80,7 +79,7 @@ export function Moldura() {
   return (
     <CascaDesktop
       itens={navegacao[modo].desktop}
-      extras={modo === 'produtor' ? <ListaEstufasLateral /> : <CardTreinoLateral />}
+      extras={modo === 'desenvolvedor' ? <CardTreinoLateral /> : undefined}
       rodape={<SeletorModo valor={modo} aoTrocar={aoTrocarModo} tamanho="sm" />}
       icones={<BotaoTema tamanho="sm" />}
       recolhida={barraRecolhida}

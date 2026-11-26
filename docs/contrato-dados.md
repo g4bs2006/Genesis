@@ -75,12 +75,13 @@ type Estufa = {
   diaDoCiclo: number;
   diasDoCiclo: number;
   massaPorPe: number;
+  massaPorDia?: number[]; // passo 10: a massa no fim de cada dia, quando a fonte conhece o ciclo (a reprodução conhece)
 };
 
 type Evento = {
   estufaId: string;
   instante: string;
-  tipo: "acerto" | "erro" | "barrado" | "perturbacao";
+  tipo: "acerto" | "erro" | "barrado"; // voltou para a faixa | saiu (risco) | a segurança barrou
   titulo: string;
   detalhe: string;
   variavel?: string;
@@ -103,18 +104,13 @@ type ResumoCiclo = {
   foraPorVariavel: Record<string, number>; // 0..1 por variável
   barradas: number; // ações barradas no ciclo
 };
-type Perturbacao =
-  | "ondaDeCalor"
-  | "phDescalibra"
-  | "bombaTrava"
-  | "quedaDeEnergia"
-  | "ruidoSensores"
-  | "tarifaDePico";
 ```
 
-`Leitura.exemplos` existe para o simulador de brinquedo, que só simula a
-temperatura do ar: os outros campos levam valor de exemplo e a tela marca
-"exemplo". A estufa real não manda esse campo.
+`Leitura.exemplos` marca os campos que a fonte não controla nem mede: nas
+gravações da fase 1 do treino, a solução nutritiva fica fixa no valor do
+simulador, e a tela escreve "valor fixo na simulação". A estufa real não manda
+esse campo. (O simulador de brinquedo, que usava o campo para tudo menos a
+temperatura do ar, saiu no passo 08.)
 
 ## Treino
 
@@ -221,10 +217,10 @@ backend só precisa guardá-los quando houver conta de usuário.
 
 ## Portas (o que o dashboard pede)
 
-| Porta               | Métodos                                                                                       | Quem implementa hoje                              | Depois                          |
-| ------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------- |
-| `FonteEstufa`       | `listarEstufas`, `assinarPassos` (tempo real), `historico(de, ate)`, `eventos`, `resumoCiclo` | `dadosExemplo` (demo), `simuladorBrinquedo` (dev) | Supabase Realtime / MQTT        |
-| `ControleSimulacao` | relógio (pausar, acelerar, pular) e `injetar(perturbacao)`                                    | `simuladorBrinquedo`                              | simulador PyTorch (só simulada) |
-| `FonteTreino`       | `estado`, `geracoes`, `modelos`, `configuracao`                                               | `dadosExemplo`                                    | arquivos exportados pelo treino |
-| `FonteGravacoes`    | `listar`, `obter(id)`                                                                         | `dadosExemplo`                                    | arquivos exportados pelo treino |
-| `RepositorioPrecos` | `obter`, `salvar`                                                                             | `precosLocal` (navegador)                         | banco                           |
+| Porta               | Métodos                                                                                                         | Quem implementa hoje                                                          | Depois              |
+| ------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------- |
+| `FonteEstufa`       | `listarEstufas`, `assinarEstufas`, `assinarPassos` (tempo real), `historico(de, ate)`, `eventos`, `resumoCiclo` | `reproducao`: uma gravação do treino tocada em ciclo (passo 10, decisão 0007) | MQTT (estufa real)  |
+| `ControleSimulacao` | relógio da reprodução (pausar, continuar, acelerar)                                                             | `reproducao`                                                                  | null na estufa real |
+| `FonteTreino`       | `estado`, `geracoes`, `modelos`, `configuracao`                                                                 | Supabase (produção); `dadosExemplo`, recorte real (demo e testes)             |                     |
+| `FonteGravacoes`    | `listar`, `obter(id)`                                                                                           | Supabase (produção); `dadosExemplo`, recorte real (demo e testes)             |                     |
+| `RepositorioPrecos` | `obter`, `salvar`                                                                                               | `precosLocal` (navegador)                                                     | banco               |

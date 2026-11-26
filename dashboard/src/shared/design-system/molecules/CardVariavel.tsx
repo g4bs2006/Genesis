@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Badge } from '@astryxdesign/core/Badge'
 import { Card } from '@astryxdesign/core/Card'
 import { HStack } from '@astryxdesign/core/HStack'
 import { Text } from '@astryxdesign/core/Text'
@@ -59,10 +58,9 @@ export function CardVariavel({
               {tendencia || '↑'}
             </span>
           )}
-          {exemplo && <Badge variant="neutral" label="exemplo" />}
         </HStack>
         {grafico}
-        {(faixa || detalhe) && (
+        {(faixa || detalhe || exemplo) && (
           <VStack gap={0.5}>
             {detalhe && (
               <Text type="supporting" color="secondary">
@@ -70,6 +68,9 @@ export function CardVariavel({
               </Text>
             )}
             {faixa && <span className={css.faixa}>faixa {faixa}</span>}
+            {/* a fase 1 do treino não controla a solução: ela fica parada no valor do simulador.
+                Embaixo, e não ao lado do número: no card estreito o selo era cortado */}
+            {exemplo && <span className={css.faixa}>valor fixo na simulação</span>}
           </VStack>
         )}
       </VStack>
