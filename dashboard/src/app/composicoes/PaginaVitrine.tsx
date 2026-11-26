@@ -21,7 +21,8 @@ import { useGravacoes, type ResumoGravacao } from '@/modules/treino'
 import { useAtraso } from '@/shared/hooks/useAtraso'
 import { formatarNumero } from '@/shared/lib/formatar'
 import { usePreferencias } from '@/shared/stores/preferencias'
-import { rotuloVelocidade, VELOCIDADES_REPRODUCAO } from './velocidades'
+import { rotuloCurto, rotuloVelocidade, VELOCIDADES_REPRODUCAO } from './velocidades'
+import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
 
 type Linha = { id: string; estufa: Estufa; resumo: ResumoGravacao | undefined }
 
@@ -67,9 +68,12 @@ function Vitrine({ linhas }: { linhas: Linha[] }) {
                   key={l.id}
                   label={l.estufa.nome}
                   description={
-                    r
-                      ? `${numero(r.massaPorPe, 0, ' g')} por pé · ${numero(r.foraDaFaixa * 100, 1, '%')} fora da faixa · ${numero(r.energiaKwh, 0, ' kWh')} · nota R$ ${numero(r.nota)}`
-                      : 'sem resumo do ciclo'
+                    // Text quebra a linha no celular (a descrição pura era cortada com "…")
+                    <Text type="supporting" color="secondary">
+                      {r
+                        ? `${numero(r.massaPorPe, 0, ' g')} por pé · ${numero(r.foraDaFaixa * 100, 1, '%')} fora da faixa · ${numero(r.energiaKwh, 0, ' kWh')} · nota R$ ${numero(r.nota)}`
+                        : 'sem resumo do ciclo'}
+                    </Text>
                   }
                   isSelected={l.id === atual?.id}
                   endContent={l.id === atual?.id ? <CheckIcon width={18} aria-hidden /> : undefined}
@@ -103,11 +107,12 @@ function Vitrine({ linhas }: { linhas: Linha[] }) {
             }}
           >
             {VELOCIDADES_REPRODUCAO.map((v) => (
-              <SegmentedControlItem key={v} value={String(v)} label={rotuloVelocidade(v)} />
+              <SegmentedControlItem key={v} value={String(v)} label={rotuloCurto(v)} />
             ))}
           </SegmentedControl>
           <Text type="supporting" color="secondary">
-            O ciclo de 35 dias leva {duracaoDoCiclo(estado?.velocidade ?? VELOCIDADES_REPRODUCAO[1])} nesta velocidade.
+            {rotuloVelocidade(estado?.velocidade ?? VELOCIDADES_REPRODUCAO[1])}: o ciclo de 35 dias leva{' '}
+            {duracaoDoCiclo(estado?.velocidade ?? VELOCIDADES_REPRODUCAO[1])}.
           </Text>
         </VStack>
       </Card>
@@ -119,11 +124,12 @@ function Vitrine({ linhas }: { linhas: Linha[] }) {
 
 function OQueOProdutorVe({ estufa }: { estufa: Estufa }) {
   const passo = usePassoAtual(estufa.id)
+  const largo = useTelaLarga()
   if (!passo) return <Skeleton height={240} radius={3} />
   return (
     <VStack gap={2}>
       <Heading level={2}>O que o produtor vê agora</Heading>
-      <CardAlface estufa={estufa} leitura={passo.leitura} deitado />
+      <CardAlface estufa={estufa} leitura={passo.leitura} deitado={largo} />
     </VStack>
   )
 }

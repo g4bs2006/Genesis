@@ -6,8 +6,6 @@ import { useState } from 'react'
 import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Heading } from '@astryxdesign/core/Heading'
-import { HStack } from '@astryxdesign/core/HStack'
-import { Link } from '@astryxdesign/core/Link'
 import { NumberInput } from '@astryxdesign/core/NumberInput'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { proportional, Table } from '@astryxdesign/core/Table'
@@ -72,7 +70,7 @@ function Treino({ estado, geracoes, config }: { estado: EstadoTreino; geracoes: 
         <Numero rotulo="geração" valor={formatarNumero(ultima.numero)} />
         <Numero rotulo="segundos por geração" valor={formatarNumero(mediaSegundos, 1)} />
         <Numero rotulo="tempo rodando" valor={duracao(rodandoHa)} />
-        <Numero rotulo="melhor nota" valor={nota(melhorDeTodas)} />
+        <Numero rotulo="melhor nota (no clima de cada geração)" valor={nota(melhorDeTodas)} />
       </Grid>
 
       <Card>
@@ -116,7 +114,7 @@ const MEDIDAS: {
     formatar: (v) => `${formatarNumero(v)} g`,
     cor: 'var(--serie-verde)',
   },
-  { titulo: 'Nota do ciclo', ler: (r) => r.nota, formatar: nota, cor: 'var(--serie-azul)' },
+  { titulo: 'Nota no ciclo gravado', ler: (r) => r.nota, formatar: nota, cor: 'var(--serie-azul)' },
 ]
 
 /**
@@ -187,7 +185,7 @@ function Comparar({
     ga && gb
       ? [
           { id: 'fase', metrica: 'Fase', a: String(ga.fase), b: String(gb.fase) },
-          { id: 'melhor', metrica: 'Melhor nota', a: nota(ga.melhor), b: nota(gb.melhor) },
+          { id: 'melhor', metrica: 'Melhor nota (clima da geração)', a: nota(ga.melhor), b: nota(gb.melhor) },
           { id: 'mediana', metrica: 'Nota mediana', a: nota(ga.mediana), b: nota(gb.mediana) },
           { id: 'regras', metrica: 'Regras fixas (mesmo clima)', a: nota(ga.regras), b: nota(gb.regras) },
           { id: 'segundos', metrica: 'Segundos', a: formatarNumero(ga.segundos, 2), b: formatarNumero(gb.segundos, 2) },
@@ -197,22 +195,21 @@ function Comparar({
     <Card>
       <VStack gap={2}>
         <Heading level={2}>Comparar gerações</Heading>
-        <HStack gap={3}>
+        <Grid columns={{ minWidth: 140, repeat: 'fit' }} gap={3}>
           <NumberInput label="Geração A" value={a} onChange={(v) => setA(limitar(v, ultima))} min={1} max={ultima} />
           <NumberInput label="Geração B" value={b} onChange={(v) => setB(limitar(v, ultima))} min={1} max={ultima} />
-        </HStack>
+        </Grid>
         <Table<Linha>
           data={linhas}
           idKey="id"
           density="compact"
           columns={[
-            // a métrica tem piso de largura: no celular a tabela rola de lado em vez de partir palavras
-            { key: 'metrica', header: 'Métrica', width: proportional(2, { minWidth: 150 }) },
-            { key: 'a', width: proportional(1, { minWidth: 88 }), header: `g${a}`, align: 'end' },
-            { key: 'b', width: proportional(1, { minWidth: 88 }), header: `g${b}`, align: 'end' },
+            // pisos pequenos: as três colunas cabem nos 375 px do celular sem vazar do cartão
+            { key: 'metrica', header: 'Métrica', width: proportional(2, { minWidth: 110 }) },
+            { key: 'a', width: proportional(1, { minWidth: 72 }), header: `g${a}`, align: 'end' },
+            { key: 'b', width: proportional(1, { minWidth: 72 }), header: `g${b}`, align: 'end' },
           ]}
         />
-        <Link href="/dev">Ver os campeões nas estufas lado a lado</Link>
       </VStack>
     </Card>
   )

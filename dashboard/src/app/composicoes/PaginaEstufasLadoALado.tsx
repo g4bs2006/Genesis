@@ -237,7 +237,7 @@ function CartaoEstufa({
         <AlfaceImagem parametros={parametros} rotulo={descreverPlanta(parametros)} largura={180} />
         {resumo && (
           <dl className={css.numeros}>
-            <dt>nota do treino</dt>
+            <dt>nota no ciclo gravado</dt>
             <dd>{nota == null ? '—' : formatarReaisCurto(nota)}</dd>
             <dt>sobra (Dinheiro)</dt>
             <dd>{sobra == null ? '—' : formatarReaisCurto(sobra)}</dd>
@@ -247,7 +247,7 @@ function CartaoEstufa({
             <dd>{formatarNumero(resumo.energiaKwh)} kWh</dd>
             <dt>fora da faixa</dt>
             <dd>{formatarNumero(resumo.foraDaFaixa * 100, 1)}%</dd>
-            <dt>barradas</dt>
+            <dt>ações barradas (segurança)</dt>
             <dd>{resumo.barradas}</dd>
           </dl>
         )}

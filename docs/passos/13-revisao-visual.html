@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>13 · Revisão visual · Genesis</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+  <div class="olho">Passo 13 · Dashboard · 25/11/2026</div>
+  <h1>Revisão visual por um par de olhos de fora</h1>
+  <p class="resumo">Um subagente que não escreveu o código (e não podia editá-lo) subiu o app, tirou 44 capturas (11 rotas × desktop 1440×900 e celular 375×812 × claro e escuro) e devolveu 30 problemas com rota, tela, tema e gravidade. Corrigi os de gravidade alta e média que valiam para a apresentação; os que ficaram estão listados com o motivo.</p>
+
+  <h2>Antes e depois</h2>
+  <figure>
+    <img class="grafico" src="../revisao-visual/fase-14/celular-claro-dinheiro.png" alt="Dinheiro no celular antes: a tabela quebrava os valores ao meio" style="max-width:320px">
+    <figcaption>Antes (celular): a tabela de 4 colunas partia "R$ 2.200,00" em duas linhas e "Embalagem" em "Embalag/em".</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-13/celular-claro-dinheiro.png" alt="Dinheiro no celular depois: cada linha da conta com o valor à direita e a origem embaixo" style="max-width:320px">
+    <figcaption>Depois: no celular, cada linha é item e valor lado a lado, com a conta e a origem embaixo.</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/fase-14/desktop-claro-ciclo.png" alt="Ciclo antes: dia 2 de 3 e quatro alfaces iguais de 11 g">
+    <figcaption>Antes: "Dia 2 de 3" e quatro alfaces iguais de "cerca de 11 g", enquanto o Dinheiro falava em 247 g.</figcaption>
+  </figure>
+  <figure>
+    <img class="grafico" src="../revisao-visual/passo-13/desktop-claro-ciclo.png" alt="Ciclo depois: dia 2 de 35 e quatro alfaces de tamanhos reais">
+    <figcaption>Depois: "Dia 2 de 35" e as alfaces dos quatro estágios com a massa real da gravação (10, 73, 166 e 230 g).</figcaption>
+  </figure>
+  <p>Capturas da revisão (antes): <code>docs/revisao-visual/fase-14/</code>. Depois das correções: <code>docs/revisao-visual/passo-13/</code>.</p>
+
+  <h2>O que foi corrigido</h2>
+  <table>
+    <tr><th>Gravidade · onde</th><th>O problema</th><th>A correção</th></tr>
+    <tr><td>alta · Agora, Ciclo, Visor, Vitrine</td><td>O peso não batia: "na colheita 11 g" no Agora, 247 g no Dinheiro. O ciclo tinha "3 dias" num lugar e 35 no outro.</td><td>Era o recorte de exemplo (3 dias de passos) levando também só 3 dias de massa. O recorte agora leva a massa dos 35 dias, e a duração do ciclo vem dela. Em produção (o ciclo inteiro) isso nunca aconteceu.</td></tr>
+    <tr><td>alta · Ciclo</td><td>Quatro alfaces iguais, todas "cerca de 11 g".</td><td>Mesma causa; agora 10, 73, 166 e 230 g.</td></tr>
+    <tr><td>alta · Dinheiro, celular</td><td>Valores partidos ao meio nas tabelas.</td><td>No celular as duas tabelas viram lista (item e valor na mesma linha).</td></tr>
+    <tr><td>alta · Treino, celular</td><td>"Comparar gerações" vazava do cartão.</td><td>Pisos de largura menores (110/72/72 px): as 3 colunas cabem em 311 px.</td></tr>
+    <tr><td>alta · Vitrine, celular</td><td>A nota e os botões de velocidade cortados com "…".</td><td>A descrição vira texto que quebra a linha; botões curtos ("1 h/s"), com a frase inteira embaixo.</td></tr>
+    <tr><td>alta · Lado a lado, Treino</td><td>Três "notas" diferentes para a mesma geração sem dizer de onde vinha cada uma.</td><td>Cada uma diz o clima: "nota no ciclo gravado" (o mesmo clima para todos) e "melhor nota (no clima de cada geração)". São números certos, de climas diferentes.</td></tr>
+    <tr><td>alta · Agora, Histórico, Lado a lado</td><td>O último rótulo do eixo ("18:0") cortado.</td><td>Margem direita do gráfico de 12 para 28 px.</td></tr>
+    <tr><td>alta · celular</td><td>Sem caminho para o Histórico.</td><td>Aba "Histórico" na barra do Produtor (5 abas).</td></tr>
+    <tr><td>média · Histórico, celular</td><td>A aba "Luz e CO₂" cortada.</td><td>"Temperatura" virou "Ar" (o mesmo nome do card): as 4 abas cabem.</td></tr>
+    <tr><td>média · Agora, Ciclo</td><td>A linha cheia da curva terminava antes de "hoje"; eixo com "d0.5".</td><td>O ponto de hoje entra nas duas linhas; o eixo mostra só dias inteiros.</td></tr>
+    <tr><td>média · Treino</td><td>Os dois campos de Comparar deixavam a direita vazia; o link parecia texto.</td><td>Campos numa grade que ocupa a largura; o link saiu (a página Lado a lado está no menu).</td></tr>
+    <tr><td>média · Modelo, Resumo do celular</td><td>"Saiu da faixa: 2 · Voltou: 0" com a estufa na faixa; o resumo do celular mostrava evento de outra gravação.</td><td>"Voltou" passou a contar a saída do risco (passando pela "atenção" na beira da faixa); o resumo segue o mesmo campeão do Modelo.</td></tr>
+    <tr><td>média · Dinheiro</td><td>"Diferença" sem sentido claro; data cortada.</td><td>A coluna se chama "Real − previsto"; o campo da data ficou mais largo.</td></tr>
+    <tr><td>média · Visor, Lado a lado</td><td>"fixo" e "barradas" sem explicação.</td><td>"fixo na simulação" e "ações barradas (segurança)".</td></tr>
+    <tr><td>(achado meu) · Gravações</td><td>Nas regras fixas e "sem controle", o lugar da rede dizia "o modelo não está na lista".</td><td>Agora diz que não há rede e o que aquela régua faz.</td></tr>
+  </table>
+
+  <h2>O que ficou, e por quê</h2>
+  <ul>
+    <li><strong>Menu do Desenvolvedor no celular só com "Resumo"</strong> (média): é de propósito, desde o prompt do dashboard; as páginas de análise são de tela grande. O diagrama da rede espremido no celular (média) vem daí.</li>
+    <li><strong>Espaço acima da alface nos cartões</strong> (média): é o desenho (gerado por IA) que tem margem no topo. Recortar as imagens é outro passo.</li>
+    <li><strong>Gravações: "escolha até 4"</strong> (média): é o limite da própria página de reprodução, que mostra um painel por gravação. O Lado a lado é outra página, sem esse limite.</li>
+    <li>Baixas: bolinhas apagadas quase somem no tema escuro (Modelo), "faixa boa" por cima da linha na ponta direita, o card Luz sem linha de faixa (a luz não tem faixa boa), três estilos de sinal de menos, as linhas pontilhadas da curva de aprendizado (são as duas gerações comparadas) e o selo "erro" no resumo do celular.</li>
+  </ul>
+  <p>O revisor também conferiu, e não achou: nenhum "?" sobrou, nenhum jargão ("agente", "geração", "modelo", "rede", "treino", "campeão", "regras fixas") no Produtor, nenhuma rolagem horizontal no celular (largura de 375 em todas as rotas) e nenhum eixo espremido.</p>
+
+  <h2>Números</h2>
+  <table>
+    <tr><th>O que</th><th>Valor</th></tr>
+    <tr><td>Capturas da revisão</td><td>44 (11 rotas × 2 telas × 2 temas)</td></tr>
+    <tr><td>Problemas apontados</td><td>30: 10 altos, 12 médios, 8 baixos</td></tr>
+    <tr><td>Corrigidos</td><td>os 10 altos e 7 médios, mais 1 achado meu</td></tr>
+    <tr><td>Testes depois das correções</td><td>71 unitários e 33 e2e passando</td></tr>
+  </table>
+
+  <h2>O que deu errado ou surpreendeu</h2>
+  <div class="erro">
+    <p><strong>O recorte de exemplo enganava a revisão.</strong> Três dos problemas "altos" eram o mesmo: um recorte de 3 dias dizendo "o ciclo tem 3 dias". Em produção o ciclo tem 35, mas a apresentação sem internet usa o recorte. A correção foi na raiz (o recorte leva a massa inteira), não tela por tela.</p>
+  </div>
+
+  <h2>Como reproduzir</h2>
+  <pre><code>cd dashboard
+MSYS_NO_PATHCONV=1 CAPTURAS=passo-13 ROTAS="/,/historico,/ciclo,/dinheiro,/ajustes,/dev,/dev/treino,/dev/modelo,/dev/gravacoes,/dev/vitrine,/visor" npx playwright test capturas</code></pre>
+
+  <h2>Links</h2>
+  <ul>
+    <li>Passos anteriores: <a href="08-limpeza.html">08</a>, <a href="10-produtor-gravacao.html">10</a>, <a href="11-dinheiro.html">11</a>, <a href="12-desenvolvedor.html">12</a>.</li>
+  </ul>
+</main>
+</body>
+</html>

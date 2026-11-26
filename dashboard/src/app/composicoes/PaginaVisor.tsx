@@ -102,7 +102,7 @@ function CardVisor({ grupo, passo, passos }: { grupo: Grupo; passo: Passo; passo
     <article className={css.card} data-estado={estado} aria-label={`${grupo.nome}, ${ROTULO_ESTADO[estado]}`}>
       <p className={css.cardTopo}>
         <span className={css.cardNome}>{grupo.nome}</span>
-        {grupo.variaveis.some((v) => ehExemplo(passo, v)) && <span className={css.exemplo}>fixo</span>}
+        {grupo.variaveis.some((v) => ehExemplo(passo, v)) && <span className={css.exemplo}>fixo na simulação</span>}
         <span className={css.bolinha} data-estado={estado} aria-hidden />
       </p>
       <p className={css.cardValor}>

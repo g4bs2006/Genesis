@@ -7,7 +7,8 @@
  *   node scripts/gerar-dados-exemplo.mjs [execucao] [dias]
  *
  * Padrão: a execução fase1-semente9-20261124 e os 3 primeiros dias de cada
- * gravação. Por que recortar: cada gravação inteira tem ~3 MB (5040 passos);
+ * gravação (só os passos: a massa por dia e o resumo ficam os do ciclo inteiro,
+ * para a tela dizer "dia 2 de 35" e a colheita bater com o Dinheiro). Por que recortar: cada gravação inteira tem ~3 MB (5040 passos);
  * cinco delas pesariam 15 MB no repositório. Os 3 dias mantêm o formato e os
  * números de verdade; o resumo do ciclo (massa, energia, nota) continua sendo
  * o do ciclo inteiro, porque é o que a gravação mediu.
@@ -40,7 +41,8 @@ const passos = dias * 144
 for (const arquivo of readdirSync(destino).filter((a) => a.endsWith('-gravacao.json'))) rmSync(join(destino, arquivo))
 for (const r of escolhidas) {
   const g = ler(join(reavaliacao, 'gravacoes', `${r.id}.json`))
-  const recorte = { ...g, passos: g.passos.slice(0, passos), massaPorDia: g.massaPorDia.slice(0, dias + 1) }
+  // a massa por dia fica inteira (35 dias): o ciclo, a colheita e o Dinheiro falam do mesmo ciclo
+  const recorte = { ...g, passos: g.passos.slice(0, passos) }
   writeFileSync(join(destino, `${r.id}.json`), JSON.stringify(recorte))
   console.log(`${r.id}: ${recorte.passos.length} passos`)
 }

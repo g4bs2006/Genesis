@@ -10,3 +10,7 @@ export function rotuloVelocidade(passosPorSegundo: number): string {
   if (minutos >= 60) return `${minutos / 60} h por segundo`
   return `${minutos} min por segundo`
 }
+
+/** 6 → "1 h/s": cabe no botão do celular */
+export const rotuloCurto = (passosPorSegundo: number) =>
+  rotuloVelocidade(passosPorSegundo).replace(' por segundo', '/s')

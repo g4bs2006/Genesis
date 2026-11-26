@@ -46,13 +46,14 @@ export function eventosDosPassos(passos: readonly Passo[], estufaId: string): Ev
           variavel: v,
           passo: i,
         })
-      if (agora === 'ok' && antes === 'risco')
+      // voltou: deixou de estar em risco (pode passar por "atenção" na beira da faixa)
+      if (agora !== 'risco' && antes === 'risco')
         eventos.push({
           estufaId,
           instante: p.leitura.instante,
           tipo: 'acerto',
-          titulo: `${f.nome} voltou para a faixa: ${comUnidade(v, valor)}`,
-          detalhe: 'dentro da faixa boa de novo',
+          titulo: `${f.nome} voltou para perto da faixa: ${comUnidade(v, valor)}`,
+          detalhe: `faixa boa: ${comUnidade(v, f.min)} a ${comUnidade(v, f.max)}`,
           variavel: v,
           passo: i,
         })

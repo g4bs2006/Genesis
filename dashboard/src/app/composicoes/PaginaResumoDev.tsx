@@ -30,7 +30,7 @@ function PaginaResumoDev() {
   const estado = useEstadoTreino()
   const geracoes = useGeracoes()
   const estufas = useEstufas()
-  const agente = estufas.data?.find((e) => e.controlador.tipo === 'agente')
+  const agente = estufas.data?.findLast((e) => e.controlador.tipo === 'agente') // o campeão mais recente, como no Modelo
   const eventos = useEventos(agente?.id ?? '')
   const origem = useOrigemTreino()
   const erro = estado.error ?? geracoes.error

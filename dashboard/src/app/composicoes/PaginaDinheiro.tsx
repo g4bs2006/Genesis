@@ -10,6 +10,7 @@ import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
+import { List, ListItem } from '@astryxdesign/core/List'
 import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
@@ -34,6 +35,7 @@ import {
 } from '@/modules/dinheiro'
 import { useEstufaAtual, useResumoCiclo, type Estufa, type ResumoCiclo } from '@/modules/estufa'
 import { useAtraso } from '@/shared/hooks/useAtraso'
+import { useTelaLarga } from '@/shared/hooks/useTelaLarga'
 import { formatarNumero } from '@/shared/lib/formatar'
 import { ControleReproducao } from './ControleReproducao'
 import { Lancamentos } from './Lancamentos'
@@ -71,6 +73,7 @@ function Dinheiro({
   aoEditar: () => void
 }) {
   const c = contaDoCiclo(resumo, estufa.plantas, precos)
+  const largo = useTelaLarga()
   return (
     <VStack gap={5} paddingBlock={6}>
       <HStack justify="between" align="end" wrap="wrap" gap={3}>
@@ -92,38 +95,50 @@ function Dinheiro({
       <Card>
         <VStack gap={3}>
           <Heading level={2}>A conta do ciclo</Heading>
-          <Table<Linha>
-            data={linhasDaConta(c, precos)}
-            idKey="id"
-            density="compact"
-            columns={[
-              {
-                key: 'item',
-                header: 'Item',
-                renderCell: (l) => <Text weight={l.forte ? 'medium' : 'normal'}>{l.item}</Text>,
-              },
-              { key: 'conta', header: 'Conta', renderCell: (l) => <Text hasTabularNumbers>{l.conta}</Text> },
-              {
-                key: 'origem',
-                header: 'De onde veio',
-                renderCell: (l) => (
-                  <Text type="supporting" color="secondary">
-                    {l.origem}
-                  </Text>
-                ),
-              },
-              {
-                key: 'valor',
-                header: 'Valor',
-                align: 'end',
-                renderCell: (l) => (
-                  <Text hasTabularNumbers weight={l.forte ? 'medium' : 'normal'}>
-                    {l.valor}
-                  </Text>
-                ),
-              },
-            ]}
-          />
+          {largo ? (
+            <Table<Linha>
+              data={linhasDaConta(c, precos)}
+              idKey="id"
+              density="compact"
+              columns={[
+                {
+                  key: 'item',
+                  header: 'Item',
+                  renderCell: (l) => <Text weight={l.forte ? 'medium' : 'normal'}>{l.item}</Text>,
+                },
+                { key: 'conta', header: 'Conta', renderCell: (l) => <Text hasTabularNumbers>{l.conta}</Text> },
+                {
+                  key: 'origem',
+                  header: 'De onde veio',
+                  renderCell: (l) => (
+                    <Text type="supporting" color="secondary">
+                      {l.origem}
+                    </Text>
+                  ),
+                },
+                {
+                  key: 'valor',
+                  header: 'Valor',
+                  align: 'end',
+                  renderCell: (l) => (
+                    <Text hasTabularNumbers weight={l.forte ? 'medium' : 'normal'}>
+                      {l.valor}
+                    </Text>
+                  ),
+                },
+              ]}
+            />
+          ) : (
+            <LinhasCelular
+              linhas={linhasDaConta(c, precos).map((l) => ({
+                id: l.id,
+                item: l.item,
+                valor: l.valor,
+                detalhe: [l.conta, l.origem].filter(Boolean).join(' · '),
+                forte: l.forte,
+              }))}
+            />
+          )}
         </VStack>
       </Card>
 
@@ -275,6 +290,7 @@ type LinhaComparacao = { id: Categoria | 'sobra'; item: string; previsto: number
 
 /** O previsto do ciclo lado a lado com o que o produtor lançou de verdade. */
 function PrevistoReal({ conta: c }: { conta: ContaDoCiclo }) {
+  const largo = useTelaLarga()
   const lancamentos = useLancamentos()
   const t = totaisDosLancamentos(lancamentos.data ?? [])
   const linhas: LinhaComparacao[] = [
@@ -291,30 +307,72 @@ function PrevistoReal({ conta: c }: { conta: ContaDoCiclo }) {
             Previsto: a conta acima. Real: a soma dos seus lançamentos, logo abaixo.
           </Text>
         </VStack>
-        <Table<LinhaComparacao>
-          data={linhas}
-          idKey="id"
-          density="compact"
-          columns={[
-            {
-              key: 'item',
-              header: 'Item',
-              renderCell: (l) => <Text weight={l.id === 'sobra' ? 'medium' : 'normal'}>{l.item}</Text>,
-            },
-            { key: 'previsto', header: 'Previsto', align: 'end', renderCell: (l) => formatarReais(l.previsto) },
-            { key: 'real', header: 'Real', align: 'end', renderCell: (l) => formatarReais(l.real) },
-            {
-              key: 'diferenca',
-              header: 'Diferença',
-              align: 'end',
-              renderCell: (l) => {
-                const d = l.real - l.previsto
-                return `${d > 0 ? '+' : d < 0 ? '−' : ''}${formatarReais(Math.abs(d))}`
+        {largo ? (
+          <Table<LinhaComparacao>
+            data={linhas}
+            idKey="id"
+            density="compact"
+            columns={[
+              {
+                key: 'item',
+                header: 'Item',
+                renderCell: (l) => <Text weight={l.id === 'sobra' ? 'medium' : 'normal'}>{l.item}</Text>,
               },
-            },
-          ]}
-        />
+              { key: 'previsto', header: 'Previsto', align: 'end', renderCell: (l) => formatarReais(l.previsto) },
+              { key: 'real', header: 'Real', align: 'end', renderCell: (l) => formatarReais(l.real) },
+              {
+                key: 'diferenca',
+                header: 'Real − previsto',
+                align: 'end',
+                renderCell: (l) => {
+                  const d = l.real - l.previsto
+                  return `${d > 0 ? '+' : d < 0 ? '−' : ''}${formatarReais(Math.abs(d))}`
+                },
+              },
+            ]}
+          />
+        ) : (
+          <LinhasCelular
+            linhas={linhas.map((l) => ({
+              id: l.id,
+              item: l.item,
+              valor: `real ${formatarReais(l.real)}`,
+              detalhe: `previsto ${formatarReais(l.previsto)}`,
+              forte: l.id === 'sobra',
+            }))}
+          />
+        )}
       </VStack>
     </Card>
+  )
+}
+
+/** No celular, cada linha da conta vira item e valor na mesma linha, e a conta e a origem embaixo. */
+function LinhasCelular({
+  linhas,
+}: {
+  linhas: { id: string; item: string; valor: string; detalhe: string; forte?: boolean }[]
+}) {
+  return (
+    <List hasDividers density="compact" edge="flush">
+      {linhas.map((l) => (
+        <ListItem
+          key={l.id}
+          label={<Text weight={l.forte ? 'medium' : 'normal'}>{l.item}</Text>}
+          description={
+            l.detalhe ? (
+              <Text type="supporting" color="secondary">
+                {l.detalhe}
+              </Text>
+            ) : undefined
+          }
+          endContent={
+            <Text hasTabularNumbers weight={l.forte ? 'medium' : 'normal'} textWrap="nowrap">
+              {l.valor}
+            </Text>
+          }
+        />
+      ))}
+    </List>
   )
 }

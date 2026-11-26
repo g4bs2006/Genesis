@@ -133,7 +133,8 @@ export function criarFonteEstufaReproducao(
         controlador: controladorDe(r),
         plantas: PLANTAS_POR_ESTUFA,
         diaDoCiclo: dia,
-        diasDoCiclo: Math.round(passos / PASSOS_POR_DIA),
+        // a massa por dia conhece o ciclo inteiro (num recorte, os passos não)
+        diasDoCiclo: g?.massaPorDia ? g.massaPorDia.length - 1 : Math.round(passos / PASSOS_POR_DIA),
         massaPorPe: g?.massaPorDia ? massaNoDia(g.massaPorDia, dia) : 0,
         ...(g?.massaPorDia && { massaPorDia: g.massaPorDia }),
       } satisfies Estufa

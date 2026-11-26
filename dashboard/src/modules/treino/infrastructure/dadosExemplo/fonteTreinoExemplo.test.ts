@@ -40,7 +40,7 @@ describe('gravações de exemplo', () => {
       const gravacao = await fonte.obter(resumo.id)
       expect(Gravacao.safeParse(gravacao).success).toBe(true)
       expect(gravacao.passos).toHaveLength(432)
-      expect(gravacao.massaPorDia).toHaveLength(4)
+      expect(gravacao.massaPorDia).toHaveLength(36) // os 35 dias inteiros + o transplante
       expect(resumo.passos).toBe(432)
       expect(resumo.resumo?.massaPorPe).toBeGreaterThan(0)
     }

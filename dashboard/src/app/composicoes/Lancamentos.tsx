@@ -72,7 +72,7 @@ export function Lancamentos() {
           />
         </HStack>
 
-        <Grid columns={{ minWidth: 170, repeat: 'fit' }} gap={3} align="end">
+        <Grid columns={{ minWidth: 210, repeat: 'fit' }} gap={3} align="end">
           <DateInput label="Data" value={data} onChange={(v) => v && setData(v)} />
           <Selector
             label="O quê"

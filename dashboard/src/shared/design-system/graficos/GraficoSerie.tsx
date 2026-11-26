@@ -69,7 +69,8 @@ function Desenho({
 }: Props & { largura: number }) {
   const [sobre, setSobre] = useState<number | null>(null)
   // com marcas, o topo ganha espaço para os triângulos de liga/desliga
-  const m = { topo: marcas.length ? 20 : 12, direita: 12, baixo: 24, esquerda: 88 }
+  // direita com folga: o último rótulo do eixo ("18:00") não é cortado
+  const m = { topo: marcas.length ? 20 : 12, direita: 28, baixo: 24, esquerda: 88 }
   const w = Math.max(10, largura - m.esquerda - m.direita)
   const h = altura - m.topo - m.baixo
   const todos = series.flatMap((s) => s.pontos)

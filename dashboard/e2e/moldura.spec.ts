@@ -105,7 +105,8 @@ test('dinheiro: um lançamento sobrevive a recarregar a página', async ({ page 
   await page.reload()
   await expect(page.getByRole('cell', { name: 'feira de sábado' })).toBeVisible()
   // e entra no "real" do previsto × real
-  await expect(page.getByRole('cell', { name: /^R\$\s?320,50$/ }).first()).toBeVisible()
+  // desktop: célula da tabela; celular: "real R$ 320,50" na lista
+  await expect(page.getByText(/^(real )?R\$\s?320,50$/).first()).toBeVisible()
 })
 
 test('treino: curva de aprendizado, sem currículo nem "esqueceu"', async ({ page, isMobile }) => {
@@ -180,7 +181,7 @@ test.describe('desenvolvedor', () => {
   test('treino: o que o modelo aprendeu, por geração', async ({ page }) => {
     await page.goto('/dev/treino')
     await expect(page.getByRole('heading', { name: 'O que o modelo aprendeu' })).toBeVisible()
-    for (const medida of ['Tempo fora da faixa', 'Energia no ciclo', 'Massa na colheita', 'Nota do ciclo'])
+    for (const medida of ['Tempo fora da faixa', 'Energia no ciclo', 'Massa na colheita', 'Nota no ciclo gravado'])
       await expect(page.getByRole('img', { name: new RegExp(`^${medida} do campeão`) })).toBeVisible()
   })
 

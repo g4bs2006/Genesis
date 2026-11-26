@@ -44,8 +44,10 @@ function Desenho({ curva, hoje, massaHoje, altura = 160, largura }: Props & { la
     range: [h, 0],
     nice: true,
   })
-  const feito = curva.filter((p) => p.dia <= hoje)
-  const falta = curva.filter((p) => p.dia >= Math.floor(hoje))
+  // o ponto de hoje entra nas duas linhas: a cheia termina nele e a tracejada começa nele
+  const agora = { dia: hoje, massa: massaHoje }
+  const feito = [...curva.filter((p) => p.dia < hoje), agora]
+  const falta = [agora, ...curva.filter((p) => p.dia > hoje)]
   const mover = (e: PointerEvent<SVGRectElement>) => {
     const caixa = e.currentTarget.getBoundingClientRect()
     const dia = x.invert(Math.min(w, Math.max(0, e.clientX - caixa.left)))
@@ -93,7 +95,8 @@ function Desenho({ curva, hoje, massaHoje, altura = 160, largura }: Props & { la
         <AxisBottom
           top={h}
           scale={x}
-          numTicks={7}
+          // só dias inteiros no eixo (nada de "d0.5")
+          tickValues={x.ticks(7).filter((v) => Number.isInteger(v))}
           hideTicks
           stroke={COR.grade}
           tickFormat={(v) => `d${v}`}

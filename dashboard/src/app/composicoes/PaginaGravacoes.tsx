@@ -344,7 +344,20 @@ const Painel = memo(function Painel({
                 massaPorDia={gravacao.massaPorDia}
                 passo={Math.min(passo, gravacao.passos.length - 1)}
               />
-              <MiniRede modelo={modelo} passos={gravacao.passos} passo={Math.min(passo, gravacao.passos.length - 1)} />
+              {resumo.controlador === 'regras' || resumo.controlador === 'nada' ? (
+                // as réguas não têm rede: dizer isso, e não "o modelo não está na lista"
+                <Text type="supporting" color="secondary">
+                  {resumo.controlador === 'regras'
+                    ? 'Sem rede: as regras fixas ligam o exaustor, a névoa e a sombra por termostato.'
+                    : 'Sem rede: nenhum equipamento é ligado.'}
+                </Text>
+              ) : (
+                <MiniRede
+                  modelo={modelo}
+                  passos={gravacao.passos}
+                  passo={Math.min(passo, gravacao.passos.length - 1)}
+                />
+              )}
             </>
           ) : (
             esboco && <Skeleton height={420} radius={2} />

@@ -103,7 +103,7 @@ export function abasDoHistorico(passos: Passo[]): Aba[] {
   return [
     {
       id: 'temperatura',
-      nome: 'Temperatura',
+      nome: 'Ar', // curto: as 4 abas cabem no celular
       paineis: [
         painel(
           passos,
