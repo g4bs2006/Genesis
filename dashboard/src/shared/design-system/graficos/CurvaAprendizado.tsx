@@ -51,7 +51,7 @@ function Desenho({
   marcas = [],
 }: Props & { altura: number; largura: number }) {
   const [sobre, setSobre] = useState<number | null>(null)
-  const m = { topo: 22, direita: 12, baixo: 26, esquerda: 64 }
+  const m = { topo: 22, direita: 12, baixo: 26, esquerda: 84 }
   const w = largura - m.esquerda - m.direita
   const h = altura - m.topo - m.baixo
   if (geracoes.length < 2) return <svg width={largura} height={altura} />

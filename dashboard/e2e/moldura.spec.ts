@@ -159,3 +159,35 @@ test('sol/lua alterna claro e escuro com um clique', async ({ page }) => {
   await page.getByRole('button', { name: 'Usar tema claro' }).click()
   await expect(page.getByRole('button', { name: 'Usar tema escuro' })).toBeVisible()
 })
+
+test.describe('desenvolvedor', () => {
+  test.skip(({ isMobile }) => isMobile, 'as páginas detalhadas do Desenvolvedor são do desktop')
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() =>
+      localStorage.setItem('genesis:preferencias', JSON.stringify({ state: { tourDevVisto: true }, version: 0 })),
+    )
+  })
+
+  test('lado a lado: g1, intermediário, final, regras fixas e sem controle; dá para desligar uma', async ({ page }) => {
+    await page.goto('/dev')
+    for (const nome of ['Geração 1', 'Geração 75', 'Geração 158', 'Regras fixas', 'Sem controle'])
+      await expect(page.locator('section').getByText(nome, { exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Uma variável nas 5 estufas' })).toBeVisible()
+    await page.getByRole('button', { name: 'Sem controle' }).click()
+    await expect(page.getByRole('heading', { name: 'Uma variável nas 4 estufas' })).toBeVisible()
+  })
+
+  test('treino: o que o modelo aprendeu, por geração', async ({ page }) => {
+    await page.goto('/dev/treino')
+    await expect(page.getByRole('heading', { name: 'O que o modelo aprendeu' })).toBeVisible()
+    for (const medida of ['Tempo fora da faixa', 'Energia no ciclo', 'Massa na colheita', 'Nota do ciclo'])
+      await expect(page.getByRole('img', { name: new RegExp(`^${medida} do campeão`) })).toBeVisible()
+  })
+
+  test('modelo: o que pesou em português e os acertos e erros', async ({ page }) => {
+    await page.goto('/dev/modelo')
+    await expect(page.getByText(/^A rede pede .* em \d+% agora\.$/)).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Acertos e erros' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Saiu da faixa: \d+$/ })).toBeVisible()
+  })
+})

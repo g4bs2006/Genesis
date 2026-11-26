@@ -1,7 +1,8 @@
 /**
- * Desenvolvedor · Estufas lado a lado: os controladores (campeões, PID,
- * regras) no mesmo clima, comparados em dinheiro, massa, energia e erros.
- * Junta estufa, alface e dinheiro: por isso mora em composicoes.
+ * Desenvolvedor · Estufas lado a lado (passo 12): várias gravações reais no
+ * mesmo clima, tocando no mesmo relógio. Por padrão: o campeão da geração 1,
+ * um intermediário, o final, as regras fixas e "sem controle"; dá para ligar e
+ * desligar cada uma. Junta estufa, alface, dinheiro e treino: fica em composicoes.
  */
 import { useCallback, useEffect, useState } from 'react'
 import { Badge } from '@astryxdesign/core/Badge'
@@ -11,36 +12,67 @@ import { HStack } from '@astryxdesign/core/HStack'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { Text } from '@astryxdesign/core/Text'
+import { ToggleButton } from '@astryxdesign/core/ToggleButton'
 import { VStack } from '@astryxdesign/core/VStack'
 import { AlfaceImagem, aparenciaMedia, descreverPlanta } from '@/modules/alface'
 import { contaDoCiclo, formatarReaisCurto, usePrecos } from '@/modules/dinheiro'
 import {
   FAIXAS,
+  massaNoDia,
   useEstufas,
   useJanela,
   useResumos,
   valorDe,
   valorExibido,
-  type Controlador,
   type Estufa,
   type Passo,
   type ResumoCiclo,
   type Variavel,
 } from '@/modules/estufa'
-import { corDaSerie } from '@/shared/design-system/graficos/estilo'
+import { useGravacoes } from '@/modules/treino'
 import { GraficoSerie } from '@/shared/design-system/graficos/GraficoSerie'
 import { MapaCalor } from '@/shared/design-system/graficos/MapaCalor'
 import { useAtraso } from '@/shared/hooks/useAtraso'
 import { formatarData, formatarHora, formatarNumero } from '@/shared/lib/formatar'
+import { ControleReproducao } from './ControleReproducao'
 import css from './PaginaEstufasLadoALado.module.css'
 
-const NOME_CONTROLADOR: Record<Controlador['tipo'], string> = {
-  agente: 'agente',
-  regras: 'regras fixas',
-  pid: 'PID',
-  nada: 'sem controle',
+/** pH, EC e a água são fixos na fase 1 do treino: compará-los mostraria linhas iguais */
+const VARIAVEIS_COMPARADAS: Variavel[] = ['temperatura', 'umidade', 'vpd', 'co2', 'luz']
+
+/**
+ * Cor fixa por estufa (não muda quando outra é ligada ou desligada): as réguas
+ * em cinza e vermelho; os campeões, em sequência, pela ordem das gerações.
+ */
+const CORES_CAMPEOES = [
+  'var(--serie-azul)',
+  'var(--serie-verde)',
+  'var(--serie-roxo)',
+  'var(--serie-amarelo)',
+  'var(--serie-menta)',
+  'var(--serie-laranja)',
+]
+function cores(estufas: Estufa[]): Record<string, { cor: string; tracejada: boolean }> {
+  let k = 0
+  return Object.fromEntries(
+    estufas.map((e) => [
+      e.id,
+      e.controlador.tipo === 'regras'
+        ? { cor: 'var(--serie-cinza)', tracejada: true }
+        : e.controlador.tipo === 'nada'
+          ? { cor: 'var(--risco)', tracejada: true }
+          : { cor: CORES_CAMPEOES[k++ % CORES_CAMPEOES.length]!, tracejada: false },
+    ]),
+  )
 }
-const VARIAVEIS_COMPARADAS: Variavel[] = ['temperatura', 'umidade', 'ph', 'ec', 'temperaturaAgua']
+
+/** A seleção padrão: a geração 1, a do meio, a última, as regras e "sem controle". */
+function padrao(estufas: Estufa[]): string[] {
+  const agentes = estufas.filter((e) => e.controlador.tipo === 'agente')
+  const escolhidos = [agentes[0], agentes[Math.floor((agentes.length - 1) / 2)], agentes.at(-1)]
+  const reguas = estufas.filter((e) => e.controlador.tipo !== 'agente')
+  return [...new Set([...escolhidos, ...reguas].filter(Boolean).map((e) => e!.id))]
+}
 
 export function PaginaEstufasLadoALado() {
   const estufas = useEstufas()
@@ -50,59 +82,56 @@ export function PaginaEstufasLadoALado() {
 }
 
 function LadoALado({ estufas }: { estufas: Estufa[] }) {
-  const resumos = useResumos(estufas.map((e) => e.id))
+  const [ligadas, setLigadas] = useState<string[]>(() => padrao(estufas))
+  const visiveis = estufas.filter((e) => ligadas.includes(e.id))
+  const resumos = useResumos(visiveis.map((e) => e.id))
   const precos = usePrecos()
+  const gravacoes = useGravacoes()
+  const cor = cores(estufas)
   const [variavel, setVariavel] = useState<Variavel>('temperatura')
   const [instante, setInstante] = useState<number | null>(null)
   const [passos, setPassos] = useState<Record<string, Passo[]>>({})
   const aoPassos = useCallback((id: string, p: Passo[]) => setPassos((a) => ({ ...a, [id]: p })), [])
+  const primeiroPasso = visiveis.map((e) => passos[e.id]?.at(-1)).find(Boolean)
+  const f = FAIXAS[variavel]
 
-  // ranking pelo resultado em R$ (preço médio); sem preços ainda, a ordem original
-  const lucro = (i: number) => {
-    const r = resumos[i]?.data
-    return r && precos.data ? contaDoCiclo(r, estufas[i]!.plantas, precos.data).sobra : null
-  }
-  const ordem = estufas
-    .map((e, i) => ({ e, i, lucro: lucro(i) }))
-    .sort((a, b) => (b.lucro ?? -Infinity) - (a.lucro ?? -Infinity))
-
-  const primeiroPasso = Object.values(passos)[0]?.at(-1)
+  const alternar = (id: string, ligada: boolean) =>
+    setLigadas((atual) => (ligada ? [...atual, id] : atual.filter((x) => x !== id)))
 
   return (
     <VStack gap={5} paddingBlock={6}>
-      <HStack justify="between" align="end" wrap="wrap" gap={3}>
-        <VStack gap={1}>
-          <Heading level={1}>Estufas lado a lado</Heading>
-          <HStack gap={2} align="center" wrap="wrap">
-            <Text color="secondary">
-              O mesmo clima para todos
-              {primeiroPasso &&
-                ` · ${formatarData(primeiroPasso.leitura.instante)} ${formatarHora(primeiroPasso.leitura.instante)}`}
-            </Text>
-            <Badge variant="neutral" label="gravações do treino" />
-          </HStack>
-        </VStack>
-      </HStack>
+      <VStack gap={1}>
+        <ControleReproducao />
+        <Heading level={1}>Estufas lado a lado</Heading>
+        <HStack gap={2} align="center" wrap="wrap">
+          <Text color="secondary">
+            Gravações reais do treino, todas no mesmo clima e no mesmo relógio
+            {primeiroPasso &&
+              ` · ${formatarData(primeiroPasso.leitura.instante)} ${formatarHora(primeiroPasso.leitura.instante)}`}
+          </Text>
+          <Badge variant="neutral" label={`${visiveis.length} de ${estufas.length} estufas`} />
+        </HStack>
+      </VStack>
 
-      <section className={css.cartoes}>
-        {ordem.map(({ e, i }, posicao) => (
-          <CartaoEstufa
+      <HStack gap={2} wrap="wrap" role="group" aria-label="Quais estufas aparecem">
+        {estufas.map((e) => (
+          <ToggleButton
             key={e.id}
-            estufa={e}
-            posicao={posicao + 1}
-            cor={corDaSerie(i)}
-            resumo={resumos[i]?.data}
-            lucro={lucro(i)}
-            instante={instante}
-            aoPassos={aoPassos}
-          />
+            size="sm"
+            label={e.nome}
+            isPressed={ligadas.includes(e.id)}
+            onPressedChange={(ligada) => alternar(e.id, ligada)}
+            icon={<span className={css.ponto} style={{ background: cor[e.id]!.cor }} aria-hidden />}
+          >
+            {e.nome}
+          </ToggleButton>
         ))}
-      </section>
+      </HStack>
 
       <Card>
         <VStack gap={3}>
           <HStack justify="between" align="center" wrap="wrap" gap={2}>
-            <Heading level={2}>Uma variável nas {estufas.length} estufas</Heading>
+            <Heading level={2}>Uma variável nas {visiveis.length} estufas</Heading>
             <SegmentedControl label="Variável" value={variavel} onChange={(v) => setVariavel(v as Variavel)}>
               {VARIAVEIS_COMPARADAS.map((v) => (
                 <SegmentedControlItem key={v} value={v} label={FAIXAS[v].nome} />
@@ -110,35 +139,53 @@ function LadoALado({ estufas }: { estufas: Estufa[] }) {
             </SegmentedControl>
           </HStack>
           <GraficoSerie
-            series={estufas.map((e, i) => ({
+            series={visiveis.map((e) => ({
               nome: e.nome,
-              cor: corDaSerie(i),
+              cor: cor[e.id]!.cor,
+              tracejada: cor[e.id]!.tracejada,
               pontos: (passos[e.id] ?? []).map((p) => ({
                 t: Date.parse(p.leitura.instante),
                 v: valorExibido(variavel, valorDe(p.leitura, variavel)),
               })),
             }))}
-            faixa={[valorExibido(variavel, FAIXAS[variavel].min), valorExibido(variavel, FAIXAS[variavel].max)]}
-            altura={340}
-            rotulo={`${FAIXAS[variavel].nome} nas estufas, nas últimas 24 horas`}
-            formatarValor={(v) => `${formatarNumero(v, FAIXAS[variavel].casas)} ${FAIXAS[variavel].unidade}`}
+            // luz não tem faixa boa (varia com o dia)
+            faixa={variavel === 'luz' ? undefined : [f.min, f.max]}
+            altura={380}
+            rotulo={`${f.nome} nas ${visiveis.length} estufas, nas últimas 24 horas`}
+            formatarValor={(v) => `${formatarNumero(v, f.casas)} ${f.unidade}`}
             formatarTempo={(t) => formatarHora(new Date(t).toISOString())}
             instante={instante}
             aoMoverInstante={setInstante}
           />
           <Text type="supporting" color="secondary">
-            Passe o ponteiro no gráfico: as alfaces mostram aquele instante.
+            Últimas 24 horas. Passe o ponteiro: o balão dá o valor exato de cada estufa e as alfaces mostram aquele
+            instante. Tracejadas: as regras fixas e "sem controle".
           </Text>
         </VStack>
       </Card>
+
+      <section className={css.cartoes}>
+        {visiveis.map((e, i) => (
+          <CartaoEstufa
+            key={e.id}
+            estufa={e}
+            cor={cor[e.id]!.cor}
+            resumo={resumos[i]?.data}
+            sobra={resumos[i]?.data && precos.data ? contaDoCiclo(resumos[i].data, e.plantas, precos.data).sobra : null}
+            nota={gravacoes.data?.find((g) => g.id === e.id)?.resumo?.nota ?? null}
+            instante={instante}
+            aoPassos={aoPassos}
+          />
+        ))}
+      </section>
 
       <Card>
         <VStack gap={2}>
           <Heading level={2}>Onde cada um erra</Heading>
           <Text type="supporting" color="secondary">
-            % do tempo fora da faixa, por variável e por controlador.
+            % do ciclo inteiro fora da faixa, por variável e por estufa.
           </Text>
-          <MapaDeErros estufas={estufas} resumos={resumos.map((r) => r.data)} />
+          <MapaDeErros estufas={visiveis} resumos={resumos.map((r) => r.data)} />
         </VStack>
       </Card>
     </VStack>
@@ -147,18 +194,18 @@ function LadoALado({ estufas }: { estufas: Estufa[] }) {
 
 function CartaoEstufa({
   estufa,
-  posicao,
   cor,
   resumo,
-  lucro,
+  sobra,
+  nota,
   instante,
   aoPassos,
 }: {
   estufa: Estufa
-  posicao: number
   cor: string
   resumo: ResumoCiclo | undefined
-  lucro: number | null
+  sobra: number | null
+  nota: number | null
   instante: number | null
   aoPassos: (id: string, passos: Passo[]) => void
 }) {
@@ -170,33 +217,30 @@ function CartaoEstufa({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- o array muda de identidade a cada render; basta o tamanho e o último instante
   }, [estufa.id, passos.length, ultimo, aoPassos])
 
-  // a alface no instante escolhido no gráfico (ou agora)
+  // a alface no instante escolhido no gráfico (ou agora), com a massa daquele dia
   const indice = instante == null ? passos.length - 1 : maisPerto(passos, instante)
   const recentes = passos.slice(Math.max(0, indice - 5), indice + 1).map((p) => p.leitura)
-  const parametros = aparenciaMedia(recentes, estufa.massaPorPe)
+  const dia =
+    estufa.diaDoCiclo -
+    (passos.at(-1) && passos[indice]
+      ? (Date.parse(passos.at(-1)!.leitura.instante) - Date.parse(passos[indice]!.leitura.instante)) / 864e5
+      : 0)
+  const parametros = aparenciaMedia(recentes, estufa.massaPorDia ? massaNoDia(estufa.massaPorDia, dia) : 0)
 
   return (
     <Card className={css.cartao}>
       <VStack gap={2}>
-        <HStack justify="between" align="center">
-          <HStack gap={1.5} align="center">
-            <span className={css.ponto} style={{ background: cor }} aria-hidden />
-            <Text weight="medium">{estufa.nome}</Text>
-          </HStack>
-          <Text type="code" color="secondary">
-            #{posicao}
-          </Text>
+        <HStack gap={1.5} align="center">
+          <span className={css.ponto} style={{ background: cor }} aria-hidden />
+          <Text weight="medium">{estufa.nome}</Text>
         </HStack>
-        <Text type="supporting" color="secondary">
-          {NOME_CONTROLADOR[estufa.controlador.tipo]}
-          {estufa.controlador.tipo === 'agente' && ` · ${estufa.controlador.modeloId}`}
-        </Text>
         <AlfaceImagem parametros={parametros} rotulo={descreverPlanta(parametros)} largura={180} />
-        <Text size="xl" weight="medium" hasTabularNumbers>
-          {lucro == null ? '—' : formatarReaisCurto(lucro)}
-        </Text>
         {resumo && (
           <dl className={css.numeros}>
+            <dt>nota do treino</dt>
+            <dd>{nota == null ? '—' : formatarReaisCurto(nota)}</dd>
+            <dt>sobra (Dinheiro)</dt>
+            <dd>{sobra == null ? '—' : formatarReaisCurto(sobra)}</dd>
             <dt>massa</dt>
             <dd>{formatarNumero(resumo.massaPorPe)} g</dd>
             <dt>energia</dt>
@@ -214,6 +258,7 @@ function CartaoEstufa({
 
 function MapaDeErros({ estufas, resumos }: { estufas: Estufa[]; resumos: (ResumoCiclo | undefined)[] }) {
   const variaveis = Object.keys(resumos.find(Boolean)?.foraPorVariavel ?? {}) as Variavel[]
+  if (estufas.length === 0) return <Text color="secondary">Ligue uma estufa acima.</Text>
   if (variaveis.length === 0) return <Skeleton height={200} radius={2} />
   return (
     <MapaCalor
@@ -221,7 +266,7 @@ function MapaDeErros({ estufas, resumos }: { estufas: Estufa[]; resumos: (Resumo
       colunas={estufas.map((e) => e.nome)}
       valores={variaveis.map((v) => resumos.map((r) => r?.foraPorVariavel[v] ?? 0))}
       formatar={(x) => `${formatarNumero(x * 100, 1)}%`}
-      rotulo="Porcentagem do tempo fora da faixa por variável e por estufa"
+      rotulo="Porcentagem do ciclo fora da faixa por variável e por estufa"
     />
   )
 }

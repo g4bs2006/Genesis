@@ -61,7 +61,7 @@ function PaginaResumoDev() {
             <Text weight="medium">{e.rodando ? 'O treino está rodando' : 'O treino está parado'}</Text>
           </HStack>
           <Text color="secondary">
-            {e.onde} · {origem === 'nuvem' ? 'ao vivo' : 'dados de exemplo'}
+            {e.onde} · {origem === 'nuvem' ? 'ao vivo' : 'recorte de uma execução real'}
           </Text>
           <Numero rotulo="geração" valor={formatarNumero(e.geracaoAtual)} />
         </VStack>

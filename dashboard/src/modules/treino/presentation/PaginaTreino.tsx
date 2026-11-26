@@ -14,10 +14,11 @@ import { proportional, Table } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import { CurvaAprendizado } from '@/shared/design-system/graficos/CurvaAprendizado'
+import { LinhaPorGeracao } from '@/shared/design-system/graficos/LinhaPorGeracao'
 import { useAtraso } from '@/shared/hooks/useAtraso'
 import { formatarNumero } from '@/shared/lib/formatar'
-import type { ConfigTreino, EstadoTreino, Geracao } from '../domain/contrato'
-import { useConfigTreino, useEstadoTreino, useGeracoes, useOrigemTreino } from './dados'
+import type { ConfigTreino, EstadoTreino, Geracao, ResumoDaGravacao } from '../domain/contrato'
+import { useConfigTreino, useEstadoTreino, useGeracoes, useGravacoes, useOrigemTreino } from './dados'
 import { AvisoTreino } from './AvisoTreino'
 
 const nota = (v: number) => `R$ ${formatarNumero(v)}`
@@ -60,7 +61,9 @@ function Treino({ estado, geracoes, config }: { estado: EstadoTreino; geracoes: 
         <Heading level={1}>Treino e gerações</Heading>
         <Text color="secondary">
           {estado.rodando ? 'Rodando' : 'Parado'} em {estado.onde} ·{' '}
-          {origem === 'nuvem' ? 'ao vivo, direto do treino' : 'dados de exemplo até o treino real exportar os seus'}
+          {origem === 'nuvem'
+            ? 'ao vivo, direto do treino'
+            : 'recorte de uma execução real (modo de teste, sem internet)'}
         </Text>
       </VStack>
 
@@ -79,10 +82,87 @@ function Treino({ estado, geracoes, config }: { estado: EstadoTreino; geracoes: 
         </VStack>
       </Card>
 
+      <OQueAprendeu />
+
       <Comparar geracoes={geracoes} a={a} b={b} setA={setA} setB={setB} />
 
       <Configuracao config={config} />
     </VStack>
+  )
+}
+
+/** As quatro medidas de cada campeão, no mesmo ciclo gravado (passo 09). */
+const MEDIDAS: {
+  titulo: string
+  ler: (r: ResumoDaGravacao) => number
+  formatar: (v: number) => string
+  cor: string
+}[] = [
+  {
+    titulo: 'Tempo fora da faixa',
+    ler: (r) => r.foraDaFaixa * 100,
+    formatar: (v) => `${formatarNumero(v, 1)}%`,
+    cor: 'var(--serie-laranja)',
+  },
+  {
+    titulo: 'Energia no ciclo',
+    ler: (r) => r.energiaKwh,
+    formatar: (v) => `${formatarNumero(v)} kWh`,
+    cor: 'var(--serie-amarelo)',
+  },
+  {
+    titulo: 'Massa na colheita',
+    ler: (r) => r.massaPorPe,
+    formatar: (v) => `${formatarNumero(v)} g`,
+    cor: 'var(--serie-verde)',
+  },
+  { titulo: 'Nota do ciclo', ler: (r) => r.nota, formatar: nota, cor: 'var(--serie-azul)' },
+]
+
+/**
+ * O que o modelo aprendeu: os campeões salvos (e o da geração 1, refeito)
+ * cultivando o mesmo ciclo gravado, com as regras fixas no mesmo clima como
+ * régua. Só os pontos que existem: o treino salva um campeão a cada 25 gerações.
+ */
+function OQueAprendeu() {
+  const gravacoes = useGravacoes()
+  const campeoes = (gravacoes.data ?? [])
+    .filter((g) => g.controlador !== 'regras' && g.controlador !== 'nada' && g.geracao != null && g.resumo)
+    .sort((x, y) => x.geracao! - y.geracao!)
+  const regras = gravacoes.data?.find((g) => g.controlador === 'regras')?.resumo
+  if (gravacoes.isPending) return <Skeleton height={480} radius={3} />
+  return (
+    <Card>
+      <VStack gap={3}>
+        <VStack gap={0.5}>
+          <Heading level={2}>O que o modelo aprendeu</Heading>
+          <Text type="supporting" color="secondary">
+            Cada ponto é um campeão salvo cultivando o mesmo ciclo de 35 dias; o tracejado, as regras fixas no mesmo
+            clima.
+          </Text>
+        </VStack>
+        {campeoes.length === 0 ? (
+          <Text color="secondary">Esta execução ainda não tem gravações com o resumo do ciclo.</Text>
+        ) : (
+          <Grid columns={{ minWidth: 360, repeat: 'fit' }} gap={4}>
+            {MEDIDAS.map((m) => (
+              <VStack key={m.titulo} gap={1}>
+                <Text type="label" color="secondary">
+                  {m.titulo}
+                </Text>
+                <LinhaPorGeracao
+                  pontos={campeoes.map((g) => ({ geracao: g.geracao!, valor: m.ler(g.resumo!) }))}
+                  referencia={regras ? { nome: 'regras fixas', valor: m.ler(regras) } : undefined}
+                  formatarValor={m.formatar}
+                  cor={m.cor}
+                  rotulo={`${m.titulo} do campeão de cada geração, com as regras fixas como referência`}
+                />
+              </VStack>
+            ))}
+          </Grid>
+        )}
+      </VStack>
+    </Card>
   )
 }
 
