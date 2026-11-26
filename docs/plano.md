@@ -405,12 +405,12 @@ Stack do dashboard decidida: React 19 + Vite + TypeScript + Astryx (ver
 | 0b. Estudo | Estufa de brinquedo em NumPy: simulador, rede e evolução, para aprender as ideias (**feito**, em [`estudo/`](../estudo/README.md)) |
 | 1. Simulador do ar | Van Henten em PyTorch, clima do INMET, conferido com a literatura |
 | 2. Regras fixas e PID | As comparações rodando no simulador, com métricas |
-| 3. Neuroevolução | Agente aprende a fase 1, milhares de estufas na GPU |
+| 3. Neuroevolução | Agente aprende a fase 1, milhares de estufas na GPU (fase 1 treinada no processador: 3 sementes na noite de 24/11, passos 04 a 06; campeões reavaliados no passo 09) |
 | 4. Solução nutritiva | pH, EC, água e reservatório; clima do INMET e tarifa variável; currículo fases 2 e 3 |
 | 5. Mundo sujo | Ruído, descalibração, falhas; fases 4 a 6; camada de segurança |
-| 6. Dashboard | Tela do agora, histórico, ciclo, agente × regras, celular e desktop (**feito**, com dados de exemplo e a estufa de brinquedo; falta ligar ao treino de verdade) |
-| 7. Financeiro | Lucro × gasto projetado, cenários, preços editáveis (**feito** no dashboard) |
-| 8. Gravações | Reprodução do ciclo acelerado e das gerações (**feito** no dashboard; falta o treino exportar as gravações) |
+| 6. Dashboard | Tela do agora, histórico, ciclo, celular e desktop (**feito**, só com dado real: o Produtor reproduz uma gravação do treino escolhida na Vitrine do produtor; o Desenvolvedor compara N gravações e vê o que cada geração aprendeu. Passos 08 a 14) |
+| 7. Financeiro | A conta do ciclo linha a linha, o ponto de equilíbrio, preços editáveis e lançamentos reais com CSV (**feito**, passo 11, decisão 0008) |
+| 8. Gravações | Reprodução do ciclo acelerado e das gerações (**feito**: o treino exporta os campeões, as regras fixas e "sem controle" no mesmo clima, com massa e resumo; passo 09) |
 | 9. Validação | Comparar com GreenLight e com resultados publicados |
 | 10. Hardware (futuro) | ESP32 + sensores pela mesma interface, dados reais calibrando o simulador |
 
