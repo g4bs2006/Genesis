@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>15 · Resultado da fase 1 · Genesis</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+  <div class="olho">Passo 15 · Treino · 28/11/2026</div>
+  <h1>O resultado da fase 1 e a tarifa de verdade</h1>
+  <p class="resumo">Os resultados da noite de 24/11 que o <a href="06-a-noite.html">passo 06</a> prometeu para a manhã: o relatório das 3 sementes em 10 climas inéditos. E a troca da tarifa de energia de R$ 0,85 para R$ 1,28/kWh (Equatorial Goiás, com impostos), antes de começar a fase 2.</p>
+
+  <h2>O que foi feito</h2>
+  <ul>
+    <li>Rodado o <code>treino.relatorio</code> nas 3 execuções da noite, com a tarifa antiga. Era o checklist da manhã que tinha ficado para trás.</li>
+    <li>A tarifa passou a ser R$ 1,28/kWh na nota (<code>controle/metricas.py</code>), no simulador (<code>simulador/estufa.py</code>) e no preço padrão do Dinheiro no dashboard. A origem do número está na <a href="../decisoes/0009-tarifa-equatorial.md">decisão 0009</a>.</li>
+    <li>Rodado o relatório de novo, com a tarifa nova, sem retreinar nada.</li>
+  </ul>
+
+  <h2>Por quê</h2>
+  <div class="decisao">
+    <div class="rotulo">Decisão do Gabriel · Equatorial Goiás</div>
+    <p>A tarifa precisava de fonte e de região. O Gabriel definiu a Equatorial, em Goiânia, e desconfiou de R$ 0,96. Esse valor bate com a tarifa <strong>sem</strong> impostos (R$ 0,954, reajuste em vigor desde 22/10/2026). Como a nota mede o que sai do bolso do produtor, entrou o valor com ICMS e PIS/COFINS: R$ 1,28.</p>
+  </div>
+  <div class="decisao">
+    <div class="rotulo">Decisão · não retreinar a fase 1</div>
+    <p>A pergunta era: com a energia 50% mais cara, o campeão da fase 1 ainda vale? Em vez de retreinar (uma noite), o campeão foi reavaliado com a tarifa nova. Ele ainda vence as regras fixas em 10 de 10 climas, então a fase 1 fica como está, documentada com R$ 0,85. A fase 2 começa com R$ 1,28 e parte desse campeão.</p>
+  </div>
+
+  <h2>Números</h2>
+  <p>Média de 10 climas amenos que nem o treino nem a prova viram (sementes 20.000 a 20.009). Nota em R$ por ciclo de 35 dias, estufa de 1000 pés. Fonte: <code>relatorio-tarifa085.md</code> e <code>relatorio-tarifa128.md</code> em cada pasta <code>treino/saidas/fase1-semente*-20261124/</code>.</p>
+  <table>
+    <tr><th>Controlador</th><th>Nota a R$ 0,85</th><th>Nota a R$ 1,28</th><th>Energia a 0,85 (kWh)</th><th>Energia a 1,28 (kWh)</th><th>Massa (g/pé)</th><th>Tempo fora da faixa (0,85 → 1,28)</th></tr>
+    <tr><td>Campeão semente 7 (g158)</td><td>985</td><td>749</td><td>422</td><td>500</td><td>246 → 247</td><td>69% → 70%</td></tr>
+    <tr><td>Campeão semente 8 (g158)</td><td>976</td><td>837</td><td>419</td><td>290</td><td>257 → 249</td><td>55% → 49%</td></tr>
+    <tr><td>Campeão semente 9 (g158)</td><td>991</td><td>735</td><td>495</td><td>552</td><td>252 → 257</td><td>55% → 56%</td></tr>
+    <tr><td>PID</td><td>679</td><td>606</td><td>169</td><td>169</td><td>273</td><td>54%</td></tr>
+    <tr><td>Regras fixas</td><td>360</td><td>289</td><td>164</td><td>164</td><td>256</td><td>76%</td></tr>
+    <tr><td>Não fazer nada</td><td>−8.379</td><td>−8.379</td><td>0</td><td>0</td><td>8</td><td>100%</td></tr>
+  </table>
+  <p>Nas duas tarifas, cada campeão venceu as regras fixas em <strong>10 de 10</strong> climas inéditos.</p>
+
+  <h2>Gráficos</h2>
+  <figure>
+    <img src="imagens/15-curva-semente7.png" alt="Curva de aprendizado da semente 7">
+    <figcaption>Semente 7: nota da melhor rede, da rede mediana e das regras fixas no mesmo clima, geração a geração. Olhe a melhor rede passar das regras fixas e a mediana vir atrás, algumas gerações depois: a população inteira aprendeu, não só um indivíduo.</figcaption>
+  </figure>
+  <figure>
+    <img src="imagens/15-curva-semente8.png" alt="Curva de aprendizado da semente 8">
+    <figcaption>Semente 8: mesmo formato da 7. Três sementes com curvas parecidas mostram que o resultado é do método, não da sorte da população inicial.</figcaption>
+  </figure>
+  <figure>
+    <img src="imagens/15-curva-semente9.png" alt="Curva de aprendizado da semente 9">
+    <figcaption>Semente 9: a melhor rede passa das regras fixas por volta da geração 30, a mediana por volta da 45, e a nota se estabiliza em torno de R$ 1.000 depois da geração 100.</figcaption>
+  </figure>
+  <p>As curvas vêm de <code>treino/relatorio.py</code> (função <code>curva</code>), com o <code>geracoes.json</code> de cada execução.</p>
+
+  <h2>O que deu errado ou surpreendeu</h2>
+  <ul>
+    <li><strong>A tarifa é entrada da rede, não só preço.</strong> Esperava-se que trocar a tarifa mudasse só a nota (energia × preço). Mas a rede lê a tarifa (<code>treino/rede.py</code>), e a entrada normalizada saiu de −0,08 para +0,63. O campeão mudou o comportamento sem treinar: a semente 8 passou a gastar menos energia (419 → 290 kWh), e a 7 e a 9 passaram a gastar mais. A rede nunca viu outra tarifa na fase 1, então a reação a esse número é um acaso do treino. A fase 3, com a tarifa variando, é que vai ensinar o que fazer com ela.</li>
+    <li><strong>O PID chegou mais perto.</strong> Com a energia mais cara, o PID (R$ 606) fica a R$ 130 a R$ 230 do campeão, contra R$ 300 antes. O campeão gasta 2 a 3 vezes a energia do PID e colhe alface um pouco mais leve (246 a 257 g contra 273 g).</li>
+    <li><strong>"Tempo fora da faixa" alto em todos.</strong> 49% a 76%, até no PID. O relatório conta todas as variáveis do ar, inclusive as que nenhum controlador consegue segurar o dia todo (luz e CO₂, por exemplo). Precisa olhar variável por variável antes de usar esse número no artigo.</li>
+    <li>O checklist da manhã do passo 06 só foi feito agora, 4 dias depois.</li>
+  </ul>
+
+  <h2>Como reproduzir</h2>
+<pre><code>.venv\Scripts\python.exe -m treino.relatorio treino/saidas/fase1-semente7-20261124
+.venv\Scripts\python.exe -m treino.relatorio treino/saidas/fase1-semente8-20261124
+.venv\Scripts\python.exe -m treino.relatorio treino/saidas/fase1-semente9-20261124</code></pre>
+  <p>Com a tarifa de R$ 0,85, troque <code>PRECOS["tarifaKwh"]</code> e <code>TARIFA_KWH</code> de volta antes de rodar.</p>
+
+  <h2>Em aberto</h2>
+  <ul>
+    <li>Confirmar a tarifa com uma fatura real da Equatorial (B2 rural: ICMS e descontos).</li>
+    <li>Quebrar o "tempo fora da faixa" por variável.</li>
+    <li>A fase 2 do currículo: a solução nutritiva, com pH e EC afetando o crescimento (decisão do Gabriel).</li>
+  </ul>
+
+  <h2>Links</h2>
+  <ul>
+    <li><a href="../decisoes/0009-tarifa-equatorial.md">Decisão 0009</a> (a tarifa) e <a href="../decisoes/0005-controle-e-nota.md">0005</a> (a nota).</li>
+    <li>Código: <code>controle/metricas.py</code>, <code>simulador/estufa.py</code>, <code>treino/relatorio.py</code>, <code>dashboard/src/modules/dinheiro/infrastructure/precosLocal/repositorioPrecosLocal.ts</code>.</li>
+    <li>Branch: <code>treino-tarifa-equatorial</code>.</li>
+  </ul>
+</main>
+</body>
+</html>

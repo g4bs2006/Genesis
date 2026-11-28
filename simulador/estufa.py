@@ -48,7 +48,7 @@ DO_AR = ("exaustor", "sombreamento", "nebulizacao", "luz")
 # Solução nutritiva fixa no meio da faixa boa do dashboard (estufa/domain/faixas.ts)
 # até a Etapa 4 do plano. Vai marcada como "exemplo" na leitura.
 SOLUCAO_FIXA = {"ph": 6.0, "ec": 1.5, "temperaturaAgua": 21.0, "nivel": 0.8}
-TARIFA_KWH = 0.85  # R$/kWh, o padrão do dashboard (dinheiro/infrastructure/precosLocal)
+TARIFA_KWH = 1.28  # R$/kWh com impostos, Equatorial Goiás (decisão 0009); a fase 1 treinou com 0,85
 FUSO = timezone(timedelta(hours=-3))  # America/Sao_Paulo, sem horário de verão
 
 
