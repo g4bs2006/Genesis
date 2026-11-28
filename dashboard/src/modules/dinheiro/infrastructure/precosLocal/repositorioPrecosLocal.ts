@@ -15,7 +15,7 @@ export const CHAVE_LANCAMENTOS = 'genesis:lancamentos'
  * VALORES DE REFERÊNCIA (ordem de grandeza, não cotação do dia; a mesma régua
  * que a nota do treino usa, controle/metricas.py):
  * - alface: R$ 2,00 o pé de 220 g;
- * - energia: R$ 0,85/kWh, tarifa média com impostos;
+ * - energia: R$ 1,28/kWh, Equatorial Goiás com impostos (docs/decisoes/0009-tarifa-equatorial.md);
  * - água: R$ 8/m³, tarifa de concessionária;
  * - muda: R$ 0,15;
  * - adubo e embalagem: 0 até o produtor informar (a simulação não dosa adubo);
@@ -23,7 +23,7 @@ export const CHAVE_LANCAMENTOS = 'genesis:lancamentos'
  */
 export const PRECOS_PADRAO: Precos = {
   alfacePorPe: 2.0,
-  tarifaKwh: 0.85,
+  tarifaKwh: 1.28,
   aguaPorM3: 8,
   mudaPorUnidade: 0.15,
   aduboPorCiclo: 0,

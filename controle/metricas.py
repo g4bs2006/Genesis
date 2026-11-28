@@ -22,7 +22,8 @@ from simulador.parametros import Adaptacao
 # Preços padrão do dashboard (repositorioPrecosLocal.ts, PRECOS_PADRAO), cenário médio.
 PRECOS = {
     "alfacePorPe": 2.0,
-    "tarifaKwh": 0.85,
+    # Equatorial Goiás, com impostos (decisão 0009); a fase 1 treinou com 0,85
+    "tarifaKwh": 1.28,
     "aguaPorM3": 8.0,
     "mudaPorUnidade": 0.15,
     "fixosPorCiclo": 180.0,

@@ -69,7 +69,8 @@ nota = receita − custos − punição
 - **Receita:** 1000 pés × R$ 2,00 (preço médio do dashboard) × fator de peso.
   O fator de peso é a régua do dashboard: 220 g vale 1, abaixo de 120 g vale 0
   e o máximo é 1,1.
-- **Custos:** energia × R$ 0,85/kWh, mais água × R$ 8/m³, mudas (R$ 150) e
+- **Custos:** energia × R$ 0,85/kWh (R$ 1,28 a partir da fase 2, ver a
+  [decisão 0009](0009-tarifa-equatorial.md)), mais água × R$ 8/m³, mudas (R$ 150) e
   fixos (R$ 180). São os mesmos preços e contas do dashboard, para os números
   baterem nas duas pontas.
 - **Punição**, a cada passo de 10 min e para cada variável controlada:
